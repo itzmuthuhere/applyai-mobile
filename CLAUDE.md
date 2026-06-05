@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Claude Master Instructions
-> Version: 1.0 | Last updated: Jun 6, 2026
+> Version: 1.1 | Last updated: Jun 6, 2026
 > Read this file every session. Entry point to the entire frontend knowledge system.
 > EVERY rule is MANDATORY. "Mandatory" = no exceptions, no skipping, no "I'll do it later."
 
@@ -23,7 +23,7 @@ You are simultaneously the:
 - **React Native Developer** — write complete, production-quality Expo + React Native code
 - **UI/UX Implementer** — implement screens exactly matching product intent
 - **State Manager** — maintain Redux store shape, selector patterns, action flows
-- **Integration Owner** — own the backend API contract, keep it in sync with API_SPEC
+- **Integration Owner** — own the backend API contract, keep it in sync with API_INTEGRATION.md
 - **Navigation Architect** — maintain screen hierarchy and navigation flows
 - **Documentation Owner** — keep every doc accurate, versioned, and in sync at all times
 
@@ -40,8 +40,7 @@ You are simultaneously the:
 | What API calls does the app make? | `API_INTEGRATION.md` |
 | What does each flow do end-to-end (UI level)? | `FUNCTIONAL_FLOW.md` |
 | What packages are we using? Why? | `TECH_STACK.md` |
-| Backend URL, env vars, auth flow? | `INTEGRATION_CONFIG.md` |
-| What prompt do I paste for today's feature? | `ApplyAI_Build_Prompts.md` |
+| Backend URL, env vars, auth flow, Android setup? | `INTEGRATION_CONFIG.md` |
 
 ---
 
@@ -59,13 +58,13 @@ STEP 3 → Identify change category:
          Tech Change / Bug Fix / Integration Change / Unplanned
 
 STEP 4 → Check DEPENDENCY MAP in PROJECT_STATE.md
-         All backend APIs used must be ✅ in the backend before building UI for them
+         All backend APIs used must be ✅ in backend before building UI for them
 
 STEP 5 → Read relevant specialist doc:
-         New screen      → read SCREEN_SPEC.md first
+         New screen        → read SCREEN_SPEC.md first
          Navigation change → read ARCHITECTURE.md first
-         API call change → read API_INTEGRATION.md first
-         State change    → read ARCHITECTURE.md → Redux Store section
+         API call change   → read API_INTEGRATION.md first
+         State change      → read ARCHITECTURE.md → Redux Store section
 
 STEP 6 → Run DOC HEALTH CHECK
 
@@ -110,11 +109,11 @@ STEP 10 → git add . && git commit && git push
 □ FUNCTIONAL_FLOW.md → bump version number
 
 □ TECH_STACK.md → for every new package.json dependency added:
-     add row with version, purpose, why chosen; bump version
+     add row with version, purpose, why chosen; update package.json section; bump version
   (skip if no new packages)
 
 □ ARCHITECTURE.md → if navigation structure changed: update NAV TREE section
-□ ARCHITECTURE.md → if Redux store changed: update STORE SHAPE section
+□ ARCHITECTURE.md → if Redux store shape changed: update STORE SHAPE section
 □ ARCHITECTURE.md → bump version if changed
 
 □ ApplyAI_Build_Prompts.md → mark this day complete with date
@@ -160,8 +159,6 @@ STEP 10 → git add . && git commit && git push
 
 □ FUNCTIONAL_FLOW.md → Flow Index: mark ⏸ On Hold for affected flows
 
-□ ApplyAI_Build_Prompts.md → add "⏸ ON HOLD — [reason]" to that day
-
 □ Tell user: "Day X is on hold. Next I will build Day Y."
 ```
 
@@ -193,7 +190,7 @@ STEP 10 → git add . && git commit && git push
 
 □ PROJECT_STATE.md → package.json dependencies section: reflect current state
 
-□ ARCHITECTURE.md → if new package changes architecture (state, navigation, etc.): update
+□ ARCHITECTURE.md → if new package changes architecture: update
 ```
 
 ---
@@ -206,7 +203,7 @@ STEP 10 → git add . && git commit && git push
 □ PROJECT_STATE.md → KNOWN ISSUES: add same entry
 
 □ If fixable now → fix → run Scenario G
-□ If needs backend change → log and flag to backend team
+□ If needs backend change → log and flag
 □ If needs env var / config → create actions/ACTION_REQUIRED_XXX.md
 ```
 
@@ -254,14 +251,13 @@ Code changes:
 Docs updated:
   ✅ PROJECT_STATE.md — [what field]
   ✅ BUILD_LOG.md — [what field]
-  ✅ SCREEN_SPEC.md — [what] (vX.X → vX.Y)       ← if changed
-  ✅ API_INTEGRATION.md — [what] (vX.X → vX.Y)    ← if changed
-  ✅ FUNCTIONAL_FLOW.md — [what]                   ← if changed
-  ✅ TECH_STACK.md — [what]                        ← if changed
-  ✅ ARCHITECTURE.md — [what]                      ← if changed
+  ✅ SCREEN_SPEC.md — [what] (vX.X → vX.Y)
+  ✅ API_INTEGRATION.md — [what] (vX.X → vX.Y)
+  ✅ FUNCTIONAL_FLOW.md — [what]
+  ✅ TECH_STACK.md — [what]
+  ✅ ARCHITECTURE.md — [what]
 
 Docs NOT changed (reason):
-  — SCHEMA.md: frontend has no schema doc
   — [doc]: [why not touched]
 
 Committed: [hash] — [message]
@@ -277,20 +273,18 @@ Blocked on: [anything] or "Nothing — ready"
 
 | Check | How to verify |
 |-------|--------------|
-| Every screen in PROJECT_STATE SCREEN STATUS has a full entry in SCREEN_SPEC.md | Compare both |
-| Every API call in API_INTEGRATION.md maps to a real backend endpoint in API_SPEC | Cross-reference with backend API_SPEC.md |
-| Every ✅ screen in PROJECT_STATE has ✅ in BUILD_LOG MASTER TRACKER | Compare both |
+| Every screen in SCREEN STATUS has full entry in SCREEN_SPEC.md | Compare both |
+| Every API call in API_INTEGRATION.md maps to real backend endpoint | Cross-ref backend API_SPEC.md |
+| Every ✅ screen in SCREEN STATUS has ✅ in BUILD_LOG MASTER TRACKER | Compare both |
 | FUNCTIONAL_FLOW.md Flow Index matches SCREEN STATUS | Compare both |
 | No "[DATE]" placeholders in BUILD_LOG session entries | Scan BUILD_LOG |
-
-If any check fails → fix before writing new code.
 
 ---
 
 ## VERSION NUMBERING RULES
 
 - **Minor (X.Y → X.Y+1):** Any content change
-- **Major (X.Y → X+1.0):** Structural change (new section, removed section)
+- **Major (X.Y → X+1.0):** New section added, section removed, format overhaul
 - Always update `Last updated:` date in the same edit
 
 ---
@@ -303,21 +297,21 @@ If any check fails → fix before writing new code.
 - No hardcoded strings — constants file for all labels, routes, keys
 - Axios for all HTTP calls — with interceptor for JWT injection
 - Redux Toolkit for all global state — no useState for shared state
-- AsyncStorage / SecureStore for JWT — never in-memory only
-- Loading state for every API call — never show blank screen
-- Error state for every API call — never silently fail
+- expo-secure-store for JWT — never AsyncStorage for tokens
+- Loading state on every API call — never show blank screen
+- Error state on every API call — never silently fail
 - TypeScript types for all props and API responses
-- Package: screens in `src/screens/`, components in `src/components/`, store in `src/store/`
+- Package layout: `src/screens/`, `src/components/`, `src/store/`, `src/api/`
 
 ---
 
 ## BACKEND INTEGRATION RULES
 
-- Before building any screen that calls an API, verify the backend endpoint is ✅ Working in the backend's `API_SPEC.md`
-- Never hardcode response shape — define a TypeScript interface for every API response
-- All API calls go through `src/api/apiClient.ts` — never call fetch/axios directly from a screen
-- JWT is injected by Axios interceptor — screens never touch the token directly
-- On 401 response → clear token → navigate to Login screen
+- Before building any screen that calls an API, verify backend endpoint is ✅ Working in backend `API_SPEC.md`
+- Define a TypeScript interface for every API response in `src/types/api.types.ts`
+- All API calls go through `src/api/apiClient.ts` — never call axios directly from a screen
+- JWT injected by Axios interceptor — screens never touch the token
+- On 401 → clear token → navigate to Login
 
 ---
 
@@ -326,7 +320,7 @@ If any check fails → fix before writing new code.
 | Item | Value |
 |------|-------|
 | App | ApplyAI Mobile |
-| Stack | React Native, Expo SDK 52+, TypeScript |
+| Stack | React Native 0.85.3, Expo SDK 56, TypeScript 6, React 19 |
 | Package name | com.applyai.mobile |
 | GitHub | https://github.com/itzmuthuhere/applyai-mobile |
 | Local | D:\applyai-mobile |

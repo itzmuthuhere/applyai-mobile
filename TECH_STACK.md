@@ -19,10 +19,11 @@
 
 | Package | Version | Status | Day | Purpose | Notes |
 |---------|---------|--------|-----|---------|-------|
-| react-native | 0.76+ | ⬜ Day 1 | — | Core framework | Via Expo |
-| expo | ~52.0 | ⬜ Day 1 | — | Managed workflow | OTA updates, no ejecting needed Phase 1 |
-| typescript | ~5.3 | ⬜ Day 1 | — | Type safety | All files .tsx/.ts, no .js |
-| expo-status-bar | ~2.0 | ⬜ Day 1 | — | Status bar control | Expo managed |
+| react-native | 0.85.3 | ✅ Active | Day 1 | Core framework | Via Expo SDK 56 |
+| expo | ~56.0.9 | ✅ Active | Day 1 | Managed workflow | OTA updates, no ejecting needed Phase 1 |
+| react | 19.2.3 | ✅ Active | Day 1 | UI library | React 19 |
+| typescript | ~6.0.3 | ✅ Active | Day 1 | Type safety | All files .tsx/.ts, no .js |
+| expo-status-bar | ~56.0.4 | ✅ Active | Day 1 | Status bar control | Expo managed |
 
 ---
 
@@ -117,15 +118,17 @@
 
 ---
 
-## package.json — PLANNED DEPENDENCIES
+## package.json — CURRENT DEPENDENCIES
 
 ```json
 {
+  "name": "applyai-mobile",
   "dependencies": {
-    "expo": "~52.0.0",
-    "react": "18.3.2",
-    "react-native": "0.76.6",
-    "typescript": "~5.3.3",
+    "expo": "~56.0.9",
+    "expo-status-bar": "~56.0.4",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "typescript": "~6.0.3",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/native-stack": "^7.2.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
