@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Claude Master Instructions
-> Version: 1.2 | Last updated: Jun 6, 2026
+> Version: 2.0 | Last updated: Jun 6, 2026
 > Read this file every session. Entry point to the entire frontend knowledge system.
 > EVERY rule is MANDATORY. "Mandatory" = no exceptions, no skipping, no "I'll do it later."
 
@@ -289,6 +289,68 @@ Blocked on: [anything] or "Nothing — ready"
 - **Minor (X.Y → X.Y+1):** Any content change
 - **Major (X.Y → X+1.0):** New section added, section removed, format overhaul
 - Always update `Last updated:` date in the same edit
+
+---
+
+## BUG TRACKING RULES
+
+When a bug is found:
+1. Assign ID: `BUG-001`, `BUG-002`, etc.
+2. Add to `BUILD_LOG.md` → OPEN BUGS table
+3. Add to `PROJECT_STATE.md` → KNOWN ISSUES section
+4. Run Scenario F checklist
+
+When a bug is fixed:
+1. Mark FIXED with date + fix in BOTH files
+2. Run Scenario G checklist
+
+---
+
+## BLOCKER PROTOCOL — When Claude Needs User Action
+
+If building requires: creating an account, installing software, setting env vars, adding secrets:
+
+1. Create `actions/ACTION_REQUIRED_XXX.md` (next sequential number)
+   - Exact steps — specific clicks, exact values, no vague instructions
+   - Estimated time, what it blocks, what to say when done
+2. Update `RESUME_POINT.md` — write exactly where work stopped
+3. Skip the blocked feature, continue with whatever CAN be built
+4. Log in `BUILD_LOG.md` current session under "Blockers"
+5. Commit and push all files
+6. Tell user: "I created `actions/ACTION_REQUIRED_XXX.md` — do that and say 'ACTION_REQUIRED_XXX done, continue Day X'"
+
+---
+
+## QUOTA EXHAUSTED PROTOCOL
+
+If output quota runs out mid-feature:
+
+1. Immediately write `RESUME_POINT.md`:
+```
+Status: INTERRUPTED
+Feature: Day X — name
+Interrupted at: [exact step / component name]
+
+DONE (committed): File A ✅, File B ✅
+PARTIAL (in progress): File C — written up to [component], missing [what]
+NOT STARTED: File D, File E
+
+NEXT STEP: [one sentence — exactly what to write next]
+DECISIONS MADE: [any approach decisions made this session]
+```
+2. Commit everything including partial files
+3. User says "continue" → read RESUME_POINT.md → resume exactly
+
+---
+
+## TESTING ERROR PROTOCOL
+
+When a screen or API call returns unexpected error:
+1. Assign BUG-XXX, run Scenario F checklist
+2. If fixable immediately → fix, run Scenario G
+3. If needs backend fix → log as blocked, flag the backend endpoint
+4. If needs env var / secret → create `actions/ACTION_REQUIRED_XXX.md`
+5. If needs device logs → ask: "paste the Metro/Expo logs for this screen"
 
 ---
 
