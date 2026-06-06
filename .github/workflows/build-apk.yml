@@ -1,11 +1,21 @@
-# Download page: https://illustrious-kleicha-2dee8f.netlify.app
 name: Build APK + Update Download Page
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'App.tsx'
+      - 'app.json'
+      - 'eas.json'
+      - 'package.json'
+      - 'android/**'
+      - 'assets/**'
+      - 'babel.config.js'
   workflow_dispatch:
     inputs:
       version_note:
-        description: 'What changed in this build? (shown on download page)'
+        description: 'What changed in this build?'
         required: false
         default: 'Latest build'
 
@@ -13,6 +23,7 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,35 +40,37 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
+      - name: Restore google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > google-services.json
+
       - name: Build APK via EAS
         id: eas_build
         run: |
-          BUILD_OUTPUT=$(eas build \
+          BUILD_JSON=$(eas build \
             --platform android \
             --profile preview \
             --non-interactive \
             --json \
-            --no-wait=false \
             2>&1)
-          echo "$BUILD_OUTPUT"
-          APK_URL=$(echo "$BUILD_OUTPUT" | python3 -c "
-          import sys, json, re
+          echo "$BUILD_JSON"
+
+          APK_URL=$(echo "$BUILD_JSON" | python3 -c "
+          import sys, json
           text = sys.stdin.read()
-          # Try to find URL in JSON output
-          try:
-              data = json.loads(text)
-              if isinstance(data, list):
-                  print(data[0].get('artifacts', {}).get('buildUrl', ''))
-              elif isinstance(data, dict):
-                  print(data.get('artifacts', {}).get('buildUrl', ''))
-          except:
-              # fallback: grep for expo.dev artifact URL
-              match = re.search(r'https://expo\.dev/artifacts/eas/[^\s]+\.apk', text)
-              if match:
-                  print(match.group(0))
+          for line in reversed(text.strip().split('\n')):
+              try:
+                  data = json.loads(line)
+                  if isinstance(data, list) and len(data) > 0:
+                      url = data[0].get('artifacts', {}).get('buildUrl', '')
+                      if url: print(url); break
+                  elif isinstance(data, dict):
+                      url = data.get('artifacts', {}).get('buildUrl', '')
+                      if url: print(url); break
+              except: continue
           " 2>/dev/null || echo "")
-          # If above fails, fetch latest build URL from EAS
+
           if [ -z "$APK_URL" ]; then
+            echo "Falling back to eas build:list..."
             APK_URL=$(eas build:list \
               --platform android \
               --status finished \
@@ -66,66 +79,77 @@ jobs:
               --non-interactive 2>/dev/null | \
               python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['artifacts']['buildUrl'])" 2>/dev/null || echo "")
           fi
+
+          if [ -z "$APK_URL" ]; then
+            echo "ERROR: Could not extract APK URL"
+            exit 1
+          fi
+
           echo "apk_url=$APK_URL" >> $GITHUB_OUTPUT
           echo "APK URL: $APK_URL"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Get current date and version
+      - name: Get build metadata
         id: meta
         run: |
-          echo "date=$(date +'%B %d, %Y')" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%b %d, %Y')" >> $GITHUB_OUTPUT
           echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-          VERSION=$(node -p "require('./app.json').expo.version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Update download page with new APK URL
-        run: |
-          APK_URL="${{ steps.eas_build.outputs.apk_url }}"
-          VERSION="${{ steps.meta.outputs.version }}"
-          DATE="${{ steps.meta.outputs.date }}"
-          SHA="${{ steps.meta.outputs.short_sha }}"
+          echo "version=$(node -p "require('./app.json').expo.version")" >> $GITHUB_OUTPUT
           NOTE="${{ github.event.inputs.version_note }}"
+          if [ -z "$NOTE" ]; then NOTE="${{ github.event.head_commit.message }}"; fi
+          echo "note=${NOTE}" >> $GITHUB_OUTPUT
 
-          python3 - <<EOF
-          import re
+      - name: Update Netlify download page
+        run: |
+          python3 - <<'PYEOF'
+          import re, os
+
+          apk_url = os.environ['APK_URL']
+          version = os.environ['VERSION']
+          date    = os.environ['DATE']
+          sha     = os.environ['SHA']
+          note    = os.environ['NOTE']
 
           with open('docs/index.html', 'r', encoding='utf-8') as f:
               content = f.read()
 
-          # Update APK download href
           content = re.sub(
-              r'href="[^"]*"(\s*\n\s*id="downloadBtn")',
-              f'href="{APK_URL}"\\1',
+              r'href="[^"]*"(\s*\n?\s*id="downloadBtn")',
+              f'href="{apk_url}"\\1',
               content
           )
+          content = re.sub(r'<span>v[\d.]+</span>', f'<span>v{version}</span>', content)
 
-          # Update version badge
-          content = re.sub(r'<span>v[\d.]+</span>', f'<span>v{VERSION}</span>', content)
-
-          # Update build note in version info
-          if '<span class="build-note">' in content:
+          if 'id="buildInfo"' in content:
               content = re.sub(
-                  r'<span class="build-note">[^<]*</span>',
-                  f'<span class="build-note">{NOTE} · {DATE} · #{SHA}</span>',
+                  r'<span id="buildInfo">[^<]*</span>',
+                  f'<span id="buildInfo">{note} · {date} · #{sha}</span>',
                   content
               )
           else:
               content = content.replace(
                   '<span>~50 MB</span>',
-                  f'<span>~50 MB</span>\n      <br/><span class="build-note" style="font-size:11px;color:#94A3B8;">{NOTE} · {DATE} · #{SHA}</span>'
+                  f'<span>~50 MB</span>\n      <br/><span id="buildInfo" style="font-size:11px;color:#94A3B8;">{note} · {date} · #{sha}</span>'
               )
 
           with open('docs/index.html', 'w', encoding='utf-8') as f:
               f.write(content)
 
-          print(f"Updated download page: v{VERSION} → {APK_URL}")
-          EOF
+          print(f"Updated: v{version} -> {apk_url}")
+          PYEOF
+        env:
+          APK_URL: ${{ steps.eas_build.outputs.apk_url }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          DATE: ${{ steps.meta.outputs.date }}
+          SHA: ${{ steps.meta.outputs.short_sha }}
+          NOTE: ${{ steps.meta.outputs.note }}
 
       - name: Commit updated download page
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/index.html
-          git commit -m "chore: update download page → APK v${{ steps.meta.outputs.version }} (#${{ steps.meta.outputs.short_sha }})" || echo "No changes to commit"
+          git diff --staged --quiet && echo "No changes" || \
+            git commit -m "chore: update download page → APK v${{ steps.meta.outputs.version }} (#${{ steps.meta.outputs.short_sha }})"
           git push
