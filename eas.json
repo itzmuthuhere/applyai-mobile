@@ -16,7 +16,11 @@
       "android": {
         "buildType": "apk"
       },
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://applyai-backend-production-3b67.up.railway.app",
+        "EXPO_PUBLIC_ENV": "production"
+      }
     },
     "production": {
       "android": {
