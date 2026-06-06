@@ -24,9 +24,9 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 2 — Google Sign-In Screen
+**Active Day:** Day 3 — Home + Profile Screens
 **Last Session:** Jun 6, 2026
-**Overall Status:** Day 1 complete — navigation shell built, all packages installed
+**Overall Status:** Day 2 complete — Google Sign-In screen built, authSlice thunk wired, google-services.json in place
 
 ---
 
@@ -36,7 +36,7 @@
 |--------|-----|--------|---------|--------|
 | App shell + navigation setup | 1 | ✅ Complete | v1.0 | ⬜ Pending emulator |
 | Splash / Onboarding screen | 1 | ✅ Complete | v1.0 | ⬜ Pending emulator |
-| Google Sign-In screen | 2 | ⬜ Not started | — | — |
+| Google Sign-In screen | 2 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Home / Dashboard screen | 3 | ⬜ Not started | — | — |
 | Resume List screen | 4 | ⬜ Not started | — | — |
 | Resume Upload screen | 4 | ⬜ Not started | — | — |
@@ -80,7 +80,7 @@ src/
 │   ├── auth/
 │   │   ├── SplashScreen.tsx   ✅ Blue branded splash
 │   │   ├── OnboardingScreen.tsx ✅ "Get Started" → GoogleSignIn
-│   │   └── GoogleSignInScreen.tsx ✅ Placeholder (real sign-in Day 2)
+│   │   └── GoogleSignInScreen.tsx ✅ Full UI + Google Sign-In flow (Day 2)
 │   ├── home/
 │   │   └── HomeScreen.tsx     ✅ Placeholder
 │   ├── resume/
@@ -218,4 +218,4 @@ _None yet._
 
 ---
 
-*Last updated: Jun 6, 2026 — v1.0: Doc system initialized, repo created*
+*Last updated: Jun 6, 2026 — v1.1: Day 2 Google Sign-In marked complete*

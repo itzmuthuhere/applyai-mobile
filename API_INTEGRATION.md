@@ -207,7 +207,7 @@ No screen needs to handle 401 individually.
 
 | Method | Path | Screen | Backend Status | Frontend Built |
 |--------|------|--------|---------------|---------------|
-| POST | /api/auth/google | GoogleSignIn | ✅ Working | ⬜ Day 2 |
+| POST | /api/auth/google | GoogleSignIn | ✅ Working | ✅ Day 2 |
 | GET | /api/auth/me | Profile (refresh) | ✅ Working | ⬜ Day 3 |
 | GET | /api/resumes | ResumeList | ⬜ Day 4 | ⬜ Day 4 |
 | POST | /api/resumes/upload | ResumeUpload | ⬜ Day 4 | ⬜ Day 4 |

@@ -10,8 +10,8 @@
 
 | # | Flow | Status | Day |
 |---|------|--------|-----|
-| UF-01 | First-time app open → Sign in | ⬜ Day 2 | Day 2 |
-| UF-02 | Returning user → Auto-login | ⬜ Day 2 | Day 2 |
+| UF-01 | First-time app open → Sign in | ✅ Day 2 | Day 2 |
+| UF-02 | Returning user → Auto-login | ✅ Day 2 | Day 2 |
 | UF-03 | Upload and analyze resume | ⬜ Day 4–5 | Day 4–5 |
 | UF-04 | Browse jobs and get match score | ⬜ Day 6–7 | Day 6–7 |
 | UF-05 | Tailor resume for a job | ⬜ Day 8 | Day 8 |

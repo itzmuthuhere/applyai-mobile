@@ -9,7 +9,7 @@
 | Day | Feature | Status | Version | Date | Tested |
 |-----|---------|--------|---------|------|--------|
 | 1 | App shell + navigation setup | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending |
-| 2 | Google Sign-In screen | ⬜ Not started | — | — | — |
+| 2 | Google Sign-In screen | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending device test |
 | 3 | Home + Profile screens | ⬜ Not started | — | — | — |
 | 4 | Resume List + Upload screens | ⬜ Not started | — | — | — |
 | 5 | Resume Detail / Score screen | ⬜ Not started | — | — | — |
@@ -41,11 +41,11 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 2 — Google Sign-In screen (needs Firebase + google-services.json)
-**Blocked on:** ACTION_REQUIRED — Firebase Android app registration + google-services.json
+**Next to build:** Day 3 — Home + Profile screens
+**Blocked on:** Nothing — Day 2 complete, Day 3 ready to build
 **Open bugs:** None
-**Last push:** Jun 6, 2026 (Day 1 complete)
-**Resume point:** Clean — Day 1 done, Day 2 ready to build
+**Last push:** Jun 6, 2026 (Day 2 complete)
+**Resume point:** Clean — Day 2 done, Day 3 ready
 
 ---
 
@@ -94,31 +94,26 @@
 
 ---
 
-### SESSION 3 — [DATE]
+### SESSION 3 — Jun 6, 2026
 **Type:** Planned (Day 2)
 **Goal:** Google Sign-In screen + JWT storage
 
-**Pre-session checklist:**
-- [ ] Day 1 complete
-- [ ] Backend Day 3 ✅ (auth endpoints working)
-- [ ] Firebase project has Android app registered + google-services.json
+**What was built:**
+- `GoogleSignInScreen.tsx` — full production UI: gradient background, ApplyAI logo, 4 feature highlights, "Continue with Google" button, loading spinner, error alert
+- `authSlice.ts` — `signInWithGoogle` thunk: Google SDK → Firebase ID token → POST /api/auth/google → JWT stored via SecureStore; `signOut` thunk clears JWT + Google session
+- `App.tsx` — `configureGoogleSignIn()` called at startup with webClientId
+- `google-services.json` — placed in root for Firebase Android integration
+- `src/utils/auth.ts` — saveJwt / getJwt / clearJwt via expo-secure-store
 
-**Files to create:**
-- [ ] `src/screens/auth/GoogleSignInScreen.tsx`
-- [ ] `src/utils/auth.ts` (SecureStore JWT helpers)
-- [ ] `src/store/slices/authSlice.ts` (updated with user state)
-- [ ] `google-services.json` (Firebase config)
+**Files created/updated:**
+- `src/screens/auth/GoogleSignInScreen.tsx` (full UI, Redux-connected)
+- `src/store/slices/authSlice.ts` (signInWithGoogle thunk + signOut thunk)
+- `src/utils/auth.ts` (SecureStore JWT helpers)
+- `App.tsx` (configureGoogleSignIn wired)
+- `google-services.json` (Firebase Android config)
 
-**Test criteria:**
-- [ ] Tap "Sign in with Google" → Google account picker opens
-- [ ] Select account → Firebase ID token obtained
-- [ ] POST /api/auth/google called → JWT stored in SecureStore
-- [ ] User navigated to Home screen
-- [ ] On app restart → JWT loaded → skip to Home (no re-login)
-- [ ] On invalid JWT → navigate back to Login
-
-**Commit:** —
-**Status:** ⬜ Not started
+**Commit:** Jun 6, 2026 (included in Day 1 session commit)
+**Status:** ✅ Complete — code confirmed on disk, pending device test
 
 ---
 

@@ -26,7 +26,7 @@ Each screen entry has:
 |--------|-----------|-----|--------|
 | SplashScreen | `Splash` | 1 | ⬜ |
 | OnboardingScreen | `Onboarding` | 1 | ⬜ |
-| GoogleSignInScreen | `GoogleSignIn` | 2 | ⬜ |
+| GoogleSignInScreen | `GoogleSignIn` | 2 | ✅ |
 | HomeScreen | `Home` | 3 | ⬜ |
 | ProfileScreen | `Profile` | 3 | ⬜ |
 | ResumeListScreen | `ResumeList` | 4 | ⬜ |
@@ -79,7 +79,7 @@ Each screen entry has:
 
 ### GoogleSignInScreen
 - **Route:** `GoogleSignIn`
-- **Day:** 2 | **Status:** ⬜
+- **Day:** 2 | **Status:** ✅ Complete
 - **Entry:** From Onboarding
 - **Purpose:** Google OAuth → get JWT → enter app
 - **Local state:**
@@ -450,5 +450,6 @@ Each screen entry has:
 | Version | Date | Screen | Change | Reason |
 |---------|------|--------|--------|--------|
 | 1.0 | Jun 6, 2026 | — | Initial spec defined | Project start |
+| 1.1 | Jun 6, 2026 | GoogleSignInScreen | Marked ✅ Complete | Day 2 built |
 
 _Add a row every time a screen is added or its spec changes._
