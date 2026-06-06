@@ -3,9 +3,18 @@
     "name": "ApplyAI",
     "slug": "applyai-mobile",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "updates": {
+      "url": "https://u.expo.dev/applyai-mobile",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.applyai.mobile"
@@ -24,6 +33,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-updates",
       "expo-secure-store",
       [
         "@react-native-google-signin/google-signin",
@@ -31,6 +41,11 @@
           "iosUrlScheme": "com.googleusercontent.apps.966711636721-o7k3vn52bimi3j9mtdgttalckc8v13a6"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "applyai-mobile"
+      }
+    }
   }
 }
