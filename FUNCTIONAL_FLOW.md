@@ -21,7 +21,7 @@
 | UF-09 | Start and complete mock interview | ⬜ Day 10–11 | Day 10–11 |
 | UF-10 | View interview report | ⬜ Day 10 | Day 10 |
 | UF-11 | Full happy path (first use to first interview) | ⬜ Day 12 | Day 12 |
-| UF-12 | Sign out | ⬜ Day 3 | Day 3 |
+| UF-12 | Sign out | ✅ Day 3 | Day 3 |
 
 ---
 

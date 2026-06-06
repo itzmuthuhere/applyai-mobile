@@ -10,7 +10,7 @@
 |-----|---------|--------|---------|------|--------|
 | 1 | App shell + navigation setup | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending |
 | 2 | Google Sign-In screen | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending device test |
-| 3 | Home + Profile screens | ⬜ Not started | — | — | — |
+| 3 | Home + Profile screens | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending device test |
 | 4 | Resume List + Upload screens | ⬜ Not started | — | — | — |
 | 5 | Resume Detail / Score screen | ⬜ Not started | — | — | — |
 | 6 | Job Feed + Job Detail screens | ⬜ Not started | — | — | — |
@@ -41,11 +41,11 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 3 — Home + Profile screens
-**Blocked on:** Nothing — Day 2 complete, Day 3 ready to build
+**Next to build:** Day 4 — Resume List + Upload screens
+**Blocked on:** Backend Day 4 resume endpoints must be ✅ + Cloudinary keys in Railway (ACTION_REQUIRED_002)
 **Open bugs:** None
-**Last push:** Jun 6, 2026 (Day 2 complete)
-**Resume point:** Clean — Day 2 done, Day 3 ready
+**Last push:** Jun 6, 2026 (Day 3 complete)
+**Resume point:** Clean — Day 3 done, Day 4 ready when backend is deployed
 
 ---
 
@@ -117,27 +117,24 @@
 
 ---
 
-### SESSION 4 — [DATE]
+### SESSION 4 — Jun 6, 2026
 **Type:** Planned (Day 3)
 **Goal:** Home + Profile screens
 
-**Pre-session checklist:**
-- [ ] Day 2 complete
-- [ ] User object in Redux store
+**What was built:**
+- `HomeScreen.tsx` — full dashboard: greeting + subscription badge, avatar tap → Profile, 3-stat row (Resumes / Applications / Interviews from Redux), 4 quick action cards (Upload Resume / Browse Jobs / Mock Interview / Applications), first-time empty state with 4-step guide
+- `ProfileScreen.tsx` — new file: avatar (Google picture or initial fallback), name, email, plan badge (FREE/HUNTER/PRO color-coded), Job Preferences section (targetRole, targetLocation, minSalary, remotePreference — read-only with dim "Not set"), Account section (userId, member since), Sign Out button with Alert confirmation
+- `navigation/types.ts` — `HomeStackParamList` added (`Home` + `Profile` routes); `MainTabParamList.Home` updated to `NavigatorScreenParams<HomeStackParamList>`
+- `navigation/MainNavigator.tsx` — `HomeNavigator` function wraps HomeScreen + ProfileScreen in a stack; `Tab.Screen name="Home"` now uses `HomeNavigator`
 
-**Files to create:**
-- [ ] `src/screens/home/HomeScreen.tsx`
-- [ ] `src/screens/profile/ProfileScreen.tsx`
-- [ ] `src/components/common/Header.tsx`
-- [ ] `src/components/common/TabBar.tsx`
+**Files created/updated:**
+- `src/screens/home/HomeScreen.tsx` (full rewrite from placeholder)
+- `src/screens/home/ProfileScreen.tsx` (new)
+- `src/navigation/types.ts` (HomeStackParamList added)
+- `src/navigation/MainNavigator.tsx` (HomeNavigator + HomeStack added)
 
-**Test criteria:**
-- [ ] Home screen shows user name, subscription plan
-- [ ] Profile screen shows full user details
-- [ ] Tab navigation works
-
-**Commit:** —
-**Status:** ⬜ Not started
+**Commit:** (this session)
+**Status:** ✅ Complete — pending device test
 
 ---
 

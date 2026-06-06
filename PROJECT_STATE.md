@@ -24,9 +24,9 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 3 — Home + Profile Screens
+**Active Day:** Day 4 — Resume List + Upload Screens
 **Last Session:** Jun 6, 2026
-**Overall Status:** Day 2 complete — Google Sign-In screen built, authSlice thunk wired, google-services.json in place
+**Overall Status:** Day 3 complete — HomeScreen + ProfileScreen built, HomeStack navigator added
 
 ---
 
@@ -37,7 +37,7 @@
 | App shell + navigation setup | 1 | ✅ Complete | v1.0 | ⬜ Pending emulator |
 | Splash / Onboarding screen | 1 | ✅ Complete | v1.0 | ⬜ Pending emulator |
 | Google Sign-In screen | 2 | ✅ Complete | v1.0 | ⬜ Pending device test |
-| Home / Dashboard screen | 3 | ⬜ Not started | — | — |
+| Home / Dashboard screen | 3 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Resume List screen | 4 | ⬜ Not started | — | — |
 | Resume Upload screen | 4 | ⬜ Not started | — | — |
 | Resume Detail / Score screen | 5 | ⬜ Not started | — | — |
@@ -51,7 +51,7 @@
 | Interview Start screen | 10 | ⬜ Not started | — | — |
 | Interview Question screen | 11 | ⬜ Not started | — | — |
 | Interview Report screen | 10 | ⬜ Not started | — | — |
-| Profile / Settings screen | 3 | ⬜ Not started | — | — |
+| Profile / Settings screen | 3 | ✅ Complete | v1.0 | ⬜ Pending device test |
 
 ---
 
@@ -74,15 +74,16 @@ src/
 ├── navigation/
 │   ├── AppNavigator.tsx       ✅ Root: bootstraps JWT → routes Auth or Main
 │   ├── AuthNavigator.tsx      ✅ Stack: Onboarding → GoogleSignIn
-│   ├── MainNavigator.tsx      ✅ Bottom tabs: Home/Jobs/Resume/Applications/Interview
-│   └── types.ts               ✅ All TS navigation param types
+│   ├── MainNavigator.tsx      ✅ Bottom tabs + HomeStack (Home → Profile)
+│   └── types.ts               ✅ All TS navigation param types (HomeStackParamList added)
 ├── screens/
 │   ├── auth/
 │   │   ├── SplashScreen.tsx   ✅ Blue branded splash
 │   │   ├── OnboardingScreen.tsx ✅ "Get Started" → GoogleSignIn
 │   │   └── GoogleSignInScreen.tsx ✅ Full UI + Google Sign-In flow (Day 2)
 │   ├── home/
-│   │   └── HomeScreen.tsx     ✅ Placeholder
+│   │   ├── HomeScreen.tsx     ✅ Full dashboard (stats, quick actions, empty state, avatar → Profile)
+│   │   └── ProfileScreen.tsx  ✅ User info, plan badge, job prefs, sign-out button
 │   ├── resume/
 │   │   ├── ResumeListScreen.tsx ✅ Placeholder
 │   │   ├── ResumeUploadScreen.tsx ✅ Placeholder
@@ -131,7 +132,8 @@ Root Stack
 │
 └── Main Tab Navigator (shown when JWT exists)
     ├── Tab: Home
-    │   └── HomeScreen (Dashboard)
+    │   ├── HomeScreen (Dashboard)
+    │   └── ProfileScreen (push from avatar)
     ├── Tab: Jobs
     │   ├── JobFeedScreen
     │   ├── JobDetailScreen
@@ -218,4 +220,4 @@ _None yet._
 
 ---
 
-*Last updated: Jun 6, 2026 — v1.1: Day 2 Google Sign-In marked complete*
+*Last updated: Jun 6, 2026 — v1.2: Day 3 Home + Profile screens complete*

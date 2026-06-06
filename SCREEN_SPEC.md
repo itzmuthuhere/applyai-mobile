@@ -27,8 +27,8 @@ Each screen entry has:
 | SplashScreen | `Splash` | 1 | ⬜ |
 | OnboardingScreen | `Onboarding` | 1 | ⬜ |
 | GoogleSignInScreen | `GoogleSignIn` | 2 | ✅ |
-| HomeScreen | `Home` | 3 | ⬜ |
-| ProfileScreen | `Profile` | 3 | ⬜ |
+| HomeScreen | `Home` | 3 | ✅ |
+| ProfileScreen | `Profile` | 3 | ✅ |
 | ResumeListScreen | `ResumeList` | 4 | ⬜ |
 | ResumeUploadScreen | `ResumeUpload` | 4 | ⬜ |
 | ResumeDetailScreen | `ResumeDetail` | 5 | ⬜ |
@@ -451,5 +451,6 @@ Each screen entry has:
 |---------|------|--------|--------|--------|
 | 1.0 | Jun 6, 2026 | — | Initial spec defined | Project start |
 | 1.1 | Jun 6, 2026 | GoogleSignInScreen | Marked ✅ Complete | Day 2 built |
+| 1.2 | Jun 6, 2026 | HomeScreen, ProfileScreen | Marked ✅ Complete | Day 3 built |
 
 _Add a row every time a screen is added or its spec changes._

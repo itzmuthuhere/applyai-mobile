@@ -6,6 +6,11 @@ export type AuthStackParamList = {
   GoogleSignIn: undefined;
 };
 
+export type HomeStackParamList = {
+  Home: undefined;
+  Profile: undefined;
+};
+
 export type JobsStackParamList = {
   JobFeed: undefined;
   JobDetail: { jobId: number };
@@ -32,7 +37,7 @@ export type InterviewStackParamList = {
 };
 
 export type MainTabParamList = {
-  Home: undefined;
+  Home: NavigatorScreenParams<HomeStackParamList>;
   JobsTab: NavigatorScreenParams<JobsStackParamList>;
   ResumeTab: NavigatorScreenParams<ResumeStackParamList>;
   ApplicationsTab: NavigatorScreenParams<ApplicationsStackParamList>;

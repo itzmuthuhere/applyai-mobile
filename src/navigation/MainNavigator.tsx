@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants';
 import {
   MainTabParamList,
+  HomeStackParamList,
   JobsStackParamList,
   ResumeStackParamList,
   ApplicationsStackParamList,
@@ -12,6 +13,7 @@ import {
 } from './types';
 
 import HomeScreen from '../screens/home/HomeScreen';
+import ProfileScreen from '../screens/home/ProfileScreen';
 import JobFeedScreen from '../screens/jobs/JobFeedScreen';
 import JobDetailScreen from '../screens/jobs/JobDetailScreen';
 import MatchScoreScreen from '../screens/jobs/MatchScoreScreen';
@@ -27,11 +29,21 @@ import InterviewQuestionScreen from '../screens/interview/InterviewQuestionScree
 import InterviewReportScreen from '../screens/interview/InterviewReportScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const JobsStack = createNativeStackNavigator<JobsStackParamList>();
 const ResumeStack = createNativeStackNavigator<ResumeStackParamList>();
 const ApplicationsStack =
   createNativeStackNavigator<ApplicationsStackParamList>();
 const InterviewStack = createNativeStackNavigator<InterviewStackParamList>();
+
+function HomeNavigator() {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={HomeScreen} />
+      <HomeStack.Screen name="Profile" component={ProfileScreen} />
+    </HomeStack.Navigator>
+  );
+}
 
 function JobsNavigator() {
   return (
@@ -94,7 +106,7 @@ export default function MainNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
+      <Tab.Screen name="Home" component={HomeNavigator} options={{ tabBarLabel: 'Home' }} />
       <Tab.Screen name="JobsTab" component={JobsNavigator} options={{ tabBarLabel: 'Jobs' }} />
       <Tab.Screen name="ResumeTab" component={ResumeNavigator} options={{ tabBarLabel: 'Resume' }} />
       <Tab.Screen name="ApplicationsTab" component={ApplicationsNavigator} options={{ tabBarLabel: 'Applications' }} />
