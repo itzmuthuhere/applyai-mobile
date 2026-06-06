@@ -153,4 +153,3 @@ jobs:
           git diff --staged --quiet && echo "No changes" || \
             git commit -m "chore: update download page → APK v${{ steps.meta.outputs.version }} (#${{ steps.meta.outputs.short_sha }})"
           git push
-trigger: test automation pipeline
