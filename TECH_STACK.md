@@ -1,6 +1,7 @@
 # ApplyAI Mobile — Tech Stack
-> Version: 1.0 | Last updated: Jun 6, 2026
-> Every package: status, version, purpose, why chosen.
+> Version: 1.1 | Last updated: Jun 6, 2026
+> Every package: actual installed version, status, purpose, why chosen.
+> Source of truth: package.json. This doc must always match.
 
 ---
 
@@ -8,7 +9,7 @@
 
 | Symbol | Meaning |
 |--------|---------|
-| ✅ Active | In use now |
+| ✅ Active | Installed and in use |
 | ⬜ Planned | Will be added on specific day |
 | ⏸ On Hold | Decided to build later |
 | ❌ Rejected | Evaluated and decided against |
@@ -17,80 +18,95 @@
 
 ## CORE FRAMEWORK
 
-| Package | Version | Status | Day | Purpose | Notes |
-|---------|---------|--------|-----|---------|-------|
-| react-native | 0.85.3 | ✅ Active | Day 1 | Core framework | Via Expo SDK 56 |
-| expo | ~56.0.9 | ✅ Active | Day 1 | Managed workflow | OTA updates, no ejecting needed Phase 1 |
-| react | 19.2.3 | ✅ Active | Day 1 | UI library | React 19 |
-| typescript | ~6.0.3 | ✅ Active | Day 1 | Type safety | All files .tsx/.ts, no .js |
-| expo-status-bar | ~56.0.4 | ✅ Active | Day 1 | Status bar control | Expo managed |
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| expo | ~56.0.9 | ✅ Active | Day 1 | Managed workflow, OTA updates, build tooling |
+| react-native | 0.85.3 | ✅ Active | Day 1 | Core mobile framework (via Expo SDK 56) |
+| react | 19.2.3 | ✅ Active | Day 1 | UI library |
+| typescript | ~6.0.3 | ✅ Active | Day 1 | Type safety across all files |
+| expo-status-bar | ~56.0.4 | ✅ Active | Day 1 | Status bar styling |
+| expo-dev-client | ~56.0.19 | ✅ Active | Day 1 | Required for @react-native-google-signin |
+| babel-preset-expo | ^56.0.14 | ✅ Active | Day 1 | Babel config for Expo + Reanimated plugin |
 
 ---
 
 ## NAVIGATION
 
-| Package | Version | Status | Day | Purpose | Notes |
-|---------|---------|--------|-----|---------|-------|
-| @react-navigation/native | ^7.0 | ⬜ Day 1 | — | Navigation core | v7 — latest |
-| @react-navigation/native-stack | ^7.0 | ⬜ Day 1 | — | Stack navigator | Screens that push/pop |
-| @react-navigation/bottom-tabs | ^7.0 | ⬜ Day 1 | — | Bottom tab bar | Main 5-tab nav |
-| react-native-screens | ~3.34 | ⬜ Day 1 | — | Native screen optimization | Required by React Nav |
-| react-native-safe-area-context | 4.12.0 | ⬜ Day 1 | — | Safe area insets | Required by React Nav |
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| @react-navigation/native | ^7.2.5 | ✅ Active | Day 1 | Navigation core library |
+| @react-navigation/native-stack | ^7.16.0 | ✅ Active | Day 1 | Stack navigator (push/pop screens) |
+| @react-navigation/bottom-tabs | ^7.16.2 | ✅ Active | Day 1 | Bottom tab bar (5 main tabs) |
+| react-native-screens | 4.25.2 | ✅ Active | Day 1 | Native screen optimization (required by React Nav) |
+| react-native-safe-area-context | ~5.7.0 | ✅ Active | Day 1 | Safe area insets (notch/status bar handling) |
 
 ---
 
 ## STATE MANAGEMENT
 
-| Package | Version | Status | Day | Purpose | Notes |
-|---------|---------|--------|-----|---------|-------|
-| @reduxjs/toolkit | ^2.3 | ⬜ Day 1 | — | Redux state management | createSlice, createAsyncThunk |
-| react-redux | ^9.1 | ⬜ Day 1 | — | React-Redux bindings | useSelector, useDispatch |
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| @reduxjs/toolkit | ^2.12.0 | ✅ Active | Day 1 | Redux state: createSlice, createAsyncThunk |
+| react-redux | ^9.3.0 | ✅ Active | Day 1 | React bindings: useSelector, useDispatch |
 
 ---
 
 ## HTTP + AUTH
 
-| Package | Version | Status | Day | Purpose | Notes |
-|---------|---------|--------|-----|---------|-------|
-| axios | ^1.7 | ⬜ Day 1 | — | HTTP client | Interceptors for JWT |
-| expo-secure-store | ~14.0 | ⬜ Day 1 | — | Secure JWT storage | Device keychain/keystore |
-| @react-native-google-signin/google-signin | ^13.0 | ⬜ Day 2 | — | Google OAuth trigger | Needs google-services.json |
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| axios | ^1.17.0 | ✅ Active | Day 1 | HTTP client with JWT interceptor |
+| expo-secure-store | ~56.0.4 | ✅ Active | Day 1 | Encrypted JWT storage (device keychain) |
+| @react-native-google-signin/google-signin | ^16.1.2 | ✅ Active | Day 2 | Google OAuth — triggers account picker, returns ID token |
 
 ---
 
-## UI COMPONENTS
+## UI + ANIMATION
 
-| Package | Version | Status | Day | Purpose | Notes |
-|---------|---------|--------|-----|---------|-------|
-| expo-linear-gradient | ~14.0 | ⬜ Day 1 | — | Gradient backgrounds | Onboarding, cards |
-| @expo/vector-icons | ^14.0 | ⬜ Day 1 | — | Icons (Ionicons, etc.) | Tab bar + button icons |
-| react-native-reanimated | ~3.16 | ⬜ Day 1 | — | Smooth animations | Score gauge animation |
-| react-native-gesture-handler | ~2.20 | ⬜ Day 1 | — | Gesture support | Required by React Nav + swiper |
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| expo-linear-gradient | ~56.0.4 | ✅ Active | Day 1 | Gradient backgrounds (Sign-In screen, cards) |
+| @expo/vector-icons | ^15.0.2 | ✅ Active | Day 1 | Icons (Ionicons) — tab bar + buttons |
+| react-native-reanimated | 4.3.1 | ✅ Active | Day 1 | Smooth animations (score gauge, transitions) |
+| react-native-gesture-handler | ~2.31.1 | ✅ Active | Day 1 | Gesture support (required by React Navigation) |
+
+---
+
+## OTA UPDATES + BUILD
+
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| expo-updates | ~56.0.18 | ✅ Active | Day 1 | OTA JS updates — existing users get updates on app open |
+
+### How OTA works:
+- Push code to `main` → GitHub Action runs `eas update --channel preview`
+- Users open app → update detected → `UpdatePrompt.tsx` appears → tap to apply
+- No reinstall needed — only new JS bundle is downloaded
 
 ---
 
 ## FILE HANDLING
 
-| Package | Version | Status | Day | Purpose | Notes |
-|---------|---------|--------|-----|---------|-------|
-| expo-document-picker | ~12.0 | ⬜ Day 4 | — | Pick PDF from phone | File type + size validation |
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| expo-document-picker | ⬜ Not yet | ⬜ Day 4 | — | Pick PDF from phone storage |
 
 ---
 
 ## AUDIO RECORDING
 
-| Package | Version | Status | Day | Purpose | Notes |
-|---------|---------|--------|-----|---------|-------|
-| expo-av | ~15.0 | ⬜ Day 11 | — | Audio recording for interview | Records voice answers as M4A |
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| expo-av | ⬜ Not yet | ⬜ Day 11 | — | Record voice answers for mock interview |
 
 ---
 
 ## UTILITIES
 
-| Package | Version | Status | Day | Purpose | Notes |
-|---------|---------|--------|-----|---------|-------|
-| expo-clipboard | ~7.0 | ⬜ Day 8 | — | Copy cover letter to clipboard | Cover letter screen |
-| dayjs | ^1.11 | ⬜ Day 1 | — | Date formatting | "Applied 3 days ago" |
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| expo-clipboard | ⬜ Not yet | ⬜ Day 8 | — | Copy cover letter text to clipboard |
+| dayjs | ^1.11.21 | ✅ Active | Day 1 | Date formatting ("Applied 3 days ago") |
 
 ---
 
@@ -99,10 +115,9 @@
 | Package | Status | Planned For | Reason on Hold |
 |---------|--------|-------------|---------------|
 | Lottie React Native | ⏸ Phase 2 | Interview character animation | Not needed for Phase 1 MVP |
-| RevenueCat | ⏸ Phase 1 launch | In-app subscriptions | Add before public launch |
-| Firebase SDK (notifications) | ⏸ Phase 1 later | Push notifications | After core features done |
+| RevenueCat | ⏸ Phase 1 launch | In-app subscriptions | Add before public Play Store launch |
+| Firebase SDK (notifications) | ⏸ Phase 2 | Push notifications | After core features done |
 | expo-camera | ⏸ Phase 3 | Video interview | Voice-only for Phase 1 |
-| react-native-vision-camera | ⏸ Phase 3 | Video interview | Overkill for Phase 1 |
 
 ---
 
@@ -118,39 +133,43 @@
 
 ---
 
-## package.json — CURRENT DEPENDENCIES
+## package.json — ACTUAL INSTALLED DEPENDENCIES
 
 ```json
 {
-  "name": "applyai-mobile",
   "dependencies": {
     "expo": "~56.0.9",
     "expo-status-bar": "~56.0.4",
+    "expo-dev-client": "~56.0.19",
+    "expo-updates": "~56.0.18",
+    "expo-secure-store": "~56.0.4",
+    "expo-linear-gradient": "~56.0.4",
     "react": "19.2.3",
     "react-native": "0.85.3",
-    "typescript": "~6.0.3",
-    "@react-navigation/native": "^7.0.14",
-    "@react-navigation/native-stack": "^7.2.0",
-    "@react-navigation/bottom-tabs": "^7.2.0",
-    "react-native-screens": "~4.4.0",
-    "react-native-safe-area-context": "4.12.0",
-    "@reduxjs/toolkit": "^2.3.0",
-    "react-redux": "^9.1.0",
-    "axios": "^1.7.9",
-    "expo-secure-store": "~14.0.0",
-    "@react-native-google-signin/google-signin": "^13.0.0",
-    "expo-linear-gradient": "~14.0.0",
-    "@expo/vector-icons": "^14.0.2",
-    "react-native-reanimated": "~3.16.1",
-    "react-native-gesture-handler": "~2.20.2",
-    "expo-document-picker": "~12.0.2",
-    "expo-clipboard": "~7.0.0",
-    "dayjs": "^1.11.13"
+    "@react-navigation/native": "^7.2.5",
+    "@react-navigation/native-stack": "^7.16.0",
+    "@react-navigation/bottom-tabs": "^7.16.2",
+    "react-native-screens": "4.25.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "@reduxjs/toolkit": "^2.12.0",
+    "react-redux": "^9.3.0",
+    "axios": "^1.17.0",
+    "@react-native-google-signin/google-signin": "^16.1.2",
+    "expo-linear-gradient": "~56.0.4",
+    "@expo/vector-icons": "^15.0.2",
+    "react-native-reanimated": "4.3.1",
+    "react-native-gesture-handler": "~2.31.1",
+    "dayjs": "^1.11.21"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "babel-preset-expo": "^56.0.14",
+    "typescript": "~6.0.3"
   }
 }
 ```
 
-_Update this section every time a package is added, removed, or version changes._
+_This section must match package.json exactly. Update on every `npm install`._
 
 ---
 
@@ -159,3 +178,4 @@ _Update this section every time a package is added, removed, or version changes.
 | Version | Date | Change | Reason |
 |---------|------|--------|--------|
 | 1.0 | Jun 6, 2026 | Initial tech stack defined | Project start |
+| 1.1 | Jun 6, 2026 | Fixed all package versions to match actual package.json; marked all Day 1–2 packages ✅ Active; added expo-updates, expo-dev-client, babel-preset-expo | Version audit |

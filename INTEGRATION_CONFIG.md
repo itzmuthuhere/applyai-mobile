@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Integration & Config
-> Version: 1.0 | Last updated: Jun 6, 2026
+> Version: 1.1 | Last updated: Jun 6, 2026
 > Backend URL, env vars, Firebase setup, Android config, build config.
 
 ---
@@ -133,19 +133,60 @@ EXPO_PUBLIC_API_URL=http://[YOUR_LAPTOP_IP]:8080   ← physical phone
 
 ---
 
-## BUILD FOR PRODUCTION (EAS Build)
+## EAS BUILD — APK GENERATION
 
-For generating an APK to share or upload to Play Store:
+| Profile | Output | Use |
+|---------|--------|-----|
+| `preview` | `.apk` | Internal testing — share with friends |
+| `production` | `.aab` | Google Play Store submission |
 
+**Build time:** ~12 minutes (runs in EAS cloud, not your machine).
+
+```powershell
+# Trigger from terminal
+eas build --platform android --profile preview
+
+# Trigger from GitHub Actions (preferred)
+# → GitHub → Actions → "Build APK + Update Download Page" → Run workflow
 ```
-npm install -g eas-cli
-eas login
-eas build:configure
-eas build -p android --profile preview   ← generates APK for testing
-eas build -p android --profile production ← generates AAB for Play Store
-```
 
-**Note:** Do this only after all features are complete (Day 12).
+Builds appear at: https://expo.dev/accounts/itzmuthuhere/projects/applyai-mobile/builds
+
+---
+
+## NETLIFY — APK DOWNLOAD PAGE
+
+| Item | Value |
+|------|-------|
+| URL | https://illustrious-kleicha-2dee8f.netlify.app |
+| Source | `docs/index.html` in this repo |
+| Publish dir | `docs` (set in Netlify UI + `netlify.toml`) |
+| Auto-deploy | Yes — every push to `main` → Netlify redeploys in ~10 sec |
+| Purpose | Friends download APK from here to test the app |
+
+Friends open this URL → tap "Download APK" → install on Android → done.
+
+---
+
+## GITHUB ACTIONS — CI/CD
+
+| Workflow | File | Trigger | What it does |
+|----------|------|---------|-------------|
+| OTA Update | `.github/workflows/ota-update.yml` | Push to `main` (src/ changes) | `eas update` → existing users get JS update on next app open |
+| Build APK | `.github/workflows/build-apk.yml` | Manual (workflow_dispatch) | `eas build` → extracts APK URL → commits to `docs/index.html` → Netlify redeploys |
+
+### Required GitHub Secret:
+
+| Secret | Purpose | Status |
+|--------|---------|--------|
+| `EXPO_TOKEN` | EAS authentication in CI | ⬜ PENDING — see `actions/ACTION_REQUIRED_001.md` |
+
+Add at: https://github.com/itzmuthuhere/applyai-mobile/settings/secrets/actions
+
+### OTA Update Rules:
+- **What OTA CAN update:** All JS/TS code, styles, API calls, Redux logic
+- **What OTA CANNOT update:** New native packages, app.json changes, new Expo plugins
+- If a native change is needed → must trigger a full APK build via `build-apk.yml`
 
 ---
 
@@ -168,3 +209,4 @@ dist/
 | Version | Date | Change | Reason |
 |---------|------|--------|--------|
 | 1.0 | Jun 6, 2026 | Initial config documented | Project start |
+| 1.1 | Jun 6, 2026 | Added EAS Build, Netlify, GitHub Actions sections | Distribution setup complete |

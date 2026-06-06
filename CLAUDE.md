@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Claude Master Instructions
-> Version: 1.1 | Last updated: Jun 6, 2026
+> Version: 1.2 | Last updated: Jun 6, 2026
 > Read this file every session. Entry point to the entire frontend knowledge system.
 > EVERY rule is MANDATORY. "Mandatory" = no exceptions, no skipping, no "I'll do it later."
 
@@ -41,6 +41,9 @@ You are simultaneously the:
 | What does each flow do end-to-end (UI level)? | `FUNCTIONAL_FLOW.md` |
 | What packages are we using? Why? | `TECH_STACK.md` |
 | Backend URL, env vars, auth flow, Android setup? | `INTEGRATION_CONFIG.md` |
+| Netlify URL, EAS build, GitHub Actions, deploy config? | `DEPLOY_INFO.md` |
+| Where did the last session stop? Resume after interruption? | `RESUME_POINT.md` |
+| User action needed? (keys, tokens, credentials) | `actions/ACTION_REQUIRED_XXX.md` |
 
 ---
 
@@ -286,6 +289,18 @@ Blocked on: [anything] or "Nothing — ready"
 - **Minor (X.Y → X.Y+1):** Any content change
 - **Major (X.Y → X+1.0):** New section added, section removed, format overhaul
 - Always update `Last updated:` date in the same edit
+
+---
+
+## ACTION REQUIRED FILES INDEX
+
+| File | Blocks | Status | What's needed |
+|------|--------|--------|--------------|
+| `actions/ACTION_REQUIRED_001.md` | APK build + OTA | ⬜ Pending | EXPO_TOKEN → GitHub Secrets |
+| `actions/ACTION_REQUIRED_002.md` | Day 4 Resume Upload | ⬜ Pending | Cloudinary account + 3 keys → Railway |
+| `actions/ACTION_REQUIRED_003.md` | Day 5, 7, 8 AI features | ⬜ Pending | Anthropic API key → Railway |
+
+_Update status here when user completes an action. Mark ✅ Done with date._
 
 ---
 

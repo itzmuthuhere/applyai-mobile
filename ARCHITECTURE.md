@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Architecture Document
-> Version: 1.0 | Last updated: Jun 6, 2026
+> Version: 1.1 | Last updated: Jun 6, 2026
 > Updated whenever navigation structure, Redux store, or component hierarchy changes.
 
 ---
@@ -47,8 +47,9 @@ AppNavigator (Root Stack)
 │
 └── [JWT in SecureStore] → MainNavigator (Bottom Tab)
     │
-    ├── Tab 1: Home
-    │   └── HomeScreen
+    ├── Tab 1: Home (Stack)
+    │   ├── HomeScreen              ← default
+    │   └── ProfileScreen           ← push on avatar tap
     │
     ├── Tab 2: Jobs (Stack)
     │   ├── JobFeedScreen          ← default
@@ -185,8 +186,7 @@ D:\applyai-mobile\
     │   │   ├── OnboardingScreen.tsx
     │   │   └── GoogleSignInScreen.tsx
     │   ├── home/
-    │   │   └── HomeScreen.tsx
-    │   ├── profile/
+    │   │   ├── HomeScreen.tsx
     │   │   └── ProfileScreen.tsx
     │   ├── resume/
     │   │   ├── ResumeListScreen.tsx
@@ -328,5 +328,6 @@ Sign Out (user taps)
 | Version | Date | Change | Reason |
 |---------|------|--------|--------|
 | 1.0 | Jun 6, 2026 | Initial architecture defined | Project start |
+| 1.1 | Jun 6, 2026 | HomeStack wraps Home + Profile; ProfileScreen moved to screens/home/; file structure corrected | Day 3 build |
 
 _Add a row every time architecture changes._

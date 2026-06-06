@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Screen Specification
-> Version: 1.0 | Last updated: Jun 6, 2026
+> Version: 1.1 | Last updated: Jun 6, 2026
 > Every screen: purpose, route name, navigation params, state, API calls, loading/error/empty states.
 > Updated every time a screen is added or its behavior changes.
 
@@ -24,8 +24,8 @@ Each screen entry has:
 
 | Screen | Route Name | Day | Status |
 |--------|-----------|-----|--------|
-| SplashScreen | `Splash` | 1 | ⬜ |
-| OnboardingScreen | `Onboarding` | 1 | ⬜ |
+| SplashScreen | `Splash` | 1 | ✅ |
+| OnboardingScreen | `Onboarding` | 1 | ✅ |
 | GoogleSignInScreen | `GoogleSignIn` | 2 | ✅ |
 | HomeScreen | `Home` | 3 | ✅ |
 | ProfileScreen | `Profile` | 3 | ✅ |
@@ -51,7 +51,7 @@ Each screen entry has:
 
 ### SplashScreen
 - **Route:** `Splash`
-- **Day:** 1 | **Status:** ⬜
+- **Day:** 1 | **Status:** ✅ Built Jun 6, 2026
 - **Entry:** App launch, always shown first
 - **Purpose:** Check JWT in SecureStore → route user to correct navigator
 - **State:** None (pure routing logic)
@@ -67,7 +67,7 @@ Each screen entry has:
 
 ### OnboardingScreen
 - **Route:** `Onboarding`
-- **Day:** 1 | **Status:** ⬜
+- **Day:** 1 | **Status:** ✅ Built Jun 6, 2026
 - **Entry:** From Splash (no JWT)
 - **Purpose:** Show app value proposition, lead to sign-in
 - **State:** None
@@ -105,7 +105,7 @@ Each screen entry has:
 
 ### HomeScreen
 - **Route:** `Home`
-- **Day:** 3 | **Status:** ⬜
+- **Day:** 3 | **Status:** ✅ Built Jun 6, 2026
 - **Entry:** Bottom tab (Tab 1)
 - **Purpose:** Dashboard — show user summary, quick actions, stats
 - **Redux reads:**
@@ -126,7 +126,7 @@ Each screen entry has:
 
 ### ProfileScreen
 - **Route:** `Profile`
-- **Day:** 3 | **Status:** ⬜
+- **Day:** 3 | **Status:** ✅ Built Jun 6, 2026
 - **Entry:** From Home screen header avatar tap
 - **Purpose:** Show full user profile + sign out
 - **Redux reads:** `auth.user` (all fields)
