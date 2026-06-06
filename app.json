@@ -10,7 +10,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "updates": {
-      "url": "https://u.expo.dev/applyai-mobile",
+      "url": "https://u.expo.dev/718062db-5b8d-4a4c-830e-6d638d123b89",
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
@@ -44,8 +44,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "applyai-mobile"
+        "projectId": "718062db-5b8d-4a4c-830e-6d638d123b89"
       }
-    }
+    },
+    "owner": "itzmuthuhere"
   }
 }
