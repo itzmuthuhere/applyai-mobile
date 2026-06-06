@@ -24,9 +24,9 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 1 — Project Setup + Navigation Shell
+**Active Day:** Day 2 — Google Sign-In Screen
 **Last Session:** Jun 6, 2026
-**Overall Status:** Not started — repo initialized, docs created
+**Overall Status:** Day 1 complete — navigation shell built, all packages installed
 
 ---
 
@@ -34,8 +34,8 @@
 
 | Screen | Day | Status | Version | Tested |
 |--------|-----|--------|---------|--------|
-| App shell + navigation setup | 1 | ⬜ Not started | — | — |
-| Splash / Onboarding screen | 1 | ⬜ Not started | — | — |
+| App shell + navigation setup | 1 | ✅ Complete | v1.0 | ⬜ Pending emulator |
+| Splash / Onboarding screen | 1 | ✅ Complete | v1.0 | ⬜ Pending emulator |
 | Google Sign-In screen | 2 | ⬜ Not started | — | — |
 | Home / Dashboard screen | 3 | ⬜ Not started | — | — |
 | Resume List screen | 4 | ⬜ Not started | — | — |
@@ -58,35 +58,62 @@
 ## FILES THAT EXIST
 
 ### Root
-- `package.json` ⬜ (after npm init)
-- `app.json` ⬜ (after expo init)
-- `.env` ⬜ (after setup)
-- `tsconfig.json` ⬜
+- `package.json` ✅
+- `app.json` ✅ (name: ApplyAI, package: com.applyai.mobile)
+- `babel.config.js` ✅ (babel-preset-expo + reanimated plugin)
+- `.env` ✅ (EXPO_PUBLIC_API_URL set)
+- `tsconfig.json` ✅
+- `App.tsx` ✅ (GestureHandlerRootView → SafeAreaProvider → Redux Provider → AppNavigator)
+- `index.ts` ✅
 
-### Source Structure (planned)
+### Source Structure (built)
 ```
 src/
 ├── api/
-│   └── apiClient.ts          ← Axios instance + JWT interceptor
-├── components/               ← Shared reusable components
+│   └── apiClient.ts          ✅ Axios + JWT interceptor + 401 handler
 ├── navigation/
-│   └── AppNavigator.tsx      ← Root navigator
+│   ├── AppNavigator.tsx       ✅ Root: bootstraps JWT → routes Auth or Main
+│   ├── AuthNavigator.tsx      ✅ Stack: Onboarding → GoogleSignIn
+│   ├── MainNavigator.tsx      ✅ Bottom tabs: Home/Jobs/Resume/Applications/Interview
+│   └── types.ts               ✅ All TS navigation param types
 ├── screens/
 │   ├── auth/
+│   │   ├── SplashScreen.tsx   ✅ Blue branded splash
+│   │   ├── OnboardingScreen.tsx ✅ "Get Started" → GoogleSignIn
+│   │   └── GoogleSignInScreen.tsx ✅ Placeholder (real sign-in Day 2)
 │   ├── home/
+│   │   └── HomeScreen.tsx     ✅ Placeholder
 │   ├── resume/
+│   │   ├── ResumeListScreen.tsx ✅ Placeholder
+│   │   ├── ResumeUploadScreen.tsx ✅ Placeholder
+│   │   ├── ResumeDetailScreen.tsx ✅ Placeholder
+│   │   ├── TailorResumeScreen.tsx ✅ Placeholder
+│   │   └── CoverLetterScreen.tsx ✅ Placeholder
 │   ├── jobs/
+│   │   ├── JobFeedScreen.tsx  ✅ Placeholder
+│   │   ├── JobDetailScreen.tsx ✅ Placeholder
+│   │   └── MatchScoreScreen.tsx ✅ Placeholder
 │   ├── applications/
+│   │   ├── ApplicationsListScreen.tsx ✅ Placeholder
+│   │   └── ApplicationDetailScreen.tsx ✅ Placeholder
 │   └── interview/
+│       ├── InterviewStartScreen.tsx ✅ Placeholder
+│       ├── InterviewQuestionScreen.tsx ✅ Placeholder
+│       └── InterviewReportScreen.tsx ✅ Placeholder
 ├── store/
-│   ├── index.ts              ← Redux store
-│   └── slices/               ← Feature slices
+│   ├── index.ts               ✅ configureStore with all slices
+│   └── slices/
+│       ├── authSlice.ts       ✅ jwt, user, isLoading, error
+│       ├── resumeSlice.ts     ✅ list, selected, isUploading, isAnalyzing
+│       ├── jobSlice.ts        ✅ feed, matchScores, pagination
+│       ├── applicationSlice.ts ✅ list, selected
+│       └── interviewSlice.ts  ✅ currentSession, history
 ├── types/
-│   └── api.types.ts          ← TypeScript interfaces for all API responses
+│   └── api.types.ts           ✅ All API response interfaces
 ├── constants/
-│   └── index.ts              ← Routes, strings, config
+│   └── index.ts               ✅ ROUTES, COLORS, API_ENDPOINTS, SECURE_STORE_KEYS
 └── utils/
-    └── auth.ts               ← Token storage helpers
+    └── auth.ts                ✅ saveJwt / getJwt / clearJwt (SecureStore)
 ```
 
 _Update this tree every time a new file is added._

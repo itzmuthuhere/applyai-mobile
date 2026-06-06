@@ -8,7 +8,7 @@
 
 | Day | Feature | Status | Version | Date | Tested |
 |-----|---------|--------|---------|------|--------|
-| 1 | App shell + navigation setup | ⬜ Not started | — | — | — |
+| 1 | App shell + navigation setup | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending |
 | 2 | Google Sign-In screen | ⬜ Not started | — | — | — |
 | 3 | Home + Profile screens | ⬜ Not started | — | — | — |
 | 4 | Resume List + Upload screens | ⬜ Not started | — | — | — |
@@ -41,11 +41,11 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 1 — App shell + navigation setup
-**Blocked on:** Nothing — ready to build
+**Next to build:** Day 2 — Google Sign-In screen (needs Firebase + google-services.json)
+**Blocked on:** ACTION_REQUIRED — Firebase Android app registration + google-services.json
 **Open bugs:** None
-**Last push:** —
-**Resume point:** Clean — ready to start
+**Last push:** Jun 6, 2026 (Day 1 complete)
+**Resume point:** Clean — Day 1 done, Day 2 ready to build
 
 ---
 
@@ -69,36 +69,28 @@
 
 ---
 
-### SESSION 2 — [DATE]
+### SESSION 2 — Jun 6, 2026
 **Type:** Planned (Day 1)
 **Goal:** App shell + navigation setup
 
-**Pre-session checklist:**
-- [ ] Node.js installed (v20+)
-- [ ] Expo CLI installed
-- [ ] Android emulator or Expo Go ready
-- [ ] .env file created with EXPO_PUBLIC_API_URL
+**What was built:**
+- Installed all Day 1 packages: React Navigation v7, Redux Toolkit, Axios, expo-secure-store, expo-linear-gradient, @expo/vector-icons, react-native-reanimated, react-native-gesture-handler, dayjs, babel-preset-expo
+- Created full `src/` folder structure (api, navigation, screens, store, types, constants, utils)
+- `apiClient.ts` — Axios with JWT request interceptor + 401 auto-logout handler
+- `AppNavigator.tsx` — bootstraps JWT from SecureStore → routes to Auth or Main navigator
+- `AuthNavigator.tsx` — Onboarding → GoogleSignIn stack
+- `MainNavigator.tsx` — 5-tab bottom navigator (Home/Jobs/Resume/Applications/Interview) with nested stacks for each
+- All 5 Redux slices: authSlice, resumeSlice, jobSlice, applicationSlice, interviewSlice
+- All placeholder screens: 17 screens across all feature areas
+- TypeScript types for all API responses (`api.types.ts`)
+- `App.tsx` updated: GestureHandlerRootView → SafeAreaProvider → Provider → AppNavigator
+- `babel.config.js` created with reanimated plugin
+- `app.json` updated: name=ApplyAI, package=com.applyai.mobile
 
-**Files to create:**
-- [ ] `package.json` (via expo init)
-- [ ] `app.json`
-- [ ] `tsconfig.json`
-- [ ] `src/navigation/AppNavigator.tsx`
-- [ ] `src/constants/index.ts` (routes, strings)
-- [ ] `src/api/apiClient.ts` (Axios + JWT interceptor)
-- [ ] `src/store/index.ts` (Redux store)
-- [ ] `src/store/slices/authSlice.ts`
-- [ ] `src/screens/auth/SplashScreen.tsx`
-- [ ] `src/screens/auth/OnboardingScreen.tsx`
+**Files created:** 28 new files in src/
 
-**Test criteria:**
-- [ ] App boots on emulator/Expo Go without crash
-- [ ] Navigation shell renders (no screens needed yet)
-- [ ] Axios client initialized with backend URL
-- [ ] Redux store initialized
-
-**Commit:** —
-**Status:** ⬜ Not started
+**Commit:** TBD
+**Status:** ✅ Complete — app running on emulator
 
 ---
 
