@@ -89,7 +89,7 @@
 
 | Package | Installed Version | Status | Day Added | Purpose |
 |---------|-----------------|--------|-----------|---------|
-| expo-document-picker | ⬜ Not yet | ⬜ Day 4 | — | Pick PDF from phone storage |
+| expo-document-picker | ~56.0.x | ✅ Active | Day 4 | Pick PDF/DOCX from phone storage for resume upload |
 
 ---
 

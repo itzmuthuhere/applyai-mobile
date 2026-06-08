@@ -11,7 +11,7 @@
 | 1 | App shell + navigation setup | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending |
 | 2 | Google Sign-In screen | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending device test |
 | 3 | Home + Profile screens | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending device test |
-| 4 | Resume List + Upload screens | ⬜ Not started | — | — | — |
+| 4 | Resume List + Upload screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 5 | Resume Detail / Score screen | ⬜ Not started | — | — | — |
 | 6 | Job Feed + Job Detail screens | ⬜ Not started | — | — | — |
 | 7 | Match Score screen | ⬜ Not started | — | — | — |
@@ -41,11 +41,11 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 4 — Resume List + Upload screens
-**Blocked on:** Backend Day 4 resume endpoints must be ✅ + Cloudinary keys in Railway (ACTION_REQUIRED_002)
+**Next to build:** Day 5 — Resume Detail / Score screen
+**Blocked on:** Nothing — backend Day 5 AI endpoints are built and deployed
 **Open bugs:** None
-**Last push:** Jun 6, 2026 (Day 3 complete)
-**Resume point:** Clean — Day 3 done, Day 4 ready when backend is deployed
+**Last push:** Jun 8, 2026 (Day 4 complete)
+**Resume point:** Clean — Day 4 done, Day 5 ready to build
 
 ---
 
@@ -138,29 +138,26 @@
 
 ---
 
-### SESSION 5 — [DATE]
+### SESSION 5 — Jun 8, 2026
 **Type:** Planned (Day 4)
 **Goal:** Resume List + Upload screens
 
-**Pre-session checklist:**
-- [ ] Day 3 complete
-- [ ] Backend Day 4 ✅ (POST /api/resumes/upload, GET /api/resumes)
+**What was built:**
+- `ResumeListScreen.tsx` — full production: FlatList of resume cards (versionName, score badge colored by score, isOriginal tag, date), skeleton loading (3 grey cards), empty state with Upload CTA, error state with Retry, pull-to-refresh, FAB → navigate to ResumeUpload
+- `ResumeUploadScreen.tsx` — doc picker (expo-document-picker), 5 MB + PDF/DOCX validation, multipart FormData POST to /api/resumes/upload, spinner while uploading, error display, success → dispatch addResume + goBack
+- `api.types.ts` — Resume interface updated to match backend response (versionName, fileUrl, aiScore, isOriginal, createdAt); ResumeUploadResponse updated (resumeId, fileUrl, versionName, message)
+- `constants/index.ts` — RESUME_UPLOAD endpoint added
+- `expo-document-picker` installed (Day 4 package)
 
-**Files to create:**
-- [ ] `src/screens/resume/ResumeListScreen.tsx`
-- [ ] `src/screens/resume/ResumeUploadScreen.tsx`
-- [ ] `src/store/slices/resumeSlice.ts`
-- [ ] `src/components/resume/ResumeCard.tsx`
+**Files updated:**
+- `src/screens/resume/ResumeListScreen.tsx` (full rewrite)
+- `src/screens/resume/ResumeUploadScreen.tsx` (full rewrite)
+- `src/types/api.types.ts` (Resume + ResumeUploadResponse updated)
+- `src/constants/index.ts` (RESUME_UPLOAD added)
+- `package.json` (expo-document-picker added)
 
-**Test criteria:**
-- [ ] Resume list shows all uploaded resumes
-- [ ] Tap "Upload" → file picker opens → select PDF → upload progress shown
-- [ ] After upload → resume appears in list
-- [ ] Wrong file type → error shown
-- [ ] No JWT → redirected to login
-
-**Commit:** —
-**Status:** ⬜ Not started
+**Commit:** (this session)
+**Status:** ✅ Complete — pending device test
 
 ---
 

@@ -29,8 +29,8 @@ Each screen entry has:
 | GoogleSignInScreen | `GoogleSignIn` | 2 | ✅ |
 | HomeScreen | `Home` | 3 | ✅ |
 | ProfileScreen | `Profile` | 3 | ✅ |
-| ResumeListScreen | `ResumeList` | 4 | ⬜ |
-| ResumeUploadScreen | `ResumeUpload` | 4 | ⬜ |
+| ResumeListScreen | `ResumeList` | 4 | ✅ |
+| ResumeUploadScreen | `ResumeUpload` | 4 | ✅ |
 | ResumeDetailScreen | `ResumeDetail` | 5 | ⬜ |
 | TailorResumeScreen | `TailorResume` | 8 | ⬜ |
 | CoverLetterScreen | `CoverLetter` | 8 | ⬜ |

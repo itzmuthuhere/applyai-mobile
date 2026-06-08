@@ -28,18 +28,18 @@ export interface AuthResponse {
 
 export interface Resume {
   id: number;
-  userId: number;
-  fileName: string;
-  cloudinaryUrl: string;
-  overallScore: number | null;
-  summaryFeedback: string | null;
-  skills: string[];
-  uploadedAt: string;
-  analyzedAt: string | null;
+  versionName: string;
+  fileUrl: string;
+  aiScore: number | null;
+  isOriginal: boolean;
+  createdAt: string;
 }
 
 export interface ResumeUploadResponse {
-  resume: Resume;
+  resumeId: number;
+  fileUrl: string;
+  versionName: string;
+  message: string;
 }
 
 export interface Job {

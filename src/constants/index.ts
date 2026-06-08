@@ -56,6 +56,7 @@ export const API_ENDPOINTS = {
   HEALTH: '/health',
   AUTH_GOOGLE: '/api/auth/google',
   RESUMES: '/api/resumes',
+  RESUME_UPLOAD: '/api/resumes/upload',
   JOBS: '/api/jobs',
   MATCH_SCORE: (resumeId: number, jobId: number) =>
     `/api/match/${resumeId}/${jobId}`,

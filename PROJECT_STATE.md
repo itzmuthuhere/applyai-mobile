@@ -24,9 +24,9 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 4 — Resume List + Upload Screens
-**Last Session:** Jun 6, 2026
-**Overall Status:** Day 3 complete — HomeScreen + ProfileScreen built, HomeStack navigator added
+**Active Day:** Day 5 — Resume Detail / Score Screen
+**Last Session:** Jun 8, 2026
+**Overall Status:** Day 4 complete — ResumeListScreen + ResumeUploadScreen built, expo-document-picker added
 
 ---
 
@@ -38,8 +38,8 @@
 | Splash / Onboarding screen | 1 | ✅ Complete | v1.0 | ⬜ Pending emulator |
 | Google Sign-In screen | 2 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Home / Dashboard screen | 3 | ✅ Complete | v1.0 | ⬜ Pending device test |
-| Resume List screen | 4 | ⬜ Not started | — | — |
-| Resume Upload screen | 4 | ⬜ Not started | — | — |
+| Resume List screen | 4 | ✅ Complete | v1.0 | ⬜ Pending device test |
+| Resume Upload screen | 4 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Resume Detail / Score screen | 5 | ⬜ Not started | — | — |
 | Job Feed screen | 6 | ⬜ Not started | — | — |
 | Job Detail screen | 6 | ⬜ Not started | — | — |
@@ -85,8 +85,8 @@ src/
 │   │   ├── HomeScreen.tsx     ✅ Full dashboard (stats, quick actions, empty state, avatar → Profile)
 │   │   └── ProfileScreen.tsx  ✅ User info, plan badge, job prefs, sign-out button
 │   ├── resume/
-│   │   ├── ResumeListScreen.tsx ✅ Placeholder
-│   │   ├── ResumeUploadScreen.tsx ✅ Placeholder
+│   │   ├── ResumeListScreen.tsx ✅ Full — FlatList, FAB, skeleton, empty/error states
+│   │   ├── ResumeUploadScreen.tsx ✅ Full — doc picker, multipart upload, validation
 │   │   ├── ResumeDetailScreen.tsx ✅ Placeholder
 │   │   ├── TailorResumeScreen.tsx ✅ Placeholder
 │   │   └── CoverLetterScreen.tsx ✅ Placeholder

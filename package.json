@@ -13,6 +13,7 @@
     "dayjs": "^1.11.21",
     "expo": "~56.0.9",
     "expo-dev-client": "~56.0.19",
+    "expo-document-picker": "~56.0.4",
     "expo-linear-gradient": "~56.0.4",
     "expo-secure-store": "~56.0.4",
     "expo-status-bar": "~56.0.4",

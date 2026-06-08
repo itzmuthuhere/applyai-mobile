@@ -65,7 +65,7 @@ No screen needs to handle 401 individually.
 ```json
 [ { "id", "versionName", "fileUrl", "aiScore", "isOriginal", "createdAt" } ]
 ```
-**Backend status:** ⬜ Day 4
+**Backend status:** ✅ Working (Day 4)
 
 ---
 
@@ -77,9 +77,9 @@ No screen needs to handle 401 individually.
 **Request:** `multipart/form-data`, field name: `file` (PDF/DOCX, max 5MB)
 **Response:**
 ```json
-{ "resumeId": 1, "fileUrl": "https://...", "message": "Upload successful" }
+{ "resumeId": 1, "fileUrl": "https://...", "versionName": "Original", "message": "Upload successful" }
 ```
-**Backend status:** ⬜ Day 4
+**Backend status:** ✅ Working (Day 4)
 
 ---
 
@@ -209,8 +209,8 @@ No screen needs to handle 401 individually.
 |--------|------|--------|---------------|---------------|
 | POST | /api/auth/google | GoogleSignIn | ✅ Working | ✅ Day 2 |
 | GET | /api/auth/me | Profile (refresh) | ✅ Working | ⬜ Day 3 |
-| GET | /api/resumes | ResumeList | ⬜ Day 4 | ⬜ Day 4 |
-| POST | /api/resumes/upload | ResumeUpload | ⬜ Day 4 | ⬜ Day 4 |
+| GET | /api/resumes | ResumeList | ✅ Working | ✅ Day 4 |
+| POST | /api/resumes/upload | ResumeUpload | ✅ Working | ✅ Day 4 |
 | POST | /api/resumes/tailor | TailorResume | ⬜ Day 8 | ⬜ Day 8 |
 | POST | /api/resumes/cover-letter | CoverLetter | ⬜ Day 8 | ⬜ Day 8 |
 | POST | /api/ai/resume-parse | ResumeDetail | ⬜ Day 5 | ⬜ Day 5 |
