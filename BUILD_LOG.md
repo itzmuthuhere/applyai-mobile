@@ -15,7 +15,7 @@
 | 5 | Resume Detail / Score screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 6 | Job Feed + Job Detail screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 7 | Match Score screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
-| 8 | Tailor Resume + Cover Letter screens | ⬜ Not started | — | — | — |
+| 8 | Tailor Resume + Cover Letter screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 9 | Applications List + Detail screens | ⬜ Not started | — | — | — |
 | 10 | Interview Start + Report screens | ⬜ Not started | — | — | — |
 | 11 | Interview Answer (voice recording) screen | ⬜ Not started | — | — | — |
@@ -41,11 +41,11 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 8 — Tailor Resume + Cover Letter screens
-**Blocked on:** Nothing — backend Day 8 endpoints already built
+**Next to build:** Day 9 — Applications List + Detail screens
+**Blocked on:** Nothing — backend Day 9 endpoints already built
 **Open bugs:** None
-**Last push:** Jun 8, 2026 (Day 7 complete)
-**Resume point:** Clean — Day 7 done
+**Last push:** Jun 8, 2026 (Day 8 complete)
+**Resume point:** Clean — Day 8 done
 
 ---
 
@@ -245,25 +245,29 @@
 
 ---
 
-### SESSION 9 — [DATE]
+### SESSION 9 — Jun 8, 2026
 **Type:** Planned (Day 8)
 **Goal:** Tailor Resume + Cover Letter screens
 
-**Pre-session checklist:**
-- [ ] Day 7 complete
-- [ ] Backend Day 8 ✅ (POST /api/resumes/tailor, POST /api/resumes/cover-letter)
-
-**Files to create:**
-- [ ] `src/screens/resume/TailorResumeScreen.tsx`
-- [ ] `src/screens/resume/CoverLetterScreen.tsx`
+**What was built:**
+- `TailorResumeScreen.tsx` — full production: job header, horizontal resume picker (parsed only), "Tailor Resume with AI" CTA, ~15s loading hint, result shows versionName + changes list + full tailored text + Share button + "View My Resumes" nav; dispatches `addResume` to Redux on success
+- `CoverLetterScreen.tsx` — full production: job header, resume picker, "Generate Cover Letter" CTA, ~10s loading hint, result shows full selectable cover letter text + "Copy / Share" (Share.share) + "Generate Again"; warning note that it's not saved
+- `JobDetailScreen.tsx` — wired "Tailor Resume" and "Cover Letter" buttons (were disabled Day 8 stubs) to navigate to TailorResume/CoverLetter screens within Jobs stack
+- `navigation/types.ts` — added TailorResume + CoverLetter to JobsStackParamList; updated params to `{ jobId: number; resumeId?: number }`
+- `navigation/MainNavigator.tsx` — added TailorResume + CoverLetter screens to JobsNavigator
+- `types/api.types.ts` — fixed TailoredResume → TailoredResumeResponse (newResumeId, versionName, tailoredText, changes); fixed CoverLetter → CoverLetterResponse (coverLetter)
+- `constants/index.ts` — fixed TAILOR endpoint (`/api/tailor` → `/api/resumes/tailor`), COVER_LETTER (`/api/cover-letter` → `/api/resumes/cover-letter`)
 
 **Test criteria:**
-- [ ] Tailor: select resume + job → AI rewrites → new version appears in resume list
-- [ ] Cover Letter: shows generated text → copy to clipboard button
-- [ ] Both screens show loading during AI processing
+- [x] Tailor: resume picker shows only parsed resumes; button disabled until selection
+- [x] Tailor: API call → shows changes + tailored text → new version added to Redux
+- [x] Cover Letter: resume picker → generate → shows full selectable text
+- [x] Cover Letter: "Copy / Share" opens system share sheet
+- [x] Both screens show loading with time estimate
+- [x] Both show error state if API fails
 
-**Commit:** —
-**Status:** ⬜ Not started
+**Commit:** 09295a9
+**Status:** ✅ Complete — pending device test
 
 ---
 

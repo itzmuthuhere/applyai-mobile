@@ -229,8 +229,8 @@ No screen needs to handle 401 individually.
 | GET | /api/auth/me | Profile (refresh) | ✅ Working | ⬜ Day 3 |
 | GET | /api/resumes | ResumeList | ✅ Working | ✅ Day 4 |
 | POST | /api/resumes/upload | ResumeUpload | ✅ Working | ✅ Day 4 |
-| POST | /api/resumes/tailor | TailorResume | ⬜ Day 8 | ⬜ Day 8 |
-| POST | /api/resumes/cover-letter | CoverLetter | ⬜ Day 8 | ⬜ Day 8 |
+| POST | /api/resumes/tailor | TailorResume | ✅ Day 8 | ✅ Day 8 |
+| POST | /api/resumes/cover-letter | CoverLetter | ✅ Day 8 | ✅ Day 8 |
 | POST | /api/ai/resume-parse | ResumeDetail | ✅ Working | ✅ Day 5 |
 | POST | /api/ai/resume-score | ResumeDetail | ✅ Working | ✅ Day 5 |
 | GET | /api/jobs/feed | JobFeed | ✅ Working | ✅ Day 6 |

@@ -32,8 +32,8 @@ Each screen entry has:
 | ResumeListScreen | `ResumeList` | 4 | ✅ |
 | ResumeUploadScreen | `ResumeUpload` | 4 | ✅ |
 | ResumeDetailScreen | `ResumeDetail` | 5 | ✅ |
-| TailorResumeScreen | `TailorResume` | 8 | ⬜ |
-| CoverLetterScreen | `CoverLetter` | 8 | ⬜ |
+| TailorResumeScreen | `TailorResume` | 8 | ✅ |
+| CoverLetterScreen | `CoverLetter` | 8 | ✅ |
 | JobFeedScreen | `JobFeed` | 6 | ✅ |
 | JobDetailScreen | `JobDetail` | 6 | ✅ |
 | MatchScoreScreen | `MatchScore` | 7 | ⬜ |
@@ -216,39 +216,44 @@ Each screen entry has:
 
 ### TailorResumeScreen
 - **Route:** `TailorResume`
-- **Params:** `{ resumeId: number }`
-- **Day:** 8 | **Status:** ⬜
-- **Entry:** From ResumeDetail or JobDetail
-- **Purpose:** Select a job, generate AI-tailored resume version
+- **Params:** `{ jobId: number; resumeId?: number }`
+- **Day:** 8 | **Status:** ✅
+- **Entry:** From JobDetail "Tailor Resume" (jobId only); or ResumeDetail (resumeId + jobId=0 stub)
+- **Purpose:** Pick a parsed resume, generate AI-tailored version for the job
 - **Local state:**
-  - `selectedJobId: number | null`
-  - `isTailoring: boolean`
-  - `result: TailorResult | null`
-- **Redux reads:** `job.feed` (to pick from)
+  - `selectedResumeId: number | null` (pre-filled if resumeId param provided)
+  - `isLoading: boolean`
+  - `result: TailoredResumeResponse | null`
+  - `error: string | null`
+- **Redux reads:** `resume.list` (parsed resumes for picker); `job.selected` (job label in header)
 - **API calls:**
-  - `POST /api/resumes/tailor { resumeId, jobId }` — on "Tailor" tap
-- **Loading state:** "AI is rewriting your resume for this job..." + spinner
-- **Success state:** Shows changes made, new version name, "View New Version" button
-- **Navigation out:** `ResumeDetail` (new resumeId) on success
+  - `GET /api/resumes` — on mount if resume list is empty
+  - `POST /api/resumes/tailor { resumeId, jobId }` — on "Tailor Resume with AI" tap
+- **Loading state:** ActivityIndicator + "AI is rewriting your resume… ~15 seconds"
+- **Success state:** Version name, changes list (checkmarks), full tailored text, Share/Copy + "View My Resumes"
+- **Dispatch on success:** `addResume(newResume)` to add new version to Redux list
+- **Navigation out:** `ResumeList` on "View My Resumes" tap
 
 ---
 
 ### CoverLetterScreen
 - **Route:** `CoverLetter`
-- **Params:** `{ resumeId: number, jobId: number }`
-- **Day:** 8 | **Status:** ⬜
-- **Entry:** From JobDetail "Generate Cover Letter"
-- **Purpose:** Show AI-generated cover letter for a job
+- **Params:** `{ jobId: number; resumeId?: number }`
+- **Day:** 8 | **Status:** ✅
+- **Entry:** From JobDetail "Cover Letter" (jobId only)
+- **Purpose:** Pick a parsed resume, generate AI cover letter (not saved to DB)
 - **Local state:**
-  - `isGenerating: boolean`
+  - `selectedResumeId: number | null`
+  - `isLoading: boolean`
   - `coverLetter: string | null`
-  - `copied: boolean`
+  - `error: string | null`
+- **Redux reads:** `resume.list` (parsed resumes for picker); `job.selected` (job label)
 - **API calls:**
-  - `POST /api/resumes/cover-letter { resumeId, jobId }` — on mount
-- **Loading state:** "Generating cover letter..." + spinner
-- **UI:** Scrollable text box with cover letter, "Copy to Clipboard" button
-- **Note:** Cover letter is NOT saved to DB — for user to copy and use
-- **Navigation out:** Back (user copies cover letter and goes back)
+  - `GET /api/resumes` — on mount if resume list empty
+  - `POST /api/resumes/cover-letter { resumeId, jobId }` — on "Generate Cover Letter" tap
+- **Loading state:** ActivityIndicator + "AI is writing your cover letter… ~10 seconds"
+- **Success state:** Warning note (not saved), full selectable cover letter text, "Copy / Share" button (Share.share), "Generate Again" button
+- **Note:** Cover letter NOT saved to DB — user must copy/share before leaving
 
 ---
 
