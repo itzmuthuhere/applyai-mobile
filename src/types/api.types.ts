@@ -32,6 +32,7 @@ export interface Resume {
   fileUrl: string;
   aiScore: number | null;
   isOriginal: boolean;
+  isParsed: boolean;
   createdAt: string;
 }
 
@@ -79,15 +80,17 @@ export interface JobFeedResponse {
 }
 
 export interface MatchScore {
+  matchId: number;
   resumeId: number;
   jobId: number;
-  overallScore: number;
-  skillMatchScore: number;
-  experienceScore: number;
-  educationScore: number;
-  missingSkills: string[];
-  matchingSkills: string[];
+  jobTitle: string;
+  company: string;
+  matchScore: number;
+  strengths: string[];
+  gaps: string[];
   recommendation: string;
+  createdAt: string;
+  cached: boolean;
 }
 
 export interface TailoredResume {

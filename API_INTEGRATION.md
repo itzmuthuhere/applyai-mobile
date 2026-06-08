@@ -63,9 +63,10 @@ No screen needs to handle 401 individually.
 
 **Response:**
 ```json
-[ { "id", "versionName", "fileUrl", "aiScore", "isOriginal", "createdAt" } ]
+[ { "id", "versionName", "fileUrl", "aiScore", "isOriginal", "isParsed", "createdAt" } ]
 ```
-**Backend status:** ✅ Working (Day 4)
+`isParsed: true` means parsedText is populated and the resume can be used for matching/tailoring.
+**Backend status:** ✅ Working (Day 4, isParsed added Day 7)
 
 ---
 
@@ -143,11 +144,28 @@ No screen needs to handle 401 individually.
 ### MatchScoreScreen
 | Call | Method | Path | When | Success | Error |
 |------|--------|------|------|---------|-------|
-| Get match score | POST | `/api/ai/match-score` | Tap "Score" | Show score breakdown | Show error |
+| Load resumes | GET | `/api/resumes` | Screen mount | Populate resume picker | Show error state |
+| Analyze match | POST | `/api/ai/match` | Tap "Analyze Match" | Show score ring + details | Show error banner |
 
-**Request:** `{ "resumeId": 1, "jobId": 1 }`
-**Response:** `{ "matchScore": 78, "skillsMatch": 85, "experienceMatch": 70, "keywordsMissing": [], "cached": false }`
-**Backend status:** ⬜ Day 7
+**Load resumes response:**
+```json
+[ { "id", "versionName", "fileUrl", "aiScore", "isOriginal", "isParsed", "createdAt" } ]
+```
+**Analyze match request:** `{ "resumeId": 1, "jobId": 1 }`
+**Analyze match response:**
+```json
+{
+  "matchId": 1, "resumeId": 1, "jobId": 1,
+  "jobTitle": "Backend Developer", "company": "Google",
+  "matchScore": 78,
+  "strengths": ["Strong Java background", "4 years relevant experience"],
+  "gaps": ["Missing Docker experience", "No AWS certifications"],
+  "recommendation": "Strong candidate — tailor resume to highlight cloud skills.",
+  "createdAt": "2026-06-08T10:00:00", "cached": false
+}
+```
+**Redux:** Result stored in `job.matchScores["{resumeId}_{jobId}"]` — cache hit shows result instantly without re-calling API.
+**Backend status:** ✅ Built (Day 7)
 
 ---
 

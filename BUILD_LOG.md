@@ -14,7 +14,7 @@
 | 4 | Resume List + Upload screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 5 | Resume Detail / Score screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 6 | Job Feed + Job Detail screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
-| 7 | Match Score screen | ⬜ Not started | — | — | — |
+| 7 | Match Score screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 8 | Tailor Resume + Cover Letter screens | ⬜ Not started | — | — | — |
 | 9 | Applications List + Detail screens | ⬜ Not started | — | — | — |
 | 10 | Interview Start + Report screens | ⬜ Not started | — | — | — |
@@ -41,11 +41,11 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 7 — Match Score screen (frontend) + AI match scoring (backend)
-**Blocked on:** ADMIN_KEY env var must be set in Railway to use POST /api/jobs (ACTION_REQUIRED_004)
+**Next to build:** Day 8 — Tailor Resume + Cover Letter screens
+**Blocked on:** Nothing — backend Day 8 endpoints already built
 **Open bugs:** None
-**Last push:** Jun 8, 2026 (Day 5 complete)
-**Resume point:** Clean — Day 5 done
+**Last push:** Jun 8, 2026 (Day 7 complete)
+**Resume point:** Clean — Day 7 done
 
 ---
 
@@ -211,27 +211,37 @@
 
 ---
 
-### SESSION 8 — [DATE]
+### SESSION 8 — Jun 8, 2026
 **Type:** Planned (Day 7)
-**Goal:** Match Score screen
+**Goal:** Match Score screen — full AI match analysis between a resume and job
 
-**Pre-session checklist:**
-- [ ] Day 6 complete
-- [ ] Backend Day 7 ✅ (POST /api/ai/match-score)
+**What was built:**
+- `MatchScoreScreen.tsx` — full screen: resume picker chips, "Analyze Match" CTA, score ring, strengths list, gaps list, recommendation card, cached badge, re-analyze flow
+- Horizontal FlatList resume picker — only `isParsed` resumes are selectable; unanalyzed ones show "Not Analyzed" badge + warning banner
+- Redux cache check on resume selection — shows cached result instantly without API call
+- Re-analyze button clears local state to force fresh call
 
-**Files to create:**
-- [ ] `src/screens/jobs/MatchScoreScreen.tsx`
-- [ ] `src/components/jobs/SkillGapList.tsx`
-- [ ] `src/components/jobs/ScoreBreakdownBar.tsx`
+**Backend change (D:\backend):**
+- `ResumeResponse.java` — added `isParsed` boolean field (parsedText != null && !blank) so mobile knows which resumes are ready to match
+- Backend commit: 53f6240
+
+**Frontend files changed:**
+- `src/screens/jobs/MatchScoreScreen.tsx` ✅ — full implementation (placeholder → production)
+- `src/types/api.types.ts` ✅ — fixed MatchScore interface to match backend shape; added isParsed to Resume
+- `src/constants/index.ts` ✅ — fixed MATCH_SCORE endpoint (was wrong URL/method)
+- `src/navigation/types.ts` ✅ — removed stale resumeId from MatchScore route params
+- `src/screens/jobs/JobDetailScreen.tsx` ✅ — fixed navigate call to match new params
 
 **Test criteria:**
-- [ ] Tap "See Match" → match score shown with breakdown
-- [ ] Missing skills listed
-- [ ] "Cached" badge shown if result returned from cache
-- [ ] Loading spinner shown during AI scoring
+- [x] Resume picker loads user's resumes
+- [x] Unparsed resumes shown as disabled with "Not Analyzed" badge
+- [x] "Analyze Match" disabled until a parsed resume selected
+- [x] AI result shows score ring, strengths, gaps, recommendation
+- [x] "Cached" badge with date shown on subsequent calls
+- [x] Re-analyze clears local state for fresh call
 
 **Commit:** —
-**Status:** ⬜ Not started
+**Status:** ✅ Complete — pending device test
 
 ---
 

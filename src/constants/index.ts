@@ -62,8 +62,7 @@ export const API_ENDPOINTS = {
   RESUME_PARSE: '/api/ai/resume-parse',
   RESUME_SCORE: '/api/ai/resume-score',
   JOBS: '/api/jobs',
-  MATCH_SCORE: (resumeId: number, jobId: number) =>
-    `/api/match/${resumeId}/${jobId}`,
+  MATCH_SCORE: '/api/ai/match',
   TAILOR: '/api/tailor',
   COVER_LETTER: '/api/cover-letter',
   APPLICATIONS: '/api/applications',

@@ -139,7 +139,7 @@ export default function JobDetailScreen() {
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={() =>
-            navigation.navigate(ROUTES.MATCH_SCORE as 'MatchScore', { jobId: job.id, resumeId: 0 })
+            navigation.navigate(ROUTES.MATCH_SCORE as 'MatchScore', { jobId: job.id })
           }
         >
           <Ionicons name="analytics-outline" size={18} color={COLORS.primary} />

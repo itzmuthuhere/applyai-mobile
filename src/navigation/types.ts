@@ -14,7 +14,7 @@ export type HomeStackParamList = {
 export type JobsStackParamList = {
   JobFeed: undefined;
   JobDetail: { jobId: number };
-  MatchScore: { jobId: number; resumeId: number };
+  MatchScore: { jobId: number };
 };
 
 export type ResumeStackParamList = {
