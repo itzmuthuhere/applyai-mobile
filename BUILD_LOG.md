@@ -19,7 +19,7 @@
 | 9 | Applications List + Detail screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 10 | Interview Start + Report screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 11 | Interview Answer (voice recording) screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
-| 12 | End-to-end testing + polish | ⬜ Not started | — | — | — |
+| 12 | End-to-end testing + polish | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 
 ---
 
@@ -41,15 +41,31 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 12 — End-to-end polish
+**Next to build:** Phase 1 complete — ready for EAS build + device testing
 **Blocked on:** Nothing
 **Open bugs:** None
-**Last push:** Jun 8, 2026 (Day 11 complete)
-**Resume point:** Clean — Day 11 done
+**Last push:** Jun 8, 2026 (Day 12 complete — all 12 days done)
+**Resume point:** Clean — Phase 1 complete
 
 ---
 
 ## SESSION LOGS
+
+---
+
+### SESSION N+2 — Jun 8, 2026
+**Type:** Planned (Day 12)
+**Goal:** End-to-end polish — TypeScript audit + navigation fixes + connection gaps
+
+**What was fixed:**
+- `HomeScreen.tsx` — Removed broken `CompositeNavigationProp` that caused 5 TS errors; switched to `useNavigation<any>()` for cross-tab navigation; fixed "Mock Interview" quick action removing invalid `applicationId:0` param
+- `ResumeUploadScreen.tsx` — Added missing `isParsed:false` field to new Resume object (was causing TS2741 error)
+- `ApplicationDetailScreen.tsx` — Fixed "Practice Interview" cross-tab navigation; was calling `navigate('InterviewStart' as any, ...)` on a stack navigator that doesn't know about InterviewTab; now correctly calls `navigate('InterviewTab', { screen: 'InterviewStart', params: { applicationId } })`
+
+**TypeScript result:** 0 errors (was 6)
+**Files modified:** HomeScreen.tsx, ResumeUploadScreen.tsx, ApplicationDetailScreen.tsx
+**Commit:** 158da5e
+**Status:** ✅ Day 12 complete — Phase 1 done
 
 ---
 
