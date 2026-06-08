@@ -93,17 +93,15 @@ export interface MatchScore {
   cached: boolean;
 }
 
-export interface TailoredResume {
-  resumeId: number;
-  jobId: number;
-  tailoredContent: string;
+export interface TailoredResumeResponse {
+  newResumeId: number;
+  versionName: string;
+  tailoredText: string;
   changes: string[];
 }
 
-export interface CoverLetter {
-  resumeId: number;
-  jobId: number;
-  content: string;
+export interface CoverLetterResponse {
+  coverLetter: string;
 }
 
 export interface Application {

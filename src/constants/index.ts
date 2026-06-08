@@ -63,8 +63,8 @@ export const API_ENDPOINTS = {
   RESUME_SCORE: '/api/ai/resume-score',
   JOBS: '/api/jobs',
   MATCH_SCORE: '/api/ai/match',
-  TAILOR: '/api/tailor',
-  COVER_LETTER: '/api/cover-letter',
+  TAILOR: '/api/resumes/tailor',
+  COVER_LETTER: '/api/resumes/cover-letter',
   APPLICATIONS: '/api/applications',
   INTERVIEW_QUESTIONS: (applicationId: number) =>
     `/api/interview/${applicationId}/questions`,

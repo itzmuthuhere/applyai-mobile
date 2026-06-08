@@ -148,18 +148,22 @@ export default function JobDetailScreen() {
 
         <View style={styles.actionDivider} />
 
-        <TouchableOpacity style={[styles.actionBtn, styles.actionBtnDisabled]} disabled>
-          <Ionicons name="color-wand-outline" size={18} color={COLORS.textMuted} />
-          <Text style={[styles.actionBtnText, styles.actionBtnTextDisabled]}>Tailor Resume</Text>
-          <Text style={styles.comingSoon}>Day 8</Text>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => navigation.navigate('TailorResume', { jobId: job.id })}
+        >
+          <Ionicons name="color-wand-outline" size={18} color={COLORS.primary} />
+          <Text style={styles.actionBtnText}>Tailor Resume</Text>
         </TouchableOpacity>
 
         <View style={styles.actionDivider} />
 
-        <TouchableOpacity style={[styles.actionBtn, styles.actionBtnDisabled]} disabled>
-          <Ionicons name="document-text-outline" size={18} color={COLORS.textMuted} />
-          <Text style={[styles.actionBtnText, styles.actionBtnTextDisabled]}>Cover Letter</Text>
-          <Text style={styles.comingSoon}>Day 8</Text>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => navigation.navigate('CoverLetter', { jobId: job.id })}
+        >
+          <Ionicons name="document-text-outline" size={18} color={COLORS.primary} />
+          <Text style={styles.actionBtnText}>Cover Letter</Text>
         </TouchableOpacity>
       </View>
 

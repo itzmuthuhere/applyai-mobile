@@ -51,6 +51,8 @@ function JobsNavigator() {
       <JobsStack.Screen name="JobFeed" component={JobFeedScreen} options={{ title: 'Jobs' }} />
       <JobsStack.Screen name="JobDetail" component={JobDetailScreen} options={{ title: 'Job Detail' }} />
       <JobsStack.Screen name="MatchScore" component={MatchScoreScreen} options={{ title: 'Match Score' }} />
+      <JobsStack.Screen name="TailorResume" component={TailorResumeScreen} options={{ title: 'Tailor Resume' }} />
+      <JobsStack.Screen name="CoverLetter" component={CoverLetterScreen} options={{ title: 'Cover Letter' }} />
     </JobsStack.Navigator>
   );
 }

@@ -15,14 +15,16 @@ export type JobsStackParamList = {
   JobFeed: undefined;
   JobDetail: { jobId: number };
   MatchScore: { jobId: number };
+  TailorResume: { jobId: number; resumeId?: number };
+  CoverLetter: { jobId: number; resumeId?: number };
 };
 
 export type ResumeStackParamList = {
   ResumeList: undefined;
   ResumeUpload: undefined;
   ResumeDetail: { resumeId: number };
-  TailorResume: { resumeId: number; jobId: number };
-  CoverLetter: { resumeId: number; jobId: number };
+  TailorResume: { jobId: number; resumeId?: number };
+  CoverLetter: { jobId: number; resumeId?: number };
 };
 
 export type ApplicationsStackParamList = {
