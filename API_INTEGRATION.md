@@ -1,5 +1,5 @@
 # ApplyAI Mobile — API Integration
-> Version: 1.1 | Last updated: Jun 8, 2026
+> Version: 1.2 | Last updated: Jun 8, 2026
 > Every API call the frontend makes: which screen, which endpoint, when, success/error handling.
 > Cross-reference with backend API_SPEC.md to verify endpoints exist and are ✅ Working.
 
@@ -205,11 +205,13 @@ No screen needs to handle 401 individually.
 ### InterviewQuestionScreen
 | Call | Method | Path | When | Success | Error |
 |------|--------|------|------|---------|-------|
-| Submit answer | POST | `/api/interviews/{sessionId}/answer` | Tap "Submit" | Show transcript + score | Show error |
+| Submit answer | POST | `/api/interviews/{sessionId}/answer` | Tap "Submit Answer" | Show score + AI feedback inline | Show error banner |
 
-**Request:** `multipart/form-data`: `audioFile` + `questionId` (Long)
-**Response:** `{ "questionId", "transcript", "score", "feedback", "sessionComplete" }`
-**Backend status:** ⬜ Day 11
+**Request:** `multipart/form-data` — `questionId` (Long) + either `answerText` (String) or `audioFile` (MP3/M4A/WAV/WebM)
+**Response:** `{ "questionId", "question", "answerText", "audioUrl", "aiScore", "aiFeedback", "sessionComplete", "overallScore" }`
+**Voice path:** audioFile → Cloudinary → Whisper transcription → Claude evaluation (~20s)
+**Text path:** answerText → Claude evaluation directly (~10s)
+**Backend status:** ✅ Day 11
 
 ---
 

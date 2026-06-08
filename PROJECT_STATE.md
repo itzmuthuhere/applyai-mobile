@@ -24,9 +24,9 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 11 — Interview Question (answer) screen
+**Active Day:** Day 12 — End-to-end polish
 **Last Session:** Jun 8, 2026
-**Overall Status:** Day 10 complete — InterviewStartScreen (history + application picker + start flow) + InterviewReportScreen (score ring, per-question breakdown)
+**Overall Status:** Day 11 complete — InterviewQuestionScreen with text + voice modes, inline AI score/feedback, auto-navigation to next question or report
 
 ---
 
@@ -49,7 +49,7 @@
 | Applications List screen | 9 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Application Detail screen | 9 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Interview Start screen | 10 | ✅ Complete | v1.0 | ⬜ Pending device test |
-| Interview Question screen | 11 | ⬜ Not started | — | — |
+| Interview Question screen | 11 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Interview Report screen | 10 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Profile / Settings screen | 3 | ✅ Complete | v1.0 | ⬜ Pending device test |
 
@@ -220,4 +220,4 @@ _None yet._
 
 ---
 
-*Last updated: Jun 8, 2026 — v1.4: Day 10 complete — InterviewStartScreen + InterviewReportScreen built; InterviewQuestion/Session types fixed to match backend; interview endpoint constants fixed; applicationId made optional in InterviewStart nav params*
+*Last updated: Jun 8, 2026 — v1.5: Day 11 complete — InterviewStartScreen + InterviewReportScreen built; InterviewQuestion/Session types fixed to match backend; interview endpoint constants fixed; applicationId made optional in InterviewStart nav params*

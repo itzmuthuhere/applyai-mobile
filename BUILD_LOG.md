@@ -18,7 +18,7 @@
 | 8 | Tailor Resume + Cover Letter screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 9 | Applications List + Detail screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 10 | Interview Start + Report screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
-| 11 | Interview Answer (voice recording) screen | ⬜ Not started | — | — | — |
+| 11 | Interview Answer (voice recording) screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 12 | End-to-end testing + polish | ⬜ Not started | — | — | — |
 
 ---
@@ -41,15 +41,32 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 11 — Interview Question screen (text answer + voice recording)
-**Blocked on:** Nothing — backend Day 11 endpoint already built
+**Next to build:** Day 12 — End-to-end polish
+**Blocked on:** Nothing
 **Open bugs:** None
-**Last push:** Jun 8, 2026 (Day 10 complete)
-**Resume point:** Clean — Day 10 done
+**Last push:** Jun 8, 2026 (Day 11 complete)
+**Resume point:** Clean — Day 11 done
 
 ---
 
 ## SESSION LOGS
+
+---
+
+### SESSION N+1 — Jun 8, 2026
+**Type:** Planned (Day 11)
+**Goal:** Interview Question screen — text + voice answer modes with inline AI scoring
+
+**What was built:**
+- `InterviewQuestionScreen.tsx` — Full: progress bar (Q1/7), question card with type badge, mode toggle (Text / Voice), text mode with multiline TextInput, voice mode with expo-av recording (start/stop/discard), submit via multipart/form-data, inline result view (score, AI feedback, session-complete banner), auto-navigate to next question or InterviewReport
+
+**Files created/modified:**
+- `src/screens/interview/InterviewQuestionScreen.tsx` — built from placeholder
+- `package.json` + `node_modules` — expo-av@^16.0.8 installed for audio recording
+
+**Endpoint test results:** Not yet tested (pending device)
+**Commit:** (see below)
+**Status:** ✅ Day 11 complete
 
 ---
 

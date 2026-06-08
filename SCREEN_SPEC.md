@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Screen Specification
-> Version: 1.2 | Last updated: Jun 8, 2026
+> Version: 1.3 | Last updated: Jun 8, 2026
 > Every screen: purpose, route name, navigation params, state, API calls, loading/error/empty states.
 > Updated every time a screen is added or its behavior changes.
 
@@ -40,7 +40,7 @@ Each screen entry has:
 | ApplicationsListScreen | `ApplicationsList` | 9 | ✅ |
 | ApplicationDetailScreen | `ApplicationDetail` | 9 | ✅ |
 | InterviewStartScreen | `InterviewStart` | 10 | ✅ |
-| InterviewQuestionScreen | `InterviewQuestion` | 11 | ⬜ |
+| InterviewQuestionScreen | `InterviewQuestion` | 11 | ✅ |
 | InterviewReportScreen | `InterviewReport` | 10 | ✅ |
 
 ---
