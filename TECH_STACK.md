@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Tech Stack
-> Version: 1.1 | Last updated: Jun 6, 2026
+> Version: 1.2 | Last updated: Jun 8, 2026
 > Every package: actual installed version, status, purpose, why chosen.
 > Source of truth: package.json. This doc must always match.
 
@@ -97,7 +97,7 @@
 
 | Package | Installed Version | Status | Day Added | Purpose |
 |---------|-----------------|--------|-----------|---------|
-| expo-av | ⬜ Not yet | ⬜ Day 11 | — | Record voice answers for mock interview |
+| expo-av | ^16.0.8 | ✅ Installed | Day 11 | Record voice answers for mock interview (Audio.Recording) |
 
 ---
 
