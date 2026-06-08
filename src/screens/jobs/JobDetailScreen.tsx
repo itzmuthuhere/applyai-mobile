@@ -165,6 +165,16 @@ export default function JobDetailScreen() {
           <Ionicons name="document-text-outline" size={18} color={COLORS.primary} />
           <Text style={styles.actionBtnText}>Cover Letter</Text>
         </TouchableOpacity>
+
+        <View style={styles.actionDivider} />
+
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => navigation.navigate('ApplyJob', { jobId: job.id })}
+        >
+          <Ionicons name="send-outline" size={18} color={COLORS.secondary} />
+          <Text style={[styles.actionBtnText, { color: COLORS.secondary }]}>Apply</Text>
+        </TouchableOpacity>
       </View>
 
       {/* View original posting */}

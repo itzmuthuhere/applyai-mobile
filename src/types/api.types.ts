@@ -1,11 +1,13 @@
 export type SubscriptionPlan = 'FREE' | 'HUNTER' | 'PRO';
 export type RemotePreference = 'REMOTE' | 'HYBRID' | 'ONSITE' | 'ANY';
 export type ApplicationStatus =
-  | 'SAVED'
   | 'APPLIED'
+  | 'VIEWED'
+  | 'SHORTLISTED'
   | 'INTERVIEW'
   | 'OFFER'
-  | 'REJECTED';
+  | 'REJECTED'
+  | 'WITHDRAWN';
 
 export interface User {
   id: number;
@@ -106,13 +108,13 @@ export interface CoverLetterResponse {
 
 export interface Application {
   id: number;
-  userId: number;
-  jobId: number;
-  resumeId: number;
   status: ApplicationStatus;
   appliedAt: string | null;
+  lastUpdated: string | null;
   notes: string | null;
-  job: Job;
+  coverLetter: string | null;
+  job: { id: number; title: string; company: string; location: string };
+  resume: { id: number; versionName: string };
 }
 
 export interface InterviewQuestion {

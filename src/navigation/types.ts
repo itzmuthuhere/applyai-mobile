@@ -17,6 +17,7 @@ export type JobsStackParamList = {
   MatchScore: { jobId: number };
   TailorResume: { jobId: number; resumeId?: number };
   CoverLetter: { jobId: number; resumeId?: number };
+  ApplyJob: { jobId: number };
 };
 
 export type ResumeStackParamList = {

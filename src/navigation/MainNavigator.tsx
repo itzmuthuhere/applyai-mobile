@@ -22,6 +22,7 @@ import ResumeUploadScreen from '../screens/resume/ResumeUploadScreen';
 import ResumeDetailScreen from '../screens/resume/ResumeDetailScreen';
 import TailorResumeScreen from '../screens/resume/TailorResumeScreen';
 import CoverLetterScreen from '../screens/resume/CoverLetterScreen';
+import ApplyJobScreen from '../screens/jobs/ApplyJobScreen';
 import ApplicationsListScreen from '../screens/applications/ApplicationsListScreen';
 import ApplicationDetailScreen from '../screens/applications/ApplicationDetailScreen';
 import InterviewStartScreen from '../screens/interview/InterviewStartScreen';
@@ -53,6 +54,7 @@ function JobsNavigator() {
       <JobsStack.Screen name="MatchScore" component={MatchScoreScreen} options={{ title: 'Match Score' }} />
       <JobsStack.Screen name="TailorResume" component={TailorResumeScreen} options={{ title: 'Tailor Resume' }} />
       <JobsStack.Screen name="CoverLetter" component={CoverLetterScreen} options={{ title: 'Cover Letter' }} />
+      <JobsStack.Screen name="ApplyJob" component={ApplyJobScreen} options={{ title: 'Apply to Job' }} />
     </JobsStack.Navigator>
   );
 }

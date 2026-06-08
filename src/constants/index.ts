@@ -66,6 +66,9 @@ export const API_ENDPOINTS = {
   TAILOR: '/api/resumes/tailor',
   COVER_LETTER: '/api/resumes/cover-letter',
   APPLICATIONS: '/api/applications',
+  APPLICATIONS_APPLY: '/api/applications/apply',
+  APPLICATION_BY_ID: (id: number) => `/api/applications/${id}`,
+  APPLICATION_STATUS: (id: number) => `/api/applications/${id}/status`,
   INTERVIEW_QUESTIONS: (applicationId: number) =>
     `/api/interview/${applicationId}/questions`,
   INTERVIEW_SUBMIT: (sessionId: number) =>
