@@ -1,5 +1,5 @@
 # ApplyAI Mobile — API Integration
-> Version: 1.0 | Last updated: Jun 6, 2026
+> Version: 1.1 | Last updated: Jun 8, 2026
 > Every API call the frontend makes: which screen, which endpoint, when, success/error handling.
 > Cross-reference with backend API_SPEC.md to verify endpoints exist and are ✅ Working.
 
@@ -192,11 +192,13 @@ No screen needs to handle 401 individually.
 ### InterviewStartScreen
 | Call | Method | Path | When | Success | Error |
 |------|--------|------|------|---------|-------|
-| Start interview | POST | `/api/interviews/start` | Tap "Start Interview" | Store session + questions | Show error |
+| Load history | GET | `/api/interviews/history` | Screen focus | Dispatch to interviewSlice.history | Keep stale |
+| Load applications (picker) | GET | `/api/applications` | Tap "Start Mock Interview" | Populate picker | Show empty state |
+| Start interview | POST | `/api/interviews/start` | Pick application in modal | Dispatch currentSession, navigate to Question | Alert error |
 
-**Request:** `{ "applicationId": 1 }`
-**Response:** `{ "sessionId": 1, "questions": [ { "id", "question", "questionType", "sequenceOrder" } ] }`
-**Backend status:** ⬜ Day 10
+**Start request:** `{ "applicationId": 1 }`
+**Start response:** Full `InterviewSession` with `sessionId`, `jobTitle`, `company`, `questions[]`
+**Backend status:** ✅ Day 10
 
 ---
 
@@ -216,8 +218,8 @@ No screen needs to handle 401 individually.
 |------|--------|------|------|---------|-------|
 | Get session | GET | `/api/interviews/{sessionId}` | Screen mount | Render full report | Show error |
 
-**Response:** `{ "sessionId", "overallScore", "completedAt", "questions": [ { ...with scores and feedback } ] }`
-**Backend status:** ⬜ Day 10
+**Response:** `{ "sessionId", "jobTitle", "company", "overallScore", "completedAt", "questions": [ { "id", "question", "questionType", "sequenceOrder", "transcript", "aiScore", "aiFeedback" } ] }`
+**Backend status:** ✅ Day 10
 
 ---
 

@@ -24,9 +24,9 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 10 — Interview Start + Report screens
+**Active Day:** Day 11 — Interview Question (answer) screen
 **Last Session:** Jun 8, 2026
-**Overall Status:** Day 9 complete — ApplicationsList, ApplicationDetail, ApplyJob screens with status picker and apply flow
+**Overall Status:** Day 10 complete — InterviewStartScreen (history + application picker + start flow) + InterviewReportScreen (score ring, per-question breakdown)
 
 ---
 
@@ -48,9 +48,9 @@
 | Cover Letter screen | 8 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Applications List screen | 9 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Application Detail screen | 9 | ✅ Complete | v1.0 | ⬜ Pending device test |
-| Interview Start screen | 10 | ⬜ Not started | — | — |
+| Interview Start screen | 10 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Interview Question screen | 11 | ⬜ Not started | — | — |
-| Interview Report screen | 10 | ⬜ Not started | — | — |
+| Interview Report screen | 10 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Profile / Settings screen | 3 | ✅ Complete | v1.0 | ⬜ Pending device test |
 
 ---
@@ -220,4 +220,4 @@ _None yet._
 
 ---
 
-*Last updated: Jun 8, 2026 — v1.3: Day 7 MatchScoreScreen complete; isParsed added to Resume type; MatchScore type corrected to match backend*
+*Last updated: Jun 8, 2026 — v1.4: Day 10 complete — InterviewStartScreen + InterviewReportScreen built; InterviewQuestion/Session types fixed to match backend; interview endpoint constants fixed; applicationId made optional in InterviewStart nav params*

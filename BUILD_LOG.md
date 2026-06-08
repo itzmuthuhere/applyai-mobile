@@ -17,7 +17,7 @@
 | 7 | Match Score screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 8 | Tailor Resume + Cover Letter screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 9 | Applications List + Detail screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
-| 10 | Interview Start + Report screens | ⬜ Not started | — | — | — |
+| 10 | Interview Start + Report screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 11 | Interview Answer (voice recording) screen | ⬜ Not started | — | — | — |
 | 12 | End-to-end testing + polish | ⬜ Not started | — | — | — |
 
@@ -41,15 +41,36 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 10 — Interview Start + Report screens
-**Blocked on:** Nothing — backend Day 10 endpoints already built
+**Next to build:** Day 11 — Interview Question screen (text answer + voice recording)
+**Blocked on:** Nothing — backend Day 11 endpoint already built
 **Open bugs:** None
-**Last push:** Jun 8, 2026 (Day 9 complete)
-**Resume point:** Clean — Day 9 done
+**Last push:** Jun 8, 2026 (Day 10 complete)
+**Resume point:** Clean — Day 10 done
 
 ---
 
 ## SESSION LOGS
+
+---
+
+### SESSION N — Jun 8, 2026
+**Type:** Planned (Day 10)
+**Goal:** Interview Start screen + Interview Report screen
+
+**What was built:**
+- `InterviewStartScreen.tsx` — Full: interview history list (GET /api/interviews/history on focus), "Start Mock Interview" button opens bottom-sheet modal with application picker, POST /api/interviews/start → navigate to InterviewQuestion
+- `InterviewReportScreen.tsx` — Full: GET /api/interviews/{id}, score ring, expandable per-question cards with transcript + AI feedback, "Start New Interview" CTA
+
+**Files created/modified:**
+- `src/screens/interview/InterviewStartScreen.tsx` — built from placeholder
+- `src/screens/interview/InterviewReportScreen.tsx` — built from placeholder
+- `src/types/api.types.ts` — InterviewQuestion + InterviewSession types fixed to match actual backend API response; InterviewAnswerResponse added
+- `src/constants/index.ts` — Interview endpoint constants fixed (were wrong paths); added INTERVIEW_START, INTERVIEW_BY_ID, INTERVIEW_HISTORY, INTERVIEW_ANSWER
+- `src/navigation/types.ts` — InterviewStart applicationId made optional
+
+**Endpoint test results:** Not yet tested (pending device)
+**Commit:** (see below)
+**Status:** ✅ Day 10 complete
 
 ---
 

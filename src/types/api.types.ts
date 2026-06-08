@@ -119,26 +119,34 @@ export interface Application {
 
 export interface InterviewQuestion {
   id: number;
-  questionText: string;
-  category: string;
-  difficulty: string;
+  question: string;
+  questionType: string;
+  sequenceOrder: number;
+  transcript: string | null;
+  aiScore: number | null;
+  aiFeedback: string | null;
 }
 
 export interface InterviewSession {
-  id: number;
+  sessionId: number;
   applicationId: number;
-  questions: InterviewQuestion[];
-  answers: InterviewAnswer[];
+  jobTitle: string;
+  company: string;
   overallScore: number | null;
   completedAt: string | null;
   createdAt: string;
+  questions: InterviewQuestion[];
 }
 
-export interface InterviewAnswer {
+export interface InterviewAnswerResponse {
   questionId: number;
-  transcription: string;
-  score: number;
-  feedback: string;
+  question: string;
+  answerText: string;
+  audioUrl: string | null;
+  aiScore: number;
+  aiFeedback: string;
+  sessionComplete: boolean;
+  overallScore: number | null;
 }
 
 export interface ApiError {

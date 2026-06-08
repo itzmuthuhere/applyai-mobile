@@ -34,7 +34,7 @@ export type ApplicationsStackParamList = {
 };
 
 export type InterviewStackParamList = {
-  InterviewStart: { applicationId: number };
+  InterviewStart: { applicationId?: number } | undefined;
   InterviewQuestion: { sessionId: number; questionIndex: number };
   InterviewReport: { sessionId: number };
 };

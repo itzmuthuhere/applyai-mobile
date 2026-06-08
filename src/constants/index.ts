@@ -69,10 +69,8 @@ export const API_ENDPOINTS = {
   APPLICATIONS_APPLY: '/api/applications/apply',
   APPLICATION_BY_ID: (id: number) => `/api/applications/${id}`,
   APPLICATION_STATUS: (id: number) => `/api/applications/${id}/status`,
-  INTERVIEW_QUESTIONS: (applicationId: number) =>
-    `/api/interview/${applicationId}/questions`,
-  INTERVIEW_SUBMIT: (sessionId: number) =>
-    `/api/interview/sessions/${sessionId}/answers`,
-  INTERVIEW_REPORT: (sessionId: number) =>
-    `/api/interview/sessions/${sessionId}/report`,
+  INTERVIEW_START: '/api/interviews/start',
+  INTERVIEW_BY_ID: (sessionId: number) => `/api/interviews/${sessionId}`,
+  INTERVIEW_HISTORY: '/api/interviews/history',
+  INTERVIEW_ANSWER: (sessionId: number) => `/api/interviews/${sessionId}/answer`,
 } as const;
