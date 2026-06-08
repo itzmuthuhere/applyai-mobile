@@ -24,9 +24,9 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 5 — Resume Detail / Score Screen
+**Active Day:** Day 6 — Job Feed + Job Detail screens
 **Last Session:** Jun 8, 2026
-**Overall Status:** Day 4 complete — ResumeListScreen + ResumeUploadScreen built, expo-document-picker added
+**Overall Status:** Day 5 complete — ResumeDetailScreen built with AI score ring, skills chips, strengths/improvements
 
 ---
 
@@ -40,7 +40,7 @@
 | Home / Dashboard screen | 3 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Resume List screen | 4 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Resume Upload screen | 4 | ✅ Complete | v1.0 | ⬜ Pending device test |
-| Resume Detail / Score screen | 5 | ⬜ Not started | — | — |
+| Resume Detail / Score screen | 5 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Job Feed screen | 6 | ⬜ Not started | — | — |
 | Job Detail screen | 6 | ⬜ Not started | — | — |
 | Match Score screen | 7 | ⬜ Not started | — | — |
@@ -87,7 +87,7 @@ src/
 │   ├── resume/
 │   │   ├── ResumeListScreen.tsx ✅ Full — FlatList, FAB, skeleton, empty/error states
 │   │   ├── ResumeUploadScreen.tsx ✅ Full — doc picker, multipart upload, validation
-│   │   ├── ResumeDetailScreen.tsx ✅ Placeholder
+│   │   ├── ResumeDetailScreen.tsx ✅ Full — score ring, skills chips, strengths/improvements, AI analyze flow
 │   │   ├── TailorResumeScreen.tsx ✅ Placeholder
 │   │   └── CoverLetterScreen.tsx ✅ Placeholder
 │   ├── jobs/

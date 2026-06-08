@@ -12,7 +12,7 @@
 | 2 | Google Sign-In screen | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending device test |
 | 3 | Home + Profile screens | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending device test |
 | 4 | Resume List + Upload screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
-| 5 | Resume Detail / Score screen | ⬜ Not started | — | — | — |
+| 5 | Resume Detail / Score screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 6 | Job Feed + Job Detail screens | ⬜ Not started | — | — | — |
 | 7 | Match Score screen | ⬜ Not started | — | — | — |
 | 8 | Tailor Resume + Cover Letter screens | ⬜ Not started | — | — | — |
@@ -41,11 +41,11 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 5 — Resume Detail / Score screen
-**Blocked on:** Nothing — backend Day 5 AI endpoints are built and deployed
+**Next to build:** Day 6 — Job Feed + Job Detail screens
+**Blocked on:** Backend Day 6 (Job CRUD) not built yet; needs ADMIN_KEY env var (ACTION_REQUIRED_004)
 **Open bugs:** None
-**Last push:** Jun 8, 2026 (Day 4 complete)
-**Resume point:** Clean — Day 4 done, Day 5 ready to build
+**Last push:** Jun 8, 2026 (Day 5 complete)
+**Resume point:** Clean — Day 5 done
 
 ---
 
@@ -161,27 +161,24 @@
 
 ---
 
-### SESSION 6 — [DATE]
+### SESSION 6 — Jun 8, 2026
 **Type:** Planned (Day 5)
 **Goal:** Resume Detail / Score screen
 
-**Pre-session checklist:**
-- [ ] Day 4 complete
-- [ ] Backend Day 5 ✅ (POST /api/ai/resume-parse, POST /api/ai/resume-score)
+**What was built:**
+- `ResumeDetailScreen.tsx` — full production: header card (versionName, date, Original badge, View File link), score ring (90px circle, colored by score level with label), auto-analyze on mount if already scored, manual "Analyze Resume" button if score=null, parallel parse+score API calls, skills chips (blue), tech stack chips (green), experience/education info row, strengths (green checkmarks), improvements (orange arrows), "Tailor for a Job" action button, Re-analyze button
+- `api.types.ts` — `ParsedResume` and `ResumeScore` interfaces added
+- `resumeSlice.ts` — `updateResumeScore` action added (updates score in list + selected)
+- `constants/index.ts` — `RESUME_PARSE` and `RESUME_SCORE` endpoints added
 
-**Files to create:**
-- [ ] `src/screens/resume/ResumeDetailScreen.tsx`
-- [ ] `src/components/resume/ScoreGauge.tsx`
-- [ ] `src/components/resume/SkillChips.tsx`
+**Files updated:**
+- `src/screens/resume/ResumeDetailScreen.tsx` (full rewrite)
+- `src/types/api.types.ts` (ParsedResume + ResumeScore added)
+- `src/store/slices/resumeSlice.ts` (updateResumeScore action)
+- `src/constants/index.ts` (RESUME_PARSE + RESUME_SCORE added)
 
-**Test criteria:**
-- [ ] Tap resume → detail screen shows score gauge, skills, strengths, improvements
-- [ ] "Analyze" button triggers parse + score API call
-- [ ] Loading spinner shown during AI processing
-- [ ] Score displayed as 0-100 gauge
-
-**Commit:** —
-**Status:** ⬜ Not started
+**Commit:** (this session)
+**Status:** ✅ Complete — pending device test
 
 ---
 

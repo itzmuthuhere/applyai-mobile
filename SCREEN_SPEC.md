@@ -31,7 +31,7 @@ Each screen entry has:
 | ProfileScreen | `Profile` | 3 | ✅ |
 | ResumeListScreen | `ResumeList` | 4 | ✅ |
 | ResumeUploadScreen | `ResumeUpload` | 4 | ✅ |
-| ResumeDetailScreen | `ResumeDetail` | 5 | ⬜ |
+| ResumeDetailScreen | `ResumeDetail` | 5 | ✅ |
 | TailorResumeScreen | `TailorResume` | 8 | ⬜ |
 | CoverLetterScreen | `CoverLetter` | 8 | ⬜ |
 | JobFeedScreen | `JobFeed` | 6 | ⬜ |

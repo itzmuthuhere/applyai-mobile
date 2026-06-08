@@ -48,6 +48,13 @@ const resumeSlice = createSlice({
       state.isLoading = false;
       state.isUploading = false;
     },
+    updateResumeScore(state, action: PayloadAction<{ resumeId: number; score: number }>) {
+      const resume = state.list.find((r) => r.id === action.payload.resumeId);
+      if (resume) resume.aiScore = action.payload.score;
+      if (state.selected?.id === action.payload.resumeId) {
+        state.selected.aiScore = action.payload.score;
+      }
+    },
     clearError(state) {
       state.error = null;
     },
@@ -62,6 +69,7 @@ export const {
   setAnalyzing,
   setLoading,
   setError,
+  updateResumeScore,
   clearError,
 } = resumeSlice.actions;
 export default resumeSlice.reducer;

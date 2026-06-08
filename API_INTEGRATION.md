@@ -94,7 +94,7 @@ No screen needs to handle 401 individually.
 
 **Request (score):** `{ "resumeId": 1 }`
 **Response (score):** `{ "score": 72, "strengths": [], "improvements": [] }`
-**Backend status:** ⬜ Day 5
+**Backend status:** ✅ Working (Day 5)
 
 ---
 
@@ -213,8 +213,8 @@ No screen needs to handle 401 individually.
 | POST | /api/resumes/upload | ResumeUpload | ✅ Working | ✅ Day 4 |
 | POST | /api/resumes/tailor | TailorResume | ⬜ Day 8 | ⬜ Day 8 |
 | POST | /api/resumes/cover-letter | CoverLetter | ⬜ Day 8 | ⬜ Day 8 |
-| POST | /api/ai/resume-parse | ResumeDetail | ⬜ Day 5 | ⬜ Day 5 |
-| POST | /api/ai/resume-score | ResumeDetail | ⬜ Day 5 | ⬜ Day 5 |
+| POST | /api/ai/resume-parse | ResumeDetail | ✅ Working | ✅ Day 5 |
+| POST | /api/ai/resume-score | ResumeDetail | ✅ Working | ✅ Day 5 |
 | GET | /api/jobs/feed | JobFeed | ⬜ Day 6 | ⬜ Day 6 |
 | GET | /api/jobs/{id} | JobDetail | ⬜ Day 6 | ⬜ Day 6 |
 | POST | /api/ai/match-score | MatchScore | ⬜ Day 7 | ⬜ Day 7 |

@@ -35,6 +35,20 @@ export interface Resume {
   createdAt: string;
 }
 
+export interface ParsedResume {
+  skills: string[];
+  experienceYears: number;
+  education: string;
+  techStack: string[];
+  summary: string;
+}
+
+export interface ResumeScore {
+  score: number;
+  strengths: string[];
+  improvements: string[];
+}
+
 export interface ResumeUploadResponse {
   resumeId: number;
   fileUrl: string;
