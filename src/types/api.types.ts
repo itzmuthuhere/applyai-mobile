@@ -61,13 +61,21 @@ export interface Job {
   title: string;
   company: string;
   location: string;
-  remoteType: RemotePreference;
+  description: string;
+  source: string | null;
+  sourceUrl: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
-  description: string;
-  requiredSkills: string[];
-  postedAt: string;
-  sourceUrl: string | null;
+  isRemote: boolean | null;
+  postedDate: string | null;
+  scrapedAt: string;
+}
+
+export interface JobFeedResponse {
+  content: Job[];
+  page: number;
+  size: number;
+  totalElements: number;
 }
 
 export interface MatchScore {

@@ -215,8 +215,8 @@ No screen needs to handle 401 individually.
 | POST | /api/resumes/cover-letter | CoverLetter | ⬜ Day 8 | ⬜ Day 8 |
 | POST | /api/ai/resume-parse | ResumeDetail | ✅ Working | ✅ Day 5 |
 | POST | /api/ai/resume-score | ResumeDetail | ✅ Working | ✅ Day 5 |
-| GET | /api/jobs/feed | JobFeed | ⬜ Day 6 | ⬜ Day 6 |
-| GET | /api/jobs/{id} | JobDetail | ⬜ Day 6 | ⬜ Day 6 |
+| GET | /api/jobs/feed | JobFeed | ✅ Working | ✅ Day 6 |
+| GET | /api/jobs/{id} | JobDetail | ✅ Working | ✅ Day 6 |
 | POST | /api/ai/match-score | MatchScore | ⬜ Day 7 | ⬜ Day 7 |
 | POST | /api/applications/apply | ApplicationDetail | ⬜ Day 9 | ⬜ Day 9 |
 | GET | /api/applications | ApplicationsList | ⬜ Day 9 | ⬜ Day 9 |

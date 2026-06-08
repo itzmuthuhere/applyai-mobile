@@ -34,8 +34,8 @@ Each screen entry has:
 | ResumeDetailScreen | `ResumeDetail` | 5 | ✅ |
 | TailorResumeScreen | `TailorResume` | 8 | ⬜ |
 | CoverLetterScreen | `CoverLetter` | 8 | ⬜ |
-| JobFeedScreen | `JobFeed` | 6 | ⬜ |
-| JobDetailScreen | `JobDetail` | 6 | ⬜ |
+| JobFeedScreen | `JobFeed` | 6 | ✅ |
+| JobDetailScreen | `JobDetail` | 6 | ✅ |
 | MatchScoreScreen | `MatchScore` | 7 | ⬜ |
 | ApplicationsListScreen | `ApplicationsList` | 9 | ⬜ |
 | ApplicationDetailScreen | `ApplicationDetail` | 9 | ⬜ |

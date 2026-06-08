@@ -13,7 +13,7 @@
 | 3 | Home + Profile screens | ✅ Complete | v1.0 | Jun 6, 2026 | ⬜ Pending device test |
 | 4 | Resume List + Upload screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 5 | Resume Detail / Score screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
-| 6 | Job Feed + Job Detail screens | ⬜ Not started | — | — | — |
+| 6 | Job Feed + Job Detail screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 7 | Match Score screen | ⬜ Not started | — | — | — |
 | 8 | Tailor Resume + Cover Letter screens | ⬜ Not started | — | — | — |
 | 9 | Applications List + Detail screens | ⬜ Not started | — | — | — |
@@ -41,8 +41,8 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 6 — Job Feed + Job Detail screens
-**Blocked on:** Backend Day 6 (Job CRUD) not built yet; needs ADMIN_KEY env var (ACTION_REQUIRED_004)
+**Next to build:** Day 7 — Match Score screen (frontend) + AI match scoring (backend)
+**Blocked on:** ADMIN_KEY env var must be set in Railway to use POST /api/jobs (ACTION_REQUIRED_004)
 **Open bugs:** None
 **Last push:** Jun 8, 2026 (Day 5 complete)
 **Resume point:** Clean — Day 5 done
@@ -182,28 +182,32 @@
 
 ---
 
-### SESSION 7 — [DATE]
+### SESSION 7 — Jun 8, 2026
 **Type:** Planned (Day 6)
 **Goal:** Job Feed + Job Detail screens
 
-**Pre-session checklist:**
-- [ ] Day 5 complete
-- [ ] Backend Day 6 ✅ (GET /api/jobs/feed, GET /api/jobs/{id})
+**What was built:**
+- `JobFeedScreen.tsx` — FlatList of job cards, infinite scroll (onEndReached → appendJobs), INR salary formatting (L/Cr), Remote badge, skeleton loading (5 cards), empty/error states, pull-to-refresh
+- `JobDetailScreen.tsx` — fetches job on mount, header with company initial icon, meta row (location, remote, salary, posted date, source), action row (See Match Score wired, Tailor + Cover Letter disabled with Day 8 badges), View Original Posting link (Linking.openURL), full description
+- `api.types.ts` — `Job` type updated to match backend (isRemote, postedDate, scrapedAt, source); `JobFeedResponse` type added
+- `constants/index.ts` — `JOB_FEED` and `JOB_BY_ID` endpoints added
 
-**Files to create:**
-- [ ] `src/screens/jobs/JobFeedScreen.tsx`
-- [ ] `src/screens/jobs/JobDetailScreen.tsx`
-- [ ] `src/store/slices/jobSlice.ts`
-- [ ] `src/components/jobs/JobCard.tsx`
+**Files updated:**
+- `src/screens/jobs/JobFeedScreen.tsx` (full rewrite)
+- `src/screens/jobs/JobDetailScreen.tsx` (full rewrite)
+- `src/types/api.types.ts` (Job + JobFeedResponse updated)
+- `src/constants/index.ts` (JOB_FEED + JOB_BY_ID added)
 
-**Test criteria:**
-- [ ] Job feed loads paginated list
-- [ ] Infinite scroll loads next page
-- [ ] Tap job → detail screen with full description
-- [ ] Match score shown on card (null shown as "Not scored")
+**Backend also built this session:**
+- `entity/Job.java`, `repository/JobRepository.java`
+- `dto/JobRequest.java`, `dto/JobResponse.java`, `dto/JobFeedResponse.java`
+- `service/JobService.java`, `controller/JobController.java`
+- POST /api/jobs (admin key), GET /api/jobs/feed, GET /api/jobs/{id}
+- SecurityConfig updated: POST /api/jobs permitAll, X-Admin-Key added to CORS
+- Backend commit: dbcb658
 
-**Commit:** —
-**Status:** ⬜ Not started
+**Commit:** (this session)
+**Status:** ✅ Complete — pending device test + ADMIN_KEY in Railway
 
 ---
 

@@ -24,7 +24,7 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 6 — Job Feed + Job Detail screens
+**Active Day:** Day 7 — Match Score screen
 **Last Session:** Jun 8, 2026
 **Overall Status:** Day 5 complete — ResumeDetailScreen built with AI score ring, skills chips, strengths/improvements
 
@@ -41,8 +41,8 @@
 | Resume List screen | 4 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Resume Upload screen | 4 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Resume Detail / Score screen | 5 | ✅ Complete | v1.0 | ⬜ Pending device test |
-| Job Feed screen | 6 | ⬜ Not started | — | — |
-| Job Detail screen | 6 | ⬜ Not started | — | — |
+| Job Feed screen | 6 | ✅ Complete | v1.0 | ⬜ Pending device test |
+| Job Detail screen | 6 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Match Score screen | 7 | ⬜ Not started | — | — |
 | Tailor Resume screen | 8 | ⬜ Not started | — | — |
 | Cover Letter screen | 8 | ⬜ Not started | — | — |
@@ -91,8 +91,8 @@ src/
 │   │   ├── TailorResumeScreen.tsx ✅ Placeholder
 │   │   └── CoverLetterScreen.tsx ✅ Placeholder
 │   ├── jobs/
-│   │   ├── JobFeedScreen.tsx  ✅ Placeholder
-│   │   ├── JobDetailScreen.tsx ✅ Placeholder
+│   │   ├── JobFeedScreen.tsx  ✅ Full — FlatList, infinite scroll, salary formatting, skeleton/empty/error
+│   │   ├── JobDetailScreen.tsx ✅ Full — job meta, action row, description, View Posting link
 │   │   └── MatchScoreScreen.tsx ✅ Placeholder
 │   ├── applications/
 │   │   ├── ApplicationsListScreen.tsx ✅ Placeholder
