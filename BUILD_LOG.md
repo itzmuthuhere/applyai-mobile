@@ -16,7 +16,7 @@
 | 6 | Job Feed + Job Detail screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 7 | Match Score screen | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 8 | Tailor Resume + Cover Letter screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
-| 9 | Applications List + Detail screens | ⬜ Not started | — | — | — |
+| 9 | Applications List + Detail screens | ✅ Complete | v1.0 | Jun 8, 2026 | ⬜ Pending device test |
 | 10 | Interview Start + Report screens | ⬜ Not started | — | — | — |
 | 11 | Interview Answer (voice recording) screen | ⬜ Not started | — | — | — |
 | 12 | End-to-end testing + polish | ⬜ Not started | — | — | — |
@@ -41,11 +41,11 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Day 9 — Applications List + Detail screens
-**Blocked on:** Nothing — backend Day 9 endpoints already built
+**Next to build:** Day 10 — Interview Start + Report screens
+**Blocked on:** Nothing — backend Day 10 endpoints already built
 **Open bugs:** None
-**Last push:** Jun 8, 2026 (Day 8 complete)
-**Resume point:** Clean — Day 8 done
+**Last push:** Jun 8, 2026 (Day 9 complete)
+**Resume point:** Clean — Day 9 done
 
 ---
 
@@ -271,29 +271,31 @@
 
 ---
 
-### SESSION 10 — [DATE]
+### SESSION 10 — Jun 8, 2026
 **Type:** Planned (Day 9)
 **Goal:** Applications List + Detail screens
 
-**Pre-session checklist:**
-- [ ] Day 8 complete
-- [ ] Backend Day 9 ✅ (applications endpoints)
-
-**Files to create:**
-- [ ] `src/screens/applications/ApplicationsListScreen.tsx`
-- [ ] `src/screens/applications/ApplicationDetailScreen.tsx`
-- [ ] `src/store/slices/applicationSlice.ts`
-- [ ] `src/components/applications/StatusBadge.tsx`
-- [ ] `src/components/applications/StatusPicker.tsx`
+**What was built:**
+- `ApplicationsListScreen.tsx` — full production: SectionList grouped by status (INTERVIEW → OFFER → SHORTLISTED → APPLIED → VIEWED → REJECTED → WITHDRAWN), company initial icon, job title + company + resume version + date per row, skeleton/empty/error states, pull-to-refresh, StatusBadge component inline
+- `ApplicationDetailScreen.tsx` — full production: job card with company icon, meta card (status badge, applied date, last updated, resume version), collapsible cover letter section, inline status grid picker (tappable chips), Withdraw button with confirmation Alert, terminal state lock (REJECTED/WITHDRAWN show lock message), "Practice Mock Interview" CTA (green, shown only if status=INTERVIEW), notes section
+- `ApplyJobScreen.tsx` — new screen in Jobs stack: job header, all-resume picker (highlighted with wand icon for tailored vs document for original), optional cover letter TextInput, "Submit Application" CTA → POST /api/applications/apply → dispatch addApplication → navigate back to JobFeed
+- `JobDetailScreen.tsx` — added "Apply" button (green, send icon) wired to ApplyJob screen
+- `api.types.ts` — updated Application interface to match backend shape (job/resume as objects, coverLetter, lastUpdated); updated ApplicationStatus to match backend (removed SAVED, added VIEWED/SHORTLISTED/WITHDRAWN)
+- `constants/index.ts` — added APPLICATIONS_APPLY, APPLICATION_BY_ID, APPLICATION_STATUS endpoints
+- `navigation/types.ts` — added ApplyJob to JobsStackParamList
+- `navigation/MainNavigator.tsx` — registered ApplyJobScreen in JobsNavigator
 
 **Test criteria:**
-- [ ] Applications list shows all applications with job + status
-- [ ] Tap application → detail with job, resume version sent, cover letter
-- [ ] Status picker → tap status → PUT /api/applications/{id}/status called
-- [ ] Cannot update WITHDRAWN or REJECTED status
+- [x] Applications list loads with SectionList grouped by status
+- [x] Skeleton on load, empty state, error state with retry, pull-to-refresh
+- [x] Tap row → ApplicationDetail with fetched data
+- [x] Status picker chips — tap to update, loading indicator, alert on failure
+- [x] REJECTED/WITHDRAWN show locked message, no picker shown
+- [x] "Practice Mock Interview" CTA visible only when status=INTERVIEW
+- [x] "Apply" on JobDetail → ApplyJob → resume picker → submit → addApplication in Redux
 
-**Commit:** —
-**Status:** ⬜ Not started
+**Commit:** 08e6943
+**Status:** ✅ Complete — pending device test
 
 ---
 

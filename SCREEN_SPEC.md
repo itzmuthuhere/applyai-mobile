@@ -37,8 +37,8 @@ Each screen entry has:
 | JobFeedScreen | `JobFeed` | 6 | ✅ |
 | JobDetailScreen | `JobDetail` | 6 | ✅ |
 | MatchScoreScreen | `MatchScore` | 7 | ⬜ |
-| ApplicationsListScreen | `ApplicationsList` | 9 | ⬜ |
-| ApplicationDetailScreen | `ApplicationDetail` | 9 | ⬜ |
+| ApplicationsListScreen | `ApplicationsList` | 9 | ✅ |
+| ApplicationDetailScreen | `ApplicationDetail` | 9 | ✅ |
 | InterviewStartScreen | `InterviewStart` | 10 | ⬜ |
 | InterviewQuestionScreen | `InterviewQuestion` | 11 | ⬜ |
 | InterviewReportScreen | `InterviewReport` | 10 | ⬜ |
@@ -335,41 +335,39 @@ Each screen entry has:
 
 ### ApplicationsListScreen
 - **Route:** `ApplicationsList`
-- **Day:** 9 | **Status:** ⬜
+- **Day:** 9 | **Status:** ✅
 - **Entry:** Bottom tab (Tab 4, default)
 - **Purpose:** Track all submitted applications
-- **Redux reads:** `application.list`, `application.isLoading`
-- **API calls:**
-  - `GET /api/applications` — on mount
-- **Loading state:** Skeleton rows
-- **Empty state:** "No applications yet. Apply to a job to get started."
-- **UI:**
-  - Grouped by status: APPLIED | INTERVIEW | OFFER | REJECTED
-  - Each row: company, job title, applied date, status badge
-- **Navigation out:** Tap application → `ApplicationDetail` (pass applicationId)
+- **Redux reads:** `application.list`
+- **API calls:** `GET /api/applications?page=0&size=50` — on mount
+- **Loading state:** Skeleton rows (4)
+- **Empty state:** Briefcase icon + "No applications yet"
+- **Error state:** Retry button
+- **UI:** SectionList grouped by status order (INTERVIEW → OFFER → SHORTLISTED → APPLIED → VIEWED → REJECTED → WITHDRAWN); each row: company initial icon, job title, company, resume version name, applied date; inline StatusBadge
+- **Navigation out:** Tap row → `ApplicationDetail` (pass applicationId)
 
 ---
 
 ### ApplicationDetailScreen
 - **Route:** `ApplicationDetail`
 - **Params:** `{ applicationId: number }`
-- **Day:** 9 | **Status:** ⬜
+- **Day:** 9 | **Status:** ✅
 - **Entry:** Tap application in ApplicationsListScreen
 - **Purpose:** Full application detail + update status + start interview prep
-- **Redux reads:** `application.selected`
+- **Local state:** `application`, `isLoading`, `isUpdating`, `showCoverLetter`, `error`
 - **API calls:**
   - `GET /api/applications/{id}` — on mount
-  - `PUT /api/applications/{id}/status { status }` — on status change
-- **Local state:** `isUpdating: boolean`
+  - `PUT /api/applications/{id}/status { status }` — on status chip tap
 - **UI:**
-  - Job: title, company, location
-  - Resume version sent (locked — Applied Resume Vault)
-  - Cover letter (if any)
-  - Current status + status picker
-  - "Practice Interview" button (only shown if status = INTERVIEW)
-  - Notes field
-- **Navigation out:**
-  - "Practice Interview" → `InterviewStart` (pass applicationId)
+  - Job card: company icon, title, company, location
+  - Meta card: status badge, applied date, last updated, resume version
+  - Collapsible cover letter (if present)
+  - Status grid picker: tappable chips for each non-terminal status; active chip highlighted in status color
+  - "Withdraw Application" destructive button with Alert confirmation
+  - Terminal lock: REJECTED/WITHDRAWN show lock icon + cannot-change message
+  - "Practice Mock Interview" CTA (green, mic icon) — only if status = INTERVIEW
+  - Notes section (if notes present)
+- **Navigation out:** "Practice Mock Interview" → `InterviewStart` (applicationId)
 
 ---
 

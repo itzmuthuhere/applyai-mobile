@@ -236,10 +236,10 @@ No screen needs to handle 401 individually.
 | GET | /api/jobs/feed | JobFeed | ✅ Working | ✅ Day 6 |
 | GET | /api/jobs/{id} | JobDetail | ✅ Working | ✅ Day 6 |
 | POST | /api/ai/match-score | MatchScore | ⬜ Day 7 | ⬜ Day 7 |
-| POST | /api/applications/apply | ApplicationDetail | ⬜ Day 9 | ⬜ Day 9 |
-| GET | /api/applications | ApplicationsList | ⬜ Day 9 | ⬜ Day 9 |
-| GET | /api/applications/{id} | ApplicationDetail | ⬜ Day 9 | ⬜ Day 9 |
-| PUT | /api/applications/{id}/status | ApplicationDetail | ⬜ Day 9 | ⬜ Day 9 |
+| POST | /api/applications/apply | ApplyJob | ✅ Day 9 | ✅ Day 9 |
+| GET | /api/applications | ApplicationsList | ✅ Day 9 | ✅ Day 9 |
+| GET | /api/applications/{id} | ApplicationDetail | ✅ Day 9 | ✅ Day 9 |
+| PUT | /api/applications/{id}/status | ApplicationDetail | ✅ Day 9 | ✅ Day 9 |
 | POST | /api/interviews/start | InterviewStart | ⬜ Day 10 | ⬜ Day 10 |
 | POST | /api/interviews/{id}/answer | InterviewQuestion | ⬜ Day 11 | ⬜ Day 11 |
 | GET | /api/interviews/{id} | InterviewReport | ⬜ Day 10 | ⬜ Day 10 |

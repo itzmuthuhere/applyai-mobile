@@ -24,9 +24,9 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Day 9 — Applications List + Detail screens
+**Active Day:** Day 10 — Interview Start + Report screens
 **Last Session:** Jun 8, 2026
-**Overall Status:** Day 8 complete — TailorResumeScreen + CoverLetterScreen with AI generation, resume picker, share
+**Overall Status:** Day 9 complete — ApplicationsList, ApplicationDetail, ApplyJob screens with status picker and apply flow
 
 ---
 
@@ -46,8 +46,8 @@
 | Match Score screen | 7 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Tailor Resume screen | 8 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Cover Letter screen | 8 | ✅ Complete | v1.0 | ⬜ Pending device test |
-| Applications List screen | 9 | ⬜ Not started | — | — |
-| Application Detail screen | 9 | ⬜ Not started | — | — |
+| Applications List screen | 9 | ✅ Complete | v1.0 | ⬜ Pending device test |
+| Application Detail screen | 9 | ✅ Complete | v1.0 | ⬜ Pending device test |
 | Interview Start screen | 10 | ⬜ Not started | — | — |
 | Interview Question screen | 11 | ⬜ Not started | — | — |
 | Interview Report screen | 10 | ⬜ Not started | — | — |
