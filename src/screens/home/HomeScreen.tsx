@@ -10,18 +10,9 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { RootState } from '../../store';
 import { COLORS } from '../../constants';
-import { HomeStackParamList, MainTabParamList } from '../../navigation/types';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-
-type HomeNavProp = CompositeNavigationProp<
-  NativeStackNavigationProp<HomeStackParamList, 'Home'>,
-  BottomTabNavigationProp<MainTabParamList>
->;
 
 const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
   FREE:   { bg: '#F1F5F9', text: '#64748B' },
@@ -30,7 +21,8 @@ const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function HomeScreen() {
-  const navigation = useNavigation<HomeNavProp>();
+  // useNavigation<any> — cross-tab navigation requires parent tab navigator type
+  const navigation = useNavigation<any>();
   const user = useSelector((state: RootState) => state.auth.user);
   const resumeCount = useSelector((state: RootState) => state.resume.list.length);
   const applicationCount = useSelector((state: RootState) => state.application.list.length);
@@ -126,7 +118,6 @@ export default function HomeScreen() {
             onPress={() =>
               navigation.navigate('InterviewTab', {
                 screen: 'InterviewStart',
-                params: { applicationId: 0 },
               })
             }
           />

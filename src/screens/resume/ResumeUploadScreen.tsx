@@ -73,6 +73,7 @@ export default function ResumeUploadScreen() {
         fileUrl: res.data.fileUrl,
         aiScore: null,
         isOriginal: true,
+        isParsed: false,
         createdAt: new Date().toISOString(),
       };
       dispatch(addResume(newResume));

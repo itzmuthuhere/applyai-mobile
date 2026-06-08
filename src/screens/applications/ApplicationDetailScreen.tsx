@@ -25,6 +25,8 @@ import apiClient from '../../api/apiClient';
 
 type RouteProps = RouteProp<ApplicationsStackParamList, 'ApplicationDetail'>;
 type Nav = NativeStackNavigationProp<ApplicationsStackParamList, 'ApplicationDetail'>;
+// Cross-tab navigation (to InterviewTab) uses navigation as any
+type AnyNav = any;
 
 const STATUS_ORDER: ApplicationStatus[] = [
   'APPLIED',
@@ -61,6 +63,7 @@ const TERMINAL_STATUSES: ApplicationStatus[] = ['REJECTED', 'WITHDRAWN'];
 export default function ApplicationDetailScreen() {
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
+  const anyNav = useNavigation<AnyNav>();
   const dispatch = useDispatch();
 
   const [application, setApplication] = useState<Application | null>(null);
@@ -265,7 +268,10 @@ export default function ApplicationDetailScreen() {
         <TouchableOpacity
           style={styles.interviewBtn}
           onPress={() =>
-            navigation.navigate('InterviewStart' as any, { applicationId: application.id })
+            anyNav.navigate('InterviewTab', {
+              screen: 'InterviewStart',
+              params: { applicationId: application.id },
+            })
           }
         >
           <Ionicons name="mic-outline" size={20} color="#fff" />
