@@ -69,7 +69,9 @@ export default function ApplyJobScreen() {
       const msg =
         e?.response?.data?.message ??
         e?.response?.data?.error ??
+        e?.message ??
         'Failed to submit application.';
+      console.log('[ApplyJob] Error:', JSON.stringify(e?.response?.data), 'status:', e?.response?.status, 'msg:', e?.message);
       if (msg.toLowerCase().includes('already applied')) {
         setError('You have already applied to this job.');
       } else {
