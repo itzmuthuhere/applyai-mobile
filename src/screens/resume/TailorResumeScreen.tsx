@@ -85,7 +85,7 @@ export default function TailorResumeScreen() {
           fileUrl: '',
           aiScore: null,
           isOriginal: false,
-          isParsed: false,
+          isParsed: true,
           createdAt: new Date().toISOString(),
         })
       );
