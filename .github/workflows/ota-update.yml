@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
       - name: Push OTA update (preview channel)
         run: npx eas update --channel preview --message "${{ github.event.head_commit.message }}" --non-interactive
         env:
