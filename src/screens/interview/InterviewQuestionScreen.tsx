@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
+  Linking,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -95,8 +96,15 @@ export default function InterviewQuestionScreen() {
         const { granted } = await Audio.requestPermissionsAsync();
         if (!granted) {
           Alert.alert(
-            'Microphone Access',
-            'Please allow microphone access in Settings to use voice mode.',
+            'Microphone Access Required',
+            'ApplyAI needs microphone access to record your answers. Please enable it in Settings.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Open Settings',
+                onPress: () => Linking.openSettings(),
+              },
+            ],
           );
           return;
         }
