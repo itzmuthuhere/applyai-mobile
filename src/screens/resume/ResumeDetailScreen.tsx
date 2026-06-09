@@ -55,14 +55,26 @@ export default function ResumeDetailScreen() {
     if (!silent) setAnalyzeError(null);
     setIsAnalyzing(true);
     try {
-      const [parseRes, scoreRes] = await Promise.all([
+      const [parseSettled, scoreSettled] = await Promise.allSettled([
         apiClient.post<ParsedResume>(API_ENDPOINTS.RESUME_PARSE, { resumeId: resume.id }),
         apiClient.post<ResumeScore>(API_ENDPOINTS.RESUME_SCORE, { resumeId: resume.id }),
       ]);
-      setParseResult(parseRes.data);
-      setScoreResult(scoreRes.data);
-      dispatch(updateResumeScore({ resumeId: resume.id, score: scoreRes.data.score }));
-      dispatch(updateResumeParsed({ resumeId: resume.id }));
+
+      if (parseSettled.status === 'fulfilled') {
+        setParseResult(parseSettled.value.data);
+        dispatch(updateResumeParsed({ resumeId: resume.id }));
+      }
+
+      if (scoreSettled.status === 'fulfilled') {
+        setScoreResult(scoreSettled.value.data);
+        dispatch(updateResumeScore({ resumeId: resume.id, score: scoreSettled.value.data.score }));
+        // Score endpoint now saves parsedText too (backend fix), so mark as parsed
+        dispatch(updateResumeParsed({ resumeId: resume.id }));
+      }
+
+      if (parseSettled.status === 'rejected' && scoreSettled.status === 'rejected') {
+        setAnalyzeError('Analysis failed. Please try again.');
+      }
     } catch {
       setAnalyzeError('Analysis failed. Please try again.');
     } finally {
