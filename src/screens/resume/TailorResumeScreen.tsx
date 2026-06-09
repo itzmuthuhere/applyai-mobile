@@ -10,7 +10,7 @@ import {
   Alert,
   Share,
 } from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -227,7 +227,9 @@ export default function TailorResumeScreen() {
 
             <TouchableOpacity
               style={styles.doneBtn}
-              onPress={() => navigation.navigate('ResumeList')}
+              onPress={() => navigation.dispatch(
+                CommonActions.navigate({ name: 'ResumeTab' })
+              )}
             >
               <Text style={styles.doneBtnText}>View My Resumes</Text>
             </TouchableOpacity>
