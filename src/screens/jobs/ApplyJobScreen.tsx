@@ -7,9 +7,8 @@ import {
   TextInput,
   StyleSheet,
   ActivityIndicator,
-  FlatList,
 } from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,6 +19,7 @@ import { setResumes } from '../../store/slices/resumeSlice';
 import { addApplication } from '../../store/slices/applicationSlice';
 import { Resume, Application } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import ResumeDropdown from '../../components/common/ResumeDropdown';
 
 type RouteProps = RouteProp<JobsStackParamList, 'ApplyJob'>;
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'ApplyJob'>;
@@ -37,6 +37,7 @@ export default function ApplyJobScreen() {
   const [resumesLoading, setResumesLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (resumes.length === 0) loadResumes();
@@ -63,11 +64,17 @@ export default function ApplyJobScreen() {
       if (coverLetter.trim()) body.coverLetter = coverLetter.trim();
       const { data } = await apiClient.post<Application>(API_ENDPOINTS.APPLICATIONS_APPLY, body);
       dispatch(addApplication(data));
-      navigation.navigate('JobFeed');
+      setSubmitted(true);
     } catch (e: any) {
       const msg =
-        e?.response?.data?.message ?? e?.response?.data?.error ?? 'Failed to submit application.';
-      setError(msg);
+        e?.response?.data?.message ??
+        e?.response?.data?.error ??
+        'Failed to submit application.';
+      if (msg.toLowerCase().includes('already applied')) {
+        setError('You have already applied to this job.');
+      } else {
+        setError(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -77,8 +84,45 @@ export default function ApplyJobScreen() {
     ? `${selectedJob.title} at ${selectedJob.company}`
     : `Job #${params.jobId}`;
 
+  // ── Success state ──────────────────────────────────────────────────────────
+  if (submitted) {
+    return (
+      <View style={styles.successContainer}>
+        <View style={styles.successIconWrap}>
+          <Ionicons name="checkmark-circle" size={72} color={COLORS.success} />
+        </View>
+        <Text style={styles.successTitle}>Application Submitted!</Text>
+        <Text style={styles.successSubtitle}>
+          Your application for{'\n'}
+          <Text style={styles.successJobName}>{jobLabel}</Text>
+          {'\n'}has been sent successfully.
+        </Text>
+        <TouchableOpacity
+          style={styles.viewAppsBtn}
+          onPress={() =>
+            navigation.dispatch(CommonActions.navigate({ name: 'ApplicationsTab' }))
+          }
+        >
+          <Ionicons name="list-outline" size={18} color="#fff" />
+          <Text style={styles.viewAppsBtnText}>View My Applications</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.dispatch(CommonActions.navigate({ name: 'JobsTab' }))}
+        >
+          <Text style={styles.backBtnText}>Back to Jobs</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // ── Form ──────────────────────────────────────────────────────────────────
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.jobHeader}>
         <Ionicons name="briefcase-outline" size={16} color={COLORS.primary} />
         <Text style={styles.jobLabel} numberOfLines={2}>
@@ -87,53 +131,16 @@ export default function ApplyJobScreen() {
       </View>
 
       <Text style={styles.sectionTitle}>Select Resume to Submit</Text>
-      {resumesLoading ? (
-        <ActivityIndicator color={COLORS.primary} style={styles.spinner} />
-      ) : resumes.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Ionicons name="document-outline" size={32} color={COLORS.textMuted} />
-          <Text style={styles.emptyText}>No resumes found.</Text>
-          <Text style={styles.emptySubtext}>Upload a resume from the Resume tab first.</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={resumes}
-          keyExtractor={(r) => String(r.id)}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.pickerRow}
-          renderItem={({ item }) => {
-            const selected = item.id === selectedResumeId;
-            return (
-              <TouchableOpacity
-                style={[styles.chip, selected && styles.chipSelected]}
-                onPress={() => setSelectedResumeId(item.id)}
-              >
-                <Ionicons
-                  name={item.isOriginal ? 'document-outline' : 'color-wand-outline'}
-                  size={13}
-                  color={selected ? COLORS.primary : COLORS.textMuted}
-                />
-                <Text
-                  style={[styles.chipText, selected && styles.chipTextSelected]}
-                  numberOfLines={1}
-                >
-                  {item.versionName}
-                </Text>
-                {item.aiScore != null && (
-                  <Text style={[styles.chipScore, selected && styles.chipScoreSelected]}>
-                    {item.aiScore}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            );
-          }}
-        />
-      )}
+      <ResumeDropdown
+        resumes={resumes}
+        selectedId={selectedResumeId}
+        onSelect={(id) => { setSelectedResumeId(id); setError(null); }}
+        loading={resumesLoading}
+        placeholder="Choose a resume…"
+      />
 
-      <Text style={styles.sectionTitle}>
-        Cover Letter{' '}
-        <Text style={styles.optional}>(optional)</Text>
+      <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+        Cover Letter <Text style={styles.optional}>(optional)</Text>
       </Text>
       <TextInput
         style={styles.textArea}
@@ -154,7 +161,10 @@ export default function ApplyJobScreen() {
       )}
 
       <TouchableOpacity
-        style={[styles.submitBtn, (!selectedResumeId || isSubmitting) && styles.submitBtnDisabled]}
+        style={[
+          styles.submitBtn,
+          (!selectedResumeId || isSubmitting) && styles.submitBtnDisabled,
+        ]}
         onPress={handleApply}
         disabled={!selectedResumeId || isSubmitting}
       >
@@ -190,39 +200,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10 },
   optional: { fontSize: 13, fontWeight: '400', color: COLORS.textSecondary },
 
-  spinner: { marginVertical: 20 },
-
-  emptyBox: {
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 16,
-  },
-  emptyText: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, marginTop: 8 },
-  emptySubtext: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', marginTop: 4 },
-
-  pickerRow: { paddingVertical: 4, gap: 8, marginBottom: 20 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    maxWidth: 200,
-  },
-  chipSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
-  chipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500', flexShrink: 1 },
-  chipTextSelected: { color: COLORS.primary, fontWeight: '700' },
-  chipScore: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600' },
-  chipScoreSelected: { color: COLORS.primary },
-
   textArea: {
     backgroundColor: COLORS.surface,
     borderRadius: 12,
@@ -257,4 +234,48 @@ const styles = StyleSheet.create({
   },
   submitBtnDisabled: { backgroundColor: COLORS.textMuted },
   submitBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+
+  // Success screen
+  successContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 16,
+  },
+  successIconWrap: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F0FDF4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  successTitle: { fontSize: 24, fontWeight: '800', color: COLORS.textPrimary },
+  successSubtitle: {
+    fontSize: 15,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  successJobName: { fontWeight: '700', color: COLORS.textPrimary },
+  viewAppsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    width: '100%',
+    marginTop: 8,
+  },
+  viewAppsBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  backBtn: {
+    paddingVertical: 12,
+  },
+  backBtnText: { fontSize: 15, color: COLORS.textSecondary, fontWeight: '500' },
 });
