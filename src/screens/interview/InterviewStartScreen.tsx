@@ -79,8 +79,9 @@ export default function InterviewStartScreen() {
     setPickerVisible(true);
     setAppsLoading(true);
     try {
-      const { data } = await apiClient.get<Application[]>(API_ENDPOINTS.APPLICATIONS);
-      const eligible = data.filter(
+      const { data } = await apiClient.get<{ content: Application[] }>(API_ENDPOINTS.APPLICATIONS);
+      const list = Array.isArray(data) ? data : data.content ?? [];
+      const eligible = list.filter(
         (a) => a.status !== 'WITHDRAWN' && a.status !== 'REJECTED'
       );
       setApplications(eligible);
