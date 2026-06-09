@@ -71,9 +71,9 @@ export default function ApplyJobScreen() {
         e?.response?.data?.error ??
         e?.message ??
         'Failed to submit application.';
-      console.log('[ApplyJob] Error:', JSON.stringify(e?.response?.data), 'status:', e?.response?.status, 'msg:', e?.message);
-      if (msg.toLowerCase().includes('already applied')) {
-        setError('You have already applied to this job.');
+      if (msg.toLowerCase().includes('already applied') || e?.response?.status === 409) {
+        // First attempt succeeded but response was lost (network drop) — treat as success
+        setSubmitted(true);
       } else {
         setError(msg);
       }
