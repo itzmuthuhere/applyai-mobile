@@ -48,6 +48,14 @@ export default function TailorResumeScreen() {
     }
   }, []);
 
+  // Once resumes load, validate the pre-selected resumeId is actually parsed
+  useEffect(() => {
+    if (selectedResumeId !== null && resumes.length > 0) {
+      const isParsed = parsedResumes.some((r) => r.id === selectedResumeId);
+      if (!isParsed) setSelectedResumeId(null);
+    }
+  }, [resumes]);
+
   async function loadResumes() {
     setResumesLoading(true);
     try {
@@ -96,10 +104,14 @@ export default function TailorResumeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.jobHeader}>
-        <Ionicons name="briefcase-outline" size={16} color={COLORS.primary} />
-        <Text style={styles.jobLabel} numberOfLines={1}>
-          {jobLabel}
+      <View style={[styles.jobHeader, !params.jobId && styles.jobHeaderWarn]}>
+        <Ionicons
+          name="briefcase-outline"
+          size={16}
+          color={params.jobId ? COLORS.primary : COLORS.warning}
+        />
+        <Text style={[styles.jobLabel, !params.jobId && styles.jobLabelWarn]} numberOfLines={1}>
+          {params.jobId ? jobLabel : 'No job selected — open a job and tap "Tailor Resume"'}
         </Text>
       </View>
 
@@ -157,9 +169,9 @@ export default function TailorResumeScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.ctaBtn, (!selectedResumeId || isLoading) && styles.ctaBtnDisabled]}
+            style={[styles.ctaBtn, (!selectedResumeId || !params.jobId || isLoading) && styles.ctaBtnDisabled]}
             onPress={handleTailor}
-            disabled={!selectedResumeId || isLoading}
+            disabled={!selectedResumeId || !params.jobId || isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" size="small" />
@@ -241,6 +253,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   jobLabel: { flex: 1, fontSize: 13, color: COLORS.primary, fontWeight: '600' },
+  jobHeaderWarn: { backgroundColor: '#FEF3C7' },
+  jobLabelWarn: { color: COLORS.warning },
 
   sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8, marginTop: 16 },
   hint: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 12 },

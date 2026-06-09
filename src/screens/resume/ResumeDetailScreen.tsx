@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Linking,
+  Alert,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,7 +17,7 @@ import dayjs from 'dayjs';
 import { COLORS, API_ENDPOINTS, ROUTES } from '../../constants';
 import { ResumeStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
-import { setSelectedResume, updateResumeScore } from '../../store/slices/resumeSlice';
+import { setSelectedResume, updateResumeScore, updateResumeParsed } from '../../store/slices/resumeSlice';
 import { ParsedResume, ResumeScore } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 
@@ -61,8 +62,9 @@ export default function ResumeDetailScreen() {
       setParseResult(parseRes.data);
       setScoreResult(scoreRes.data);
       dispatch(updateResumeScore({ resumeId: resume.id, score: scoreRes.data.score }));
+      dispatch(updateResumeParsed({ resumeId: resume.id }));
     } catch {
-      if (!silent) setAnalyzeError('Analysis failed. Please try again.');
+      setAnalyzeError('Analysis failed. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -255,16 +257,29 @@ export default function ResumeDetailScreen() {
       {/* Action Buttons */}
       <View style={styles.actionRow}>
         <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() =>
-            navigation.navigate(ROUTES.TAILOR_RESUME as 'TailorResume', {
-              resumeId: resume.id,
-              jobId: 0,
-            })
-          }
+          style={[styles.actionBtn, !resume.isParsed && styles.actionBtnDisabled]}
+          onPress={() => {
+            if (!resume.isParsed) {
+              Alert.alert(
+                'Analyze First',
+                'Please analyze this resume before tailoring it for a job.',
+              );
+              return;
+            }
+            Alert.alert(
+              'Select a Job',
+              'Go to the Jobs tab, open a job, and tap "Tailor Resume" from there.',
+            );
+          }}
         >
-          <Ionicons name="color-wand-outline" size={18} color={COLORS.primary} />
-          <Text style={styles.actionBtnText}>Tailor for a Job</Text>
+          <Ionicons
+            name="color-wand-outline"
+            size={18}
+            color={resume.isParsed ? COLORS.primary : COLORS.textMuted}
+          />
+          <Text style={[styles.actionBtnText, !resume.isParsed && styles.actionBtnTextDisabled]}>
+            Tailor for a Job
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -430,4 +445,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   actionBtnText: { fontSize: 15, fontWeight: '600', color: COLORS.primary },
+  actionBtnDisabled: { borderColor: COLORS.border },
+  actionBtnTextDisabled: { color: COLORS.textMuted },
 });
