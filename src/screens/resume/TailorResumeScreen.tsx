@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  FlatList,
   Alert,
   Share,
 } from 'react-native';
+import ResumeDropdown from '../../components/common/ResumeDropdown';
 import { useRoute, useNavigation, RouteProp, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -120,46 +120,12 @@ export default function TailorResumeScreen() {
           <Text style={styles.sectionTitle}>Select a Resume</Text>
           <Text style={styles.hint}>Only analyzed resumes can be tailored.</Text>
 
-          {resumesLoading ? (
-            <ActivityIndicator color={COLORS.primary} style={styles.spinner} />
-          ) : parsedResumes.length === 0 ? (
-            <View style={styles.emptyBox}>
-              <Ionicons name="document-outline" size={32} color={COLORS.textMuted} />
-              <Text style={styles.emptyText}>No analyzed resumes found.</Text>
-              <Text style={styles.emptySubtext}>
-                Upload and analyze a resume first from the Resume tab.
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={parsedResumes}
-              keyExtractor={(r) => String(r.id)}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.pickerRow}
-              renderItem={({ item }) => {
-                const selected = item.id === selectedResumeId;
-                return (
-                  <TouchableOpacity
-                    style={[styles.chip, selected && styles.chipSelected]}
-                    onPress={() => setSelectedResumeId(item.id)}
-                  >
-                    <Text
-                      style={[styles.chipText, selected && styles.chipTextSelected]}
-                      numberOfLines={1}
-                    >
-                      {item.versionName}
-                    </Text>
-                    {item.aiScore != null && (
-                      <Text style={[styles.chipScore, selected && styles.chipScoreSelected]}>
-                        {item.aiScore}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          )}
+          <ResumeDropdown
+            resumes={parsedResumes}
+            selectedId={selectedResumeId}
+            onSelect={setSelectedResumeId}
+            loading={resumesLoading}
+          />
 
           {error && (
             <View style={styles.errorBox}>

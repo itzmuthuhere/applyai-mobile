@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  FlatList,
 } from 'react-native';
+import ResumeDropdown from '../../components/common/ResumeDropdown';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -156,65 +156,12 @@ export default function MatchScoreScreen() {
       <View style={styles.pickerSection}>
         <Text style={styles.sectionTitle}>Select Resume to Compare</Text>
         <Text style={styles.sectionSubtitle}>Only analyzed resumes can be matched.</Text>
-
-        <FlatList
-          horizontal
-          data={resumes}
-          keyExtractor={(r) => String(r.id)}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipList}
-          renderItem={({ item }) => {
-            const isSelected = item.id === selectedResumeId;
-            const isParsed = item.isParsed;
-            return (
-              <TouchableOpacity
-                style={[
-                  styles.chip,
-                  isSelected && styles.chipSelected,
-                  !isParsed && styles.chipDisabled,
-                ]}
-                onPress={() => isParsed && setSelectedResumeId(item.id)}
-                activeOpacity={isParsed ? 0.7 : 1}
-              >
-                <Ionicons
-                  name={item.isOriginal ? 'document-text' : 'color-wand'}
-                  size={14}
-                  color={
-                    !isParsed
-                      ? COLORS.textMuted
-                      : isSelected
-                      ? COLORS.surface
-                      : COLORS.primary
-                  }
-                />
-                <Text
-                  style={[
-                    styles.chipText,
-                    isSelected && styles.chipTextSelected,
-                    !isParsed && styles.chipTextDisabled,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {item.versionName}
-                </Text>
-                {!isParsed && (
-                  <View style={styles.notAnalyzedBadge}>
-                    <Text style={styles.notAnalyzedText}>Not Analyzed</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          }}
+        <ResumeDropdown
+          resumes={resumes.filter((r) => r.isParsed)}
+          selectedId={selectedResumeId}
+          onSelect={setSelectedResumeId}
+          loading={isLoadingResumes}
         />
-
-        {selectedResume && !selectedResume.isParsed && (
-          <View style={styles.warningBanner}>
-            <Ionicons name="warning-outline" size={15} color={COLORS.warning} />
-            <Text style={styles.warningText}>
-              This resume hasn't been analyzed yet. Go to Resume tab → tap the resume → Analyze.
-            </Text>
-          </View>
-        )}
       </View>
 
       {/* Analyze button */}
