@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useDispatch, useSelector } from 'react-redux';
 import { View, ActivityIndicator } from 'react-native';
@@ -9,6 +9,7 @@ import { setAuth, clearAuth } from '../store/slices/authSlice';
 import { getJwt, clearJwt } from '../utils/auth';
 import { setUnauthorizedHandler } from '../api/apiClient';
 import { COLORS } from '../constants';
+import { useFcmDeepLink } from '../hooks/useFcmDeepLink';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 
@@ -18,6 +19,8 @@ export default function AppNavigator() {
   const dispatch = useDispatch<AppDispatch>();
   const jwt = useSelector((state: RootState) => state.auth.jwt);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const navRef = useRef<NavigationContainerRef<any>>(null);
+  const { onNavigationReady } = useFcmDeepLink(navRef, !!jwt);
 
   useEffect(() => {
     (async () => {
@@ -47,7 +50,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navRef} onReady={onNavigationReady}>
       <Root.Navigator screenOptions={{ headerShown: false }}>
         {jwt ? (
           <Root.Screen name="Main" component={MainNavigator} />

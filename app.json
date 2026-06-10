@@ -21,6 +21,7 @@
     },
     "android": {
       "package": "com.applyai.mobile",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -36,6 +37,7 @@
     "plugins": [
       "expo-updates",
       "expo-secure-store",
+      "@react-native-firebase/app",
       [
         "expo-av",
         {
