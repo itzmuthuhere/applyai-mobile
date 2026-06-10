@@ -4,6 +4,10 @@ import resumeReducer from './slices/resumeSlice';
 import jobReducer from './slices/jobSlice';
 import applicationReducer from './slices/applicationSlice';
 import interviewReducer from './slices/interviewSlice';
+import analyticsReducer from './analyticsSlice';
+import intelligenceReducer from './intelligenceSlice';
+import blacklistReducer from './blacklistSlice';
+import notificationReducer from './notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +16,10 @@ export const store = configureStore({
     job: jobReducer,
     application: applicationReducer,
     interview: interviewReducer,
+    analytics: analyticsReducer,
+    intelligence: intelligenceReducer,
+    blacklist: blacklistReducer,
+    notifications: notificationReducer,
   },
 });
 

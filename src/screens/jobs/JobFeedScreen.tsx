@@ -118,11 +118,20 @@ export default function JobFeedScreen() {
               </View>
             )}
           </View>
-          {item.postedDate && (
-            <Text style={styles.postedDate}>
-              {dayjs(item.postedDate).format('MMM D, YYYY')}
-            </Text>
-          )}
+          <View style={styles.bottomRow}>
+            {item.postedDate && (
+              <Text style={styles.postedDate}>
+                {dayjs(item.postedDate).format('MMM D, YYYY')}
+              </Text>
+            )}
+            {item.matchScore != null && (
+              <View style={[styles.matchBadge, { backgroundColor: item.matchScore >= 80 ? '#D1FAE5' : item.matchScore >= 60 ? '#FEF9C3' : '#F1F5F9' }]}>
+                <Text style={[styles.matchBadgeText, { color: item.matchScore >= 80 ? '#065F46' : item.matchScore >= 60 ? '#854D0E' : '#475569' }]}>
+                  {item.matchScore}% match
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -266,6 +275,9 @@ const styles = StyleSheet.create({
   tagSalary: { backgroundColor: COLORS.primaryLight },
   tagTextSalary: { color: COLORS.primary, fontWeight: '600' },
   postedDate: { fontSize: 11, color: COLORS.textMuted },
+  bottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  matchBadge: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+  matchBadgeText: { fontSize: 11, fontWeight: '700' },
 
   // Skeleton
   skeletonCard: { opacity: 0.5 },

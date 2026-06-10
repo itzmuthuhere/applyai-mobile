@@ -263,24 +263,46 @@ export default function ApplicationDetailScreen() {
         )}
       </View>
 
-      {/* Practice interview CTA */}
+      {/* Interview CTAs */}
       {application.status === 'INTERVIEW' && (
-        <TouchableOpacity
-          style={styles.interviewBtn}
-          onPress={() =>
-            anyNav.navigate('InterviewTab', {
-              screen: 'InterviewStart',
-              params: { applicationId: application.id },
-            })
-          }
-        >
-          <Ionicons name="mic-outline" size={20} color="#fff" />
-          <View style={styles.interviewBtnText}>
-            <Text style={styles.interviewBtnTitle}>Practice Mock Interview</Text>
-            <Text style={styles.interviewBtnSub}>7 AI-generated questions for this role</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#fff" />
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity
+            style={styles.prepBtn}
+            onPress={() => navigation.navigate('InterviewPrepPlan', { applicationId: application.id })}
+          >
+            <Ionicons name="calendar-outline" size={20} color="#fff" />
+            <View style={styles.interviewBtnText}>
+              <Text style={styles.interviewBtnTitle}>Get Prep Plan</Text>
+              <Text style={styles.interviewBtnSub}>AI day-by-day plan tailored to this role</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#fff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.interviewBtn}
+            onPress={() =>
+              anyNav.navigate('InterviewTab', {
+                screen: 'InterviewStart',
+                params: { applicationId: application.id },
+              })
+            }
+          >
+            <Ionicons name="mic-outline" size={20} color="#fff" />
+            <View style={styles.interviewBtnText}>
+              <Text style={styles.interviewBtnTitle}>Practice Mock Interview</Text>
+              <Text style={styles.interviewBtnSub}>7 AI-generated questions for this role</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#fff" />
+          </TouchableOpacity>
+        </>
+      )}
+
+      {/* Follow-up sent badge */}
+      {(application as any).followUpSent && (
+        <View style={styles.followUpBadge}>
+          <Ionicons name="mail-open-outline" size={14} color={COLORS.secondary} />
+          <Text style={styles.followUpText}>Follow-up email sent automatically</Text>
+        </View>
       )}
 
       {/* Notes */}
@@ -423,4 +445,13 @@ const styles = StyleSheet.create({
   interviewBtnSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
 
   notesText: { fontSize: 13, color: COLORS.textPrimary, lineHeight: 20 },
+  prepBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.primary, borderRadius: 14, padding: 16, marginBottom: 10,
+  },
+  followUpBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#D1FAE5', borderRadius: 8, padding: 10, marginBottom: 12,
+  },
+  followUpText: { fontSize: 13, color: COLORS.secondary },
 });

@@ -1,0 +1,96 @@
+diff --git a/node_modules/expo-av/android/src/main/java/expo/modules/av/ViewUtils.kt b/node_modules/expo-av/android/src/main/java/expo/modules/av/ViewUtils.kt
+index d18b58a..ff53308 100644
+--- a/node_modules/expo-av/android/src/main/java/expo/modules/av/ViewUtils.kt
++++ b/node_modules/expo-av/android/src/main/java/expo/modules/av/ViewUtils.kt
+@@ -2,8 +2,10 @@ package expo.modules.av
+ 
+ import androidx.annotation.AnyThread
+ import androidx.annotation.UiThread
++import com.facebook.react.bridge.ReactContext
+ import com.facebook.react.bridge.UiThreadUtil
+ import com.facebook.react.uimanager.IllegalViewOperationException
++import com.facebook.react.uimanager.UIManagerModule
+ import expo.modules.av.video.VideoView
+ import expo.modules.av.video.VideoViewWrapper
+ import expo.modules.core.ModuleRegistry
+@@ -15,10 +17,19 @@ object ViewUtils {
+     fun runWithVideoView(videoView: VideoView): Unit
+   }
+ 
++  @Suppress("DEPRECATION")
++  private fun resolveVideoWrapper(moduleRegistry: ModuleRegistry, viewTag: Int): VideoViewWrapper? {
++    val uiManager = moduleRegistry.getModule(UIManager::class.java)
++    val field = uiManager.javaClass.getDeclaredField("mReactContext")
++    field.isAccessible = true
++    val reactContext = field.get(uiManager) as ReactContext
++    return reactContext.getNativeModule(UIManagerModule::class.java)?.resolveView(viewTag) as VideoViewWrapper?
++  }
++
+   @UiThread
+   private fun tryRunWithVideoViewOnUiThread(moduleRegistry: ModuleRegistry, viewTag: Int, callback: VideoViewCallback, promise: Promise) {
+     try {
+-      val videoWrapperView = moduleRegistry.getModule(UIManager::class.java).resolveView(viewTag) as VideoViewWrapper?
++      val videoWrapperView = resolveVideoWrapper(moduleRegistry, viewTag)
+       val videoView = videoWrapperView?.videoViewInstance
+       if (videoView != null) {
+         callback.runWithVideoView(videoView)
+@@ -49,7 +60,7 @@ object ViewUtils {
+   @UiThread
+   private fun tryRunWithVideoViewOnUiThread(moduleRegistry: ModuleRegistry, viewTag: Int, callback: VideoViewCallback, promise: expo.modules.kotlin.Promise) {
+     try {
+-      val videoWrapperView = moduleRegistry.getModule(UIManager::class.java).resolveView(viewTag) as VideoViewWrapper?
++      val videoWrapperView = resolveVideoWrapper(moduleRegistry, viewTag)
+       val videoView = videoWrapperView?.videoViewInstance
+       if (videoView != null) {
+         callback.runWithVideoView(videoView)
+diff --git a/node_modules/expo-av/android/src/main/java/expo/modules/av/video/FullscreenVideoPlayer.java b/node_modules/expo-av/android/src/main/java/expo/modules/av/video/FullscreenVideoPlayer.java
+index ec4c842..2e84530 100644
+--- a/node_modules/expo-av/android/src/main/java/expo/modules/av/video/FullscreenVideoPlayer.java
++++ b/node_modules/expo-av/android/src/main/java/expo/modules/av/video/FullscreenVideoPlayer.java
+@@ -11,7 +11,6 @@ import android.widget.FrameLayout;
+ import java.lang.ref.WeakReference;
+ 
+ import expo.modules.core.ModuleRegistry;
+-import expo.modules.core.interfaces.services.KeepAwakeManager;
+ import expo.modules.av.player.PlayerData;
+ import expo.modules.kotlin.AppContext;
+ 
+@@ -33,16 +32,10 @@ public class FullscreenVideoPlayer extends Dialog {
+           boolean isPlaying =
+               fullscreenVideoPlayer.mVideoView.getStatus().containsKey(PlayerData.STATUS_IS_PLAYING_KEY_PATH)
+                   && fullscreenVideoPlayer.mVideoView.getStatus().getBoolean(PlayerData.STATUS_IS_PLAYING_KEY_PATH);
+-          AppContext appContext = fullscreenVideoPlayer.mAppContext.get();
+-          ModuleRegistry moduleRegistry = appContext != null ? appContext.getLegacyModuleRegistry() : null;
+-          if (moduleRegistry != null) {
+-            KeepAwakeManager keepAwakeManager = moduleRegistry.getModule(KeepAwakeManager.class);
+-            boolean keepAwakeIsActivated = keepAwakeManager != null && keepAwakeManager.isActivated();
+-            if (isPlaying || keepAwakeIsActivated) {
+-              window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+-            } else {
+-              window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+-            }
++          if (isPlaying) {
++            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
++          } else {
++            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+           }
+         }
+         fullscreenVideoPlayer.mKeepScreenOnHandler.postDelayed(this, UPDATE_KEEP_SCREEN_ON_FLAG_MS);
+diff --git a/node_modules/expo-av/expo-module.config.json b/node_modules/expo-av/expo-module.config.json
+index 6313da6..6659d96 100644
+--- a/node_modules/expo-av/expo-module.config.json
++++ b/node_modules/expo-av/expo-module.config.json
+@@ -4,12 +4,6 @@
+     "modules": ["VideoViewModule"]
+   },
+   "android": {
+-    "modules": ["expo.modules.av.video.VideoViewModule", "expo.modules.av.AVModule"],
+-    "publication": {
+-      "groupId": "host.exp.exponent",
+-      "artifactId": "expo.modules.av",
+-      "version": "16.0.8",
+-      "repository": "local-maven-repo"
+-    }
++    "modules": ["expo.modules.av.video.VideoViewModule", "expo.modules.av.AVModule"]
+   }
+ }

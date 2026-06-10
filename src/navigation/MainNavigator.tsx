@@ -14,6 +14,12 @@ import {
 
 import HomeScreen from '../screens/home/HomeScreen';
 import ProfileScreen from '../screens/home/ProfileScreen';
+import AnalyticsScreen from '../screens/home/AnalyticsScreen';
+import SalaryIntelScreen from '../screens/home/SalaryIntelScreen';
+import NegotiationCoachScreen from '../screens/home/NegotiationCoachScreen';
+import BlacklistScreen from '../screens/home/BlacklistScreen';
+import ProfileSettingsScreen from '../screens/home/ProfileSettingsScreen';
+import PaywallScreen from '../screens/common/PaywallScreen';
 import JobFeedScreen from '../screens/jobs/JobFeedScreen';
 import JobDetailScreen from '../screens/jobs/JobDetailScreen';
 import MatchScoreScreen from '../screens/jobs/MatchScoreScreen';
@@ -25,6 +31,7 @@ import CoverLetterScreen from '../screens/resume/CoverLetterScreen';
 import ApplyJobScreen from '../screens/jobs/ApplyJobScreen';
 import ApplicationsListScreen from '../screens/applications/ApplicationsListScreen';
 import ApplicationDetailScreen from '../screens/applications/ApplicationDetailScreen';
+import InterviewPrepPlanScreen from '../screens/applications/InterviewPrepPlanScreen';
 import InterviewStartScreen from '../screens/interview/InterviewStartScreen';
 import InterviewQuestionScreen from '../screens/interview/InterviewQuestionScreen';
 import InterviewReportScreen from '../screens/interview/InterviewReportScreen';
@@ -41,7 +48,12 @@ function HomeNavigator() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home" component={HomeScreen} />
-      <HomeStack.Screen name="Profile" component={ProfileScreen} />
+      <HomeStack.Screen name="Profile" component={ProfileSettingsScreen} />
+      <HomeStack.Screen name="Analytics" component={AnalyticsScreen} options={{ headerShown: true, title: 'Analytics' }} />
+      <HomeStack.Screen name="SalaryIntel" component={SalaryIntelScreen} options={{ headerShown: true, title: 'Salary Intelligence' }} />
+      <HomeStack.Screen name="NegotiationCoach" component={NegotiationCoachScreen} options={{ headerShown: true, title: 'Negotiation Coach' }} />
+      <HomeStack.Screen name="Blacklist" component={BlacklistScreen} options={{ headerShown: true, title: 'Company Blacklist' }} />
+      <HomeStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
     </HomeStack.Navigator>
   );
 }
@@ -76,6 +88,7 @@ function ApplicationsNavigator() {
     <ApplicationsStack.Navigator>
       <ApplicationsStack.Screen name="ApplicationsList" component={ApplicationsListScreen} options={{ title: 'Applications' }} />
       <ApplicationsStack.Screen name="ApplicationDetail" component={ApplicationDetailScreen} options={{ title: 'Application' }} />
+      <ApplicationsStack.Screen name="InterviewPrepPlan" component={InterviewPrepPlanScreen} options={{ title: 'Prep Plan' }} />
     </ApplicationsStack.Navigator>
   );
 }

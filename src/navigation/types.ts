@@ -9,6 +9,11 @@ export type AuthStackParamList = {
 export type HomeStackParamList = {
   Home: undefined;
   Profile: undefined;
+  Analytics: undefined;
+  SalaryIntel: undefined;
+  NegotiationCoach: undefined;
+  Paywall: { feature?: string };
+  Blacklist: undefined;
 };
 
 export type JobsStackParamList = {
@@ -31,6 +36,7 @@ export type ResumeStackParamList = {
 export type ApplicationsStackParamList = {
   ApplicationsList: undefined;
   ApplicationDetail: { applicationId: number };
+  InterviewPrepPlan: { applicationId: number };
 };
 
 export type InterviewStackParamList = {

@@ -73,4 +73,20 @@ export const API_ENDPOINTS = {
   INTERVIEW_BY_ID: (sessionId: number) => `/api/interviews/${sessionId}`,
   INTERVIEW_HISTORY: '/api/interviews/history',
   INTERVIEW_ANSWER: (sessionId: number) => `/api/interviews/${sessionId}/answer`,
+  // Phase 2M
+  ANALYTICS_OVERVIEW: '/api/analytics/overview',
+  ANALYTICS_RESUME: '/api/analytics/resume-performance',
+  SALARY_INTEL: '/api/ai/salary-intel',
+  NEGOTIATION: '/api/ai/negotiation',
+  INTERVIEW_PREP: '/api/ai/interview-prep',
+  COMPANY_INTEL: '/api/ai/company-intel',
+  REGISTER_FCM_TOKEN: '/api/notifications/register-token',
+  BLACKLIST: '/api/blacklist',
+  BLACKLIST_BY_ID: (id: number) => `/api/blacklist/${id}`,
+} as const;
+
+export const PLAN_LIMITS = {
+  FREE: { applications: 10, interviews: 2 },
+  HUNTER: { applications: 100, interviews: 10 },
+  PRO: { applications: Infinity, interviews: Infinity },
 } as const;
