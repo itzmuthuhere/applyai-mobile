@@ -175,6 +175,16 @@ export default function JobDetailScreen() {
           <Ionicons name="send-outline" size={18} color={COLORS.secondary} />
           <Text style={[styles.actionBtnText, { color: COLORS.secondary }]}>Apply</Text>
         </TouchableOpacity>
+
+        <View style={styles.actionDivider} />
+
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => navigation.navigate('CompanyIntel', { companyName: job.company ?? '', jobTitle: job.title })}
+        >
+          <Ionicons name="business-outline" size={18} color={COLORS.primary} />
+          <Text style={styles.actionBtnText}>Company Intel</Text>
+        </TouchableOpacity>
       </View>
 
       {/* View original posting */}

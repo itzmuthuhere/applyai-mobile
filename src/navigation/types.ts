@@ -23,6 +23,7 @@ export type JobsStackParamList = {
   TailorResume: { jobId: number; resumeId?: number };
   CoverLetter: { jobId: number; resumeId?: number };
   ApplyJob: { jobId: number };
+  CompanyIntel: { companyName: string; jobTitle?: string };
 };
 
 export type ResumeStackParamList = {

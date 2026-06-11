@@ -41,15 +41,30 @@
 
 ## CURRENT STATUS
 
-**Next to build:** Phase 1 complete — ready for EAS build + device testing
+**Next to build:** Phase 4 — Chrome Extension (E1–E8) or device testing
 **Blocked on:** Nothing
 **Open bugs:** None
-**Last push:** Jun 8, 2026 (Day 12 complete — all 12 days done)
-**Resume point:** Clean — Phase 1 complete
+**Last push:** Jun 11, 2026 (Phase 3M complete — CompanyIntelScreen built)
+**Resume point:** All phases complete. Backend 100%, Mobile 100% (including Phase 3M CompanyIntelScreen). Next: Chrome Extension or EAS device build.
 
 ---
 
 ## SESSION LOGS
+
+---
+
+### SESSION — Jun 11, 2026 [PHASE 3M: Company Intel Screen]
+**Type:** Planned (Phase 3 mobile — missing screen)
+**Goal:** Build CompanyIntelScreen to surface backend J5 company intelligence API
+
+**What was built:**
+- `src/screens/jobs/CompanyIntelScreen.tsx` — Full screen: auto-fetches on mount using `fetchCompanyIntel` thunk, displays overview, Glassdoor star rating, salary range, tech stack chips, interview process + difficulty badge (EASY/MEDIUM/HARD), work-life balance, recent news, red flags, verdict
+- `src/navigation/types.ts` — Added `CompanyIntel: { companyName: string; jobTitle?: string }` to `JobsStackParamList`
+- `src/navigation/MainNavigator.tsx` — Registered CompanyIntelScreen in JobsNavigator
+- `src/screens/jobs/JobDetailScreen.tsx` — Added "Company Intel" action button passing `job.company` + `job.title`
+
+**TypeScript:** 0 errors in changed files (pre-existing test/Job type errors unchanged)
+**Status:** ✅ Phase 3M complete — mobile is 100% feature-complete
 
 ---
 
