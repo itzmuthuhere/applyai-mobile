@@ -58,23 +58,32 @@ export function useFcmDeepLink(
       return;
     }
 
+    let fcm: any;
+    try {
+      fcm = messaging();
+    } catch {
+      // Native Firebase app not initialized (e.g. build missing google-services
+      // config) — messaging() throws synchronously; skip FCM rather than crash
+      return;
+    }
+
     // Register FCM token with backend
-    messaging().getToken().then((token: string | null) => {
+    fcm.getToken().then((token: string | null) => {
       if (token) dispatch(registerFcmToken(token));
     }).catch(() => {/* token may not be available on first launch */});
 
     // Token refresh — re-register when FCM rotates the token
-    const unsubscribeTokenRefresh = messaging().onTokenRefresh((token: string) => {
+    const unsubscribeTokenRefresh = fcm.onTokenRefresh((token: string) => {
       dispatch(registerFcmToken(token));
     });
 
     // Foreground notification — show an alert or silent badge update
-    const unsubscribeForeground = messaging().onMessage(async () => {
+    const unsubscribeForeground = fcm.onMessage(async () => {
       // Foreground: no-op — user is already in the app
     });
 
     // Background/quit tap — called when user taps a notification while app was in background
-    const unsubscribeOpenedApp = messaging().onNotificationOpenedApp((remoteMessage: any) => {
+    const unsubscribeOpenedApp = fcm.onNotificationOpenedApp((remoteMessage: any) => {
       const data = remoteMessage?.data as FcmPayload;
       if (data && navRef.current) {
         navigateFromPayload(navRef.current, data);
@@ -84,7 +93,7 @@ export function useFcmDeepLink(
     });
 
     // App opened from quit state by tapping notification
-    messaging().getInitialNotification().then((remoteMessage: any) => {
+    fcm.getInitialNotification().then((remoteMessage: any) => {
       if (!remoteMessage?.data) return;
       const data = remoteMessage.data as FcmPayload;
       // Nav may not be ready yet — store and navigate once ready
