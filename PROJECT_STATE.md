@@ -189,7 +189,20 @@ Day 12 (E2E polish)            → All above ✅
 
 ## KNOWN ISSUES / BUGS
 
-_None currently._
+```
+[BUG-001] | Login (FCM) | FIXED | Opened Jun 11, 2026 — Fixed Jun 11, 2026
+Symptom: Render crash on login — "No Firebase App '[DEFAULT]' has been created"
+Screen/File: AppNavigator → src/hooks/useFcmDeepLink.ts:62
+Reproduced: yes (physical device, dev build)
+Fix applied: (1) android/ predated Firebase — wired google-services plugin into
+android/build.gradle + android/app/build.gradle and copied google-services.json
+into android/app/ (local-only; android/ is gitignored). (2) Hardened
+useFcmDeepLink — messaging() instance obtained once inside try/catch so missing
+native Firebase degrades to no-FCM instead of crashing the render tree.
+(3) Committed google-services.json (un-gitignored) so EAS cloud prebuild gets
+Firebase wiring. NOTE: avoid `expo prebuild --clean` — it wipes the wepoll
+org.gradle.jvmargs patch in android/gradle.properties.
+```
 
 Format when adding:
 ```
@@ -220,4 +233,4 @@ _None yet._
 
 ---
 
-*Last updated: Jun 8, 2026 — v1.5: Day 11 complete — InterviewStartScreen + InterviewReportScreen built; InterviewQuestion/Session types fixed to match backend; interview endpoint constants fixed; applicationId made optional in InterviewStart nav params*
+*Last updated: Jun 11, 2026 — v1.6: BUG-001 fixed — Firebase [DEFAULT] crash on login; useFcmDeepLink hardened; google-services.json now committed for EAS builds*

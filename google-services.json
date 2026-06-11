@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "966711636721",
+    "project_id": "applyai-47158",
+    "storage_bucket": "applyai-47158.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966711636721:android:28c8c9a0151cd3cbd42f50",
+        "android_client_info": {
+          "package_name": "com.applyai.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "966711636721-7cvomkct4fefjuegsec8s4aeodmvf6n6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.applyai.mobile",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "966711636721-o7k3vn52bimi3j9mtdgttalckc8v13a6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHyv6m7VMYfRdbKeyyfjSRZJVcEH9-c4s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "966711636721-o7k3vn52bimi3j9mtdgttalckc8v13a6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

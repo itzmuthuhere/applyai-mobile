@@ -34,8 +34,8 @@ yarn-error.*
 .env*.local
 .env
 
-# Firebase
-google-services.json
+# Firebase — google-services.json is committed intentionally: it holds public
+# app identifiers (not secrets) and EAS prebuild needs it for FCM to work
 GoogleService-Info.plist
 
 # typescript

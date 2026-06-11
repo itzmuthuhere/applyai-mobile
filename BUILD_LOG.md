@@ -35,7 +35,7 @@
 
 | ID | Description | Screen | Opened | Status |
 |----|-------------|--------|--------|--------|
-| — | None yet | — | — | — |
+| BUG-001 | Render crash on login: "No Firebase App '[DEFAULT]' has been created" — native android/ project was generated before Firebase was added, so google-services wiring was missing; `messaging()` in useFcmDeepLink also threw synchronously instead of degrading | AppNavigator (useFcmDeepLink) | Jun 11, 2026 | ✅ FIXED Jun 11, 2026 — wired google-services plugin into android/, hardened hook with try/catch, committed google-services.json for EAS |
 
 ---
 
@@ -43,13 +43,35 @@
 
 **Next to build:** Phase 4 — Chrome Extension (E1–E8) or device testing
 **Blocked on:** Nothing
-**Open bugs:** None
-**Last push:** Jun 11, 2026 (Phase 3M complete — CompanyIntelScreen built)
+**Open bugs:** None (BUG-001 fixed Jun 11)
+**Last push:** Jun 11, 2026 (BUG-001 fix — FCM crash on login + google-services.json committed for EAS)
 **Resume point:** All phases complete. Backend 100%, Mobile 100% (including Phase 3M CompanyIntelScreen). Next: Chrome Extension or EAS device build.
 
 ---
 
 ## SESSION LOGS
+
+---
+
+### SESSION — Jun 11, 2026 [BUG FIX: BUG-001 Firebase crash on login]
+**Type:** Bug fix
+**Goal:** Fix "No Firebase App '[DEFAULT]' has been created" render crash on local login
+
+**Root cause (two layers):**
+1. Native: `android/` was generated before `@react-native-firebase/app` was added (M13, Jun 10). Since the folder exists, Expo config plugins (`googleServicesFile` + firebase plugin in app.json) never apply — the Google Services gradle plugin was missing, so the native `[DEFAULT]` Firebase app never initialized.
+2. JS: `messaging()` throws **synchronously** when the native app is missing; the try/catch in `useFcmDeepLink` only wrapped the `require()`, so the throw at `getToken()` crashed the whole render tree on login.
+
+**What was fixed:**
+- `android/build.gradle` (local-only, gitignored) — added `classpath('com.google.gms:google-services:4.4.3')`
+- `android/app/build.gradle` (local-only) — added `apply plugin: "com.google.gms.google-services"`
+- Copied `google-services.json` → `android/app/` (local-only)
+- `src/hooks/useFcmDeepLink.ts` — get `messaging()` instance once inside try/catch; missing Firebase now degrades to no-FCM instead of crashing
+- `.gitignore` + `google-services.json` — file is now committed (public identifiers, not secrets) so EAS cloud prebuild gets Firebase wiring; previously the next EAS build would have shipped the same crash
+
+**Deliberately avoided:** `expo prebuild --clean` — would wipe the hand-patched `org.gradle.jvmargs` wepoll fix in `android/gradle.properties`.
+
+**Tests:** 50/50 passing (10 suites) after hook change
+**Status:** ✅ Fixed — local rebuild required on device for native fix to take effect
 
 ---
 
