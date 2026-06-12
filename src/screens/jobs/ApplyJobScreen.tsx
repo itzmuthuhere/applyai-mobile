@@ -43,6 +43,11 @@ export default function ApplyJobScreen() {
     if (resumes.length === 0) loadResumes();
   }, []);
 
+  useEffect(() => {
+    setError(null);
+    setSubmitted(false);
+  }, [params.jobId]);
+
   async function loadResumes() {
     setResumesLoading(true);
     try {
@@ -66,16 +71,16 @@ export default function ApplyJobScreen() {
       dispatch(addApplication(data));
       setSubmitted(true);
     } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ??
-        e?.response?.data?.error ??
-        e?.message ??
-        'Failed to submit application.';
-      if (msg.toLowerCase().includes('already applied') || e?.response?.status === 409) {
-        // First attempt succeeded but response was lost (network drop) — treat as success
-        setSubmitted(true);
+      const status = e?.response?.status;
+      const serverMsg: string | undefined = e?.response?.data?.error ?? e?.response?.data?.message;
+      if (status === 409) {
+        setError('You have already applied to this job.');
+      } else if (serverMsg) {
+        setError(serverMsg);
+      } else if (!e?.response) {
+        setError('Connection error. Check your internet and try again.');
       } else {
-        setError(msg);
+        setError('Failed to submit application. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
