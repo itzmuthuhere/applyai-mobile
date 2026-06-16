@@ -7,7 +7,7 @@ import { RootStackParamList } from './types';
 import { RootState, AppDispatch } from '../store';
 import { setAuth, clearAuth } from '../store/slices/authSlice';
 import { getJwt, clearJwt } from '../utils/auth';
-import { setUnauthorizedHandler } from '../api/apiClient';
+import apiClient, { setUnauthorizedHandler } from '../api/apiClient';
 import { COLORS } from '../constants';
 import { useFcmDeepLink } from '../hooks/useFcmDeepLink';
 import AuthNavigator from './AuthNavigator';
@@ -27,9 +27,15 @@ export default function AppNavigator() {
       const token = await getJwt();
       if (!token) {
         dispatch(clearAuth());
+      } else {
+        try {
+          const { data } = await apiClient.get('/api/auth/me');
+          dispatch(setAuth({ jwt: token, user: data as any }));
+        } catch {
+          await clearJwt();
+          dispatch(clearAuth());
+        }
       }
-      // JWT exists but we don't have user profile yet — user will be fetched after sign-in
-      // For now just mark as authenticated so MainNavigator shows
       setIsBootstrapping(false);
     })();
   }, []);

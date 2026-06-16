@@ -15,6 +15,8 @@ export const ROUTES = {
   JOB_FEED: 'JobFeed',
   JOB_DETAIL: 'JobDetail',
   MATCH_SCORE: 'MatchScore',
+  APPLY_JOB: 'ApplyJob',
+  COMPANY_INTEL: 'CompanyIntel',
 
   // Resume stack
   RESUME_LIST: 'ResumeList',
@@ -31,6 +33,13 @@ export const ROUTES = {
   INTERVIEW_START: 'InterviewStart',
   INTERVIEW_QUESTION: 'InterviewQuestion',
   INTERVIEW_REPORT: 'InterviewReport',
+  INTERVIEW_PREP_PLAN: 'InterviewPrepPlan',
+
+  // Home stack
+  ANALYTICS: 'Analytics',
+  SALARY_INTEL: 'SalaryIntel',
+  NEGOTIATION_COACH: 'NegotiationCoach',
+  BLACKLIST: 'Blacklist',
 } as const;
 
 export const COLORS = {
@@ -55,6 +64,7 @@ export const SECURE_STORE_KEYS = {
 export const API_ENDPOINTS = {
   HEALTH: '/health',
   AUTH_GOOGLE: '/api/auth/google',
+  AUTH_ME: '/api/auth/me',
   RESUMES: '/api/resumes',
   JOB_FEED: '/api/jobs/feed',
   JOB_BY_ID: (id: number) => `/api/jobs/${id}`,
