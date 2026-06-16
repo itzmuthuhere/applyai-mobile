@@ -67,18 +67,28 @@ export default function ApplyJobScreen() {
     try {
       const body: Record<string, unknown> = { jobId: params.jobId, resumeId: selectedResumeId };
       if (coverLetter.trim()) body.coverLetter = coverLetter.trim();
-      const { data } = await apiClient.post<Application>(API_ENDPOINTS.APPLICATIONS_APPLY, body);
+      // 60s timeout: Railway free tier cold-starts take up to 30s
+      const { data } = await apiClient.post<Application>(API_ENDPOINTS.APPLICATIONS_APPLY, body, { timeout: 60000 });
       dispatch(addApplication(data));
       setSubmitted(true);
     } catch (e: any) {
       const status = e?.response?.status;
       const serverMsg: string | undefined = e?.response?.data?.error ?? e?.response?.data?.message;
       if (status === 409) {
-        setError('You have already applied to this job.');
+        // Already applied = success — backend processed it
+        setSubmitted(true);
+      } else if (!e?.response) {
+        // Network timeout (e.g. Railway cold start) — verify silently before showing error
+        try {
+          const { data: apps } = await apiClient.get<Application[]>(API_ENDPOINTS.APPLICATIONS);
+          if (apps.some((a) => a.job.id === params.jobId)) {
+            setSubmitted(true);
+            return;
+          }
+        } catch { /* ignore — show error below */ }
+        setError('Applying is taking longer than expected. Please check your Applications tab or try again.');
       } else if (serverMsg) {
         setError(serverMsg);
-      } else if (!e?.response) {
-        setError('Connection error. Check your internet and try again.');
       } else {
         setError('Failed to submit application. Please try again.');
       }
