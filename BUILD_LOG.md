@@ -36,20 +36,46 @@
 | ID | Description | Screen | Opened | Status |
 |----|-------------|--------|--------|--------|
 | BUG-001 | Render crash on login: "No Firebase App '[DEFAULT]' has been created" — native android/ project was generated before Firebase was added, so google-services wiring was missing; `messaging()` in useFcmDeepLink also threw synchronously instead of degrading | AppNavigator (useFcmDeepLink) | Jun 11, 2026 | ✅ FIXED Jun 11, 2026 — wired google-services plugin into android/, hardened hook with try/catch, committed google-services.json for EAS |
+| BUG-MOB-001 | Apply screen: Railway free-tier cold start (~20-30s) caused axios 30s timeout to fire before response arrived → "Connection error". On retry, 409 was returned but shown as error instead of success. Also: resume filename displayed as URL-encoded (Muthu%20raja%20CV.pdf). | ApplyJobScreen, ResumeDropdown | Jun 16, 2026 | ✅ FIXED Jun 16, 2026 — see session below |
 
 ---
 
 ## CURRENT STATUS
 
-**Next to build:** Phase 4 — Chrome Extension (E1–E8) or device testing
-**Blocked on:** Nothing
-**Open bugs:** None (BUG-001 fixed Jun 11)
-**Last push:** Jun 11, 2026 (BUG-001 fix — FCM crash on login + google-services.json committed for EAS)
-**Resume point:** All phases complete. Backend 100%, Mobile 100% (including Phase 3M CompanyIntelScreen). Next: Chrome Extension or EAS device build.
+**Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
+**Blocked on:** Nothing code-wise. Play Developer account needs registration.
+**Open bugs:** None (BUG-001 fixed Jun 11, BUG-MOB-001 fixed Jun 16)
+**Last push:** Jun 16, 2026 (BUG-MOB-001 fix — apply flow Railway cold-start + 409 handling + resume filename decode)
+**Resume point:** All phases complete. Device-tested. Apply flow now works correctly on physical device.
 
 ---
 
 ## SESSION LOGS
+
+---
+
+### SESSION — Jun 16, 2026 [BUG FIX: BUG-MOB-001 Apply flow — Railway cold-start + 409 + filename decode]
+**Type:** Bug Fix
+**Goal:** Fix "Connection error → already applied" loop on physical device and URL-encoded resume filename
+
+**Root cause (three layers):**
+1. Railway free tier cold start (~20–30s) fired the 30s axios timeout before the response arrived. Backend saved the application successfully but the app never received the 200 response.
+2. On retry, backend returned 409 CONFLICT ("already applied") — but the error handler treated 409 as a red error message instead of recognising it as success.
+3. Resume `versionName` stored in DB contains URL-encoded characters from Cloudinary path (e.g. `Muthu%20raja%20CV.pdf`). No decode was applied before display.
+
+**What was fixed:**
+- `src/screens/jobs/ApplyJobScreen.tsx` — three changes in `handleApply()`:
+  1. Apply POST now uses `{ timeout: 60000 }` per-request override (60s > Railway warm-up time)
+  2. `status === 409` now calls `setSubmitted(true)` instead of `setError(...)` — already applied = success
+  3. `!e?.response` branch (timeout/no-network): silently fetches `GET /api/applications`, searches for matching `job.id === params.jobId`; if found → `setSubmitted(true)`; if not found → better error message pointing to Applications tab
+- `src/components/common/ResumeDropdown.tsx`:
+  - Added `decodeName()` helper (`decodeURIComponent` with try/catch fallback)
+  - Applied to trigger button display, list item display, and search filter
+
+**Files changed:** `src/screens/jobs/ApplyJobScreen.tsx`, `src/components/common/ResumeDropdown.tsx`
+**Commit:** 934d635
+**APK rebuilt and installed:** adb install -r — ✅ Success
+**Status:** ✅ Fixed
 
 ---
 
