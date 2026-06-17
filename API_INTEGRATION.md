@@ -1,5 +1,5 @@
 # ApplyAI Mobile — API Integration
-> Version: 1.2 | Last updated: Jun 8, 2026
+> Version: 1.3 | Last updated: Jun 17, 2026
 > Every API call the frontend makes: which screen, which endpoint, when, success/error handling.
 > Cross-reference with backend API_SPEC.md to verify endpoints exist and are ✅ Working.
 
@@ -225,6 +225,95 @@ No screen needs to handle 401 individually.
 
 ---
 
+### SavedJobsScreen
+| Call | Method | Path | When | Success | Error |
+|------|--------|------|------|---------|-------|
+| Load saved jobs | GET | `/api/jobs/saved` | Screen mount | Render FlatList | Empty state |
+| Unsave job | DELETE | `/api/jobs/{id}/save` | Tap bookmark icon | Remove row optimistically | Silent fail |
+
+**Backend status:** ✅ J7
+
+---
+
+### JobAlertsScreen
+| Call | Method | Path | When | Success | Error |
+|------|--------|------|------|---------|-------|
+| Load alerts | GET | `/api/alerts` | Screen mount | Render FlatList | Empty state |
+| Create alert | POST | `/api/alerts` | Tap "Save Alert" in modal | Prepend to list | Alert.alert error |
+| Delete alert | DELETE | `/api/alerts/{id}` | Tap trash icon | Remove row optimistically | Silent fail |
+
+**Request (create):** `{ "keywords": "Java Dev", "remote": true, "minSalary": 500000, "category": "Engineering" }`
+At least one field required; all are nullable.
+**Backend status:** ✅ J8
+
+---
+
+### CompanyProfilesScreen
+| Call | Method | Path | When | Success | Error |
+|------|--------|------|------|---------|-------|
+| Load companies | GET | `/api/jobs/companies` | Screen mount | Render FlatList | Empty list |
+
+**Response:** `[ { "company": "Razorpay", "jobCount": 12, "avgSalary": 1800000 } ]`
+Client-side text search filter applied; no server pagination.
+**Backend status:** ✅ J9
+
+---
+
+### JobDetailScreen (updated J7–J16)
+| Call | Method | Path | When | Success | Error |
+|------|--------|------|------|---------|-------|
+| Get job | GET | `/api/jobs/{id}` | Screen mount | Redux setSelectedJob | Show error |
+| Get resumes (primary) | GET | `/api/resumes` | loadSideData() on job load | Set primaryResumeId | Silent |
+| Load similar jobs | GET | `/api/jobs/{id}/similar` | loadSideData() on job load | Set similarJobs state | Silent |
+| Save job | POST | `/api/jobs/{id}/save` | Tap bookmark (unsaved) | setSaved(true) | Alert.alert |
+| Unsave job | DELETE | `/api/jobs/{id}/save` | Tap bookmark (saved) | setSaved(false) | Alert.alert |
+| Quick Apply | POST | `/api/applications/quick-apply/{id}` | Tap "Quick Apply" | Alert success | Alert error |
+| ATS Score | POST | `/api/ai/ats-score` | Tap "ATS Score" (first open) | Show inline panel | Panel error |
+| Skills Gap | POST | `/api/ai/skills-gap` | Tap "Skills Gap" (first open) | Show inline panel | Panel error |
+| Analyse Job | POST | `/api/ai/analyse-job` | Tap "Analyse Job" (first open) | Show inline panel | Panel error |
+
+AI panels are lazy-loaded on first open and cached for the screen session.
+**Backend status:** ✅ J7–J16
+
+---
+
+### ApplicationDetailScreen (updated J14–J15)
+| Call | Method | Path | When | Success | Error |
+|------|--------|------|------|---------|-------|
+| Get application | GET | `/api/applications/{id}` | Screen mount | Set local state + Redux | Show error |
+| Update status | PUT | `/api/applications/{id}/status` | Status chip tap | Update state + Redux | Alert.alert |
+| Schedule interview | PATCH | `/api/applications/{id}/interview` | Tap "Save Interview Details" | Update state + Redux | Alert.alert |
+| Track offer | PATCH | `/api/applications/{id}/offer` | Tap "Save Offer Details" (OFFER status only) | Update state + Redux | Alert.alert |
+
+Interview date format: `YYYY-MM-DDTHH:mm` — validated client-side before sending.
+Offer panel only visible when `application.status === 'OFFER'`.
+**Backend status:** ✅ J14/J15
+
+---
+
+### ProfileSettingsScreen (updated J16)
+| Call | Method | Path | When | Success | Error |
+|------|--------|------|------|---------|-------|
+| Load fresh profile | GET | `/api/auth/me` | Screen mount | setProfile (completenessScore + hints + skills) | Fall back to Redux user |
+| Save skills | PUT | `/api/auth/profile` | Tap "Save Skills" | Alert success, update local profile | Alert.alert |
+| Load resumes (Career Path) | GET | `/api/resumes` | Tap "View Career Path" | Navigate to CareerPath screen with resumeId | Alert "no resume" |
+
+Completeness score + hints computed server-side in UserProfileResponse, returned from `/api/auth/me`.
+**Backend status:** ✅ J16
+
+---
+
+### CareerPathScreen
+| Call | Method | Path | When | Success | Error |
+|------|--------|------|------|---------|-------|
+| Generate career path | POST | `/api/ai/career-path` | Screen mount | Render result | Show error + retry |
+
+**Request:** `{ "resumeId": 1 }` — passed via navigation params.
+**Response:** `{ "currentLevel", "currentSalaryRange", "nextRoles": [{title, timeline, salaryRange, skillsNeeded, difficulty}], "skillsToLearnNow", "companiesHiring", "advice" }`
+**Backend status:** ✅ J16
+
+---
+
 ## ENDPOINT STATUS TRACKER
 
 | Method | Path | Screen | Backend Status | Frontend Built |
@@ -247,6 +336,22 @@ No screen needs to handle 401 individually.
 | POST | /api/interviews/start | InterviewStart | ⬜ Day 10 | ⬜ Day 10 |
 | POST | /api/interviews/{id}/answer | InterviewQuestion | ⬜ Day 11 | ⬜ Day 11 |
 | GET | /api/interviews/{id} | InterviewReport | ⬜ Day 10 | ⬜ Day 10 |
+| GET | /api/jobs/saved | SavedJobs | ✅ J7 | ✅ J7 |
+| POST | /api/jobs/{id}/save | JobDetail | ✅ J7 | ✅ J7 |
+| DELETE | /api/jobs/{id}/save | JobDetail, SavedJobs | ✅ J7 | ✅ J7 |
+| GET | /api/alerts | JobAlerts | ✅ J8 | ✅ J8 |
+| POST | /api/alerts | JobAlerts | ✅ J8 | ✅ J8 |
+| DELETE | /api/alerts/{id} | JobAlerts | ✅ J8 | ✅ J8 |
+| GET | /api/jobs/companies | CompanyProfiles | ✅ J9 | ✅ J9 |
+| GET | /api/jobs/{id}/similar | JobDetail | ✅ J9 | ✅ J9 |
+| POST | /api/applications/quick-apply/{id} | JobDetail | ✅ J11 | ✅ J11 |
+| PATCH | /api/applications/{id}/interview | ApplicationDetail | ✅ J14 | ✅ J14 |
+| PATCH | /api/applications/{id}/offer | ApplicationDetail | ✅ J15 | ✅ J15 |
+| PUT | /api/auth/profile | ProfileSettings | ✅ J16 | ✅ J16 |
+| POST | /api/ai/ats-score | JobDetail | ✅ J13 | ✅ J13 |
+| POST | /api/ai/skills-gap | JobDetail | ✅ J16 | ✅ J16 |
+| POST | /api/ai/career-path | CareerPath | ✅ J16 | ✅ J16 |
+| POST | /api/ai/analyse-job | JobDetail | ✅ J12 | ✅ J12 |
 
 ---
 
@@ -255,5 +360,6 @@ No screen needs to handle 401 individually.
 | Version | Date | Change | Reason |
 |---------|------|--------|--------|
 | 1.0 | Jun 6, 2026 | Initial spec — all API calls documented | Project start |
+| 1.3 | Jun 17, 2026 | 17 new API calls documented: saved jobs, alerts, companies, similar, quick apply, interview scheduling, offer tracking, skills, 4 AI endpoints | 15 job portal features |
 
 _Add a row every time an API call is added, changed, or its endpoint status changes._
