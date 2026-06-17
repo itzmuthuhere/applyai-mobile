@@ -17,6 +17,9 @@ export const ROUTES = {
   MATCH_SCORE: 'MatchScore',
   APPLY_JOB: 'ApplyJob',
   COMPANY_INTEL: 'CompanyIntel',
+  SAVED_JOBS: 'SavedJobs',
+  JOB_ALERTS: 'JobAlerts',
+  COMPANY_PROFILES: 'CompanyProfiles',
 
   // Resume stack
   RESUME_LIST: 'ResumeList',
@@ -40,6 +43,7 @@ export const ROUTES = {
   SALARY_INTEL: 'SalaryIntel',
   NEGOTIATION_COACH: 'NegotiationCoach',
   BLACKLIST: 'Blacklist',
+  CAREER_PATH: 'CareerPath',
 } as const;
 
 export const COLORS = {
@@ -65,6 +69,7 @@ export const API_ENDPOINTS = {
   HEALTH: '/health',
   AUTH_GOOGLE: '/api/auth/google',
   AUTH_ME: '/api/auth/me',
+  PROFILE_UPDATE: '/api/auth/profile',
   RESUMES: '/api/resumes',
   JOB_FEED: '/api/jobs/feed',
   JOB_BY_ID: (id: number) => `/api/jobs/${id}`,
@@ -93,6 +98,21 @@ export const API_ENDPOINTS = {
   REGISTER_FCM_TOKEN: '/api/notifications/register-token',
   BLACKLIST: '/api/blacklist',
   BLACKLIST_BY_ID: (id: number) => `/api/blacklist/${id}`,
+  // New job portal features
+  SAVED_JOBS: '/api/jobs/saved',
+  SAVE_JOB: (id: number) => `/api/jobs/${id}/save`,
+  JOB_SIMILAR: (id: number) => `/api/jobs/${id}/similar`,
+  JOB_COMPANIES: '/api/jobs/companies',
+  JOB_CATEGORIES: '/api/jobs/categories',
+  QUICK_APPLY: (jobId: number) => `/api/applications/quick-apply/${jobId}`,
+  APPLICATION_INTERVIEW: (id: number) => `/api/applications/${id}/interview`,
+  APPLICATION_OFFER: (id: number) => `/api/applications/${id}/offer`,
+  JOB_ALERTS: '/api/alerts',
+  JOB_ALERT_BY_ID: (id: number) => `/api/alerts/${id}`,
+  ATS_SCORE: '/api/ai/ats-score',
+  SKILLS_GAP: '/api/ai/skills-gap',
+  CAREER_PATH: '/api/ai/career-path',
+  ANALYSE_JOB: '/api/ai/analyse-job',
 } as const;
 
 export const PLAN_LIMITS = {

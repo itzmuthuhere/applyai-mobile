@@ -30,6 +30,10 @@ import TailorResumeScreen from '../screens/resume/TailorResumeScreen';
 import CoverLetterScreen from '../screens/resume/CoverLetterScreen';
 import ApplyJobScreen from '../screens/jobs/ApplyJobScreen';
 import CompanyIntelScreen from '../screens/jobs/CompanyIntelScreen';
+import SavedJobsScreen from '../screens/jobs/SavedJobsScreen';
+import JobAlertsScreen from '../screens/jobs/JobAlertsScreen';
+import CompanyProfilesScreen from '../screens/jobs/CompanyProfilesScreen';
+import CareerPathScreen from '../screens/home/CareerPathScreen';
 import ApplicationsListScreen from '../screens/applications/ApplicationsListScreen';
 import ApplicationDetailScreen from '../screens/applications/ApplicationDetailScreen';
 import InterviewPrepPlanScreen from '../screens/applications/InterviewPrepPlanScreen';
@@ -54,6 +58,7 @@ function HomeNavigator() {
       <HomeStack.Screen name="SalaryIntel" component={SalaryIntelScreen} options={{ headerShown: true, title: 'Salary Intelligence' }} />
       <HomeStack.Screen name="NegotiationCoach" component={NegotiationCoachScreen} options={{ headerShown: true, title: 'Negotiation Coach' }} />
       <HomeStack.Screen name="Blacklist" component={BlacklistScreen} options={{ headerShown: true, title: 'Company Blacklist' }} />
+      <HomeStack.Screen name="CareerPath" component={CareerPathScreen} options={{ headerShown: true, title: 'Career Path' }} />
       <HomeStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
     </HomeStack.Navigator>
   );
@@ -69,6 +74,9 @@ function JobsNavigator() {
       <JobsStack.Screen name="CoverLetter" component={CoverLetterScreen} options={{ title: 'Cover Letter' }} />
       <JobsStack.Screen name="ApplyJob" component={ApplyJobScreen} options={{ title: 'Apply to Job' }} />
       <JobsStack.Screen name="CompanyIntel" component={CompanyIntelScreen} options={{ title: 'Company Intel' }} />
+      <JobsStack.Screen name="SavedJobs" component={SavedJobsScreen} options={{ title: 'Saved Jobs' }} />
+      <JobsStack.Screen name="JobAlerts" component={JobAlertsScreen} options={{ title: 'Job Alerts' }} />
+      <JobsStack.Screen name="CompanyProfiles" component={CompanyProfilesScreen} options={{ title: 'Companies' }} />
     </JobsStack.Navigator>
   );
 }

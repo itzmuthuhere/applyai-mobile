@@ -20,6 +20,9 @@ export interface User {
   minSalary: number | null;
   remotePreference: RemotePreference | null;
   profilePicture: string | null;
+  skills: string | null;
+  completenessScore: number;
+  completenessHints: string[];
   createdAt: string;
 }
 
@@ -71,7 +74,28 @@ export interface Job {
   salaryMax: number | null;
   isRemote: boolean | null;
   postedDate: string | null;
+  deadline: string | null;
+  category: string | null;
+  tags: string | null;
+  matchScore?: number | null;
+  saved?: boolean | null;
   scrapedAt: string;
+}
+
+export interface JobAlert {
+  id: number;
+  keywords: string | null;
+  remote: boolean | null;
+  minSalary: number | null;
+  category: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CompanyProfile {
+  company: string;
+  jobCount: number;
+  avgSalary: number | null;
 }
 
 export interface JobFeedResponse {
@@ -113,6 +137,11 @@ export interface Application {
   lastUpdated: string | null;
   notes: string | null;
   coverLetter: string | null;
+  interviewDate: string | null;
+  interviewNotes: string | null;
+  offerSalary: number | null;
+  offerDeadline: string | null;
+  offerDetails: string | null;
   job: { id: number; title: string; company: string; location: string };
   resume: { id: number; versionName: string };
 }

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -72,6 +73,17 @@ export default function ApplicationDetailScreen() {
   const [showCoverLetter, setShowCoverLetter] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Interview scheduling
+  const [interviewDate, setInterviewDate] = useState('');
+  const [interviewNotes, setInterviewNotes] = useState('');
+  const [savingInterview, setSavingInterview] = useState(false);
+
+  // Offer tracking
+  const [offerSalary, setOfferSalary] = useState('');
+  const [offerDeadline, setOfferDeadline] = useState('');
+  const [offerDetails, setOfferDetails] = useState('');
+  const [savingOffer, setSavingOffer] = useState(false);
+
   useEffect(() => {
     loadApplication();
   }, []);
@@ -85,10 +97,59 @@ export default function ApplicationDetailScreen() {
       );
       setApplication(data);
       dispatch(setSelectedApplication(data));
+      if (data.interviewDate) setInterviewDate(dayjs(data.interviewDate).format('YYYY-MM-DDTHH:mm'));
+      if (data.interviewNotes) setInterviewNotes(data.interviewNotes);
+      if (data.offerSalary) setOfferSalary(String(data.offerSalary));
+      if (data.offerDeadline) setOfferDeadline(data.offerDeadline.split('T')[0]);
+      if (data.offerDetails) setOfferDetails(data.offerDetails);
     } catch (e: any) {
       setError('Could not load application.');
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleSaveInterview() {
+    if (!application) return;
+    if (!interviewDate.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+      Alert.alert('Invalid date', 'Use format: YYYY-MM-DDTHH:mm (e.g. 2026-07-15T10:00)');
+      return;
+    }
+    setSavingInterview(true);
+    try {
+      const { data } = await apiClient.patch<Application>(
+        API_ENDPOINTS.APPLICATION_INTERVIEW(application.id),
+        { interviewDate, notes: interviewNotes || null }
+      );
+      setApplication(data);
+      dispatch(updateApplication(data));
+      Alert.alert('Saved', 'Interview details updated.');
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.message ?? 'Failed to save.');
+    } finally {
+      setSavingInterview(false);
+    }
+  }
+
+  async function handleSaveOffer() {
+    if (!application) return;
+    setSavingOffer(true);
+    try {
+      const { data } = await apiClient.patch<Application>(
+        API_ENDPOINTS.APPLICATION_OFFER(application.id),
+        {
+          offerSalary: offerSalary ? parseInt(offerSalary, 10) : null,
+          offerDeadline: offerDeadline || null,
+          offerDetails: offerDetails || null,
+        }
+      );
+      setApplication(data);
+      dispatch(updateApplication(data));
+      Alert.alert('Saved', 'Offer details updated.');
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.message ?? 'Failed to save.');
+    } finally {
+      setSavingOffer(false);
     }
   }
 
@@ -297,6 +358,85 @@ export default function ApplicationDetailScreen() {
         </>
       )}
 
+      {/* Interview scheduling */}
+      {!isTerminal && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Interview Details</Text>
+          <Text style={styles.inputLabel}>Interview Date &amp; Time</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="YYYY-MM-DDTHH:mm  (e.g. 2026-07-15T10:00)"
+            value={interviewDate}
+            onChangeText={setInterviewDate}
+            placeholderTextColor={COLORS.textMuted}
+          />
+          <Text style={[styles.inputLabel, { marginTop: 10 }]}>Notes</Text>
+          <TextInput
+            style={[styles.textInput, styles.textArea]}
+            placeholder="Interviewer name, format, topics…"
+            value={interviewNotes}
+            onChangeText={setInterviewNotes}
+            multiline
+            numberOfLines={3}
+            placeholderTextColor={COLORS.textMuted}
+          />
+          <TouchableOpacity
+            style={[styles.saveBtn, savingInterview && styles.saveBtnDisabled]}
+            onPress={handleSaveInterview}
+            disabled={savingInterview}
+          >
+            {savingInterview
+              ? <ActivityIndicator color="#fff" size="small" />
+              : <Text style={styles.saveBtnText}>Save Interview Details</Text>
+            }
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Offer tracking */}
+      {application.status === 'OFFER' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Offer Details</Text>
+          <Text style={styles.inputLabel}>Offered Salary (₹/yr)</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="e.g. 1500000"
+            value={offerSalary}
+            onChangeText={setOfferSalary}
+            keyboardType="numeric"
+            placeholderTextColor={COLORS.textMuted}
+          />
+          <Text style={[styles.inputLabel, { marginTop: 10 }]}>Deadline to Accept</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="YYYY-MM-DD  (e.g. 2026-07-30)"
+            value={offerDeadline}
+            onChangeText={setOfferDeadline}
+            placeholderTextColor={COLORS.textMuted}
+          />
+          <Text style={[styles.inputLabel, { marginTop: 10 }]}>Other Details</Text>
+          <TextInput
+            style={[styles.textInput, styles.textArea]}
+            placeholder="Signing bonus, stock, location, etc."
+            value={offerDetails}
+            onChangeText={setOfferDetails}
+            multiline
+            numberOfLines={3}
+            placeholderTextColor={COLORS.textMuted}
+          />
+          <TouchableOpacity
+            style={[styles.saveBtn, savingOffer && styles.saveBtnDisabled]}
+            onPress={handleSaveOffer}
+            disabled={savingOffer}
+          >
+            {savingOffer
+              ? <ActivityIndicator color="#fff" size="small" />
+              : <Text style={styles.saveBtnText}>Save Offer Details</Text>
+            }
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Follow-up sent badge */}
       {(application as any).followUpSent && (
         <View style={styles.followUpBadge}>
@@ -454,4 +594,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#D1FAE5', borderRadius: 8, padding: 10, marginBottom: 12,
   },
   followUpText: { fontSize: 13, color: COLORS.secondary },
+
+  inputLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 6 },
+  textInput: {
+    backgroundColor: COLORS.background, borderRadius: 10, padding: 12,
+    fontSize: 14, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border,
+  },
+  textArea: { minHeight: 72, textAlignVertical: 'top' },
+  saveBtn: {
+    backgroundColor: COLORS.primary, borderRadius: 10, paddingVertical: 12,
+    alignItems: 'center', marginTop: 14,
+  },
+  saveBtnDisabled: { opacity: 0.6 },
+  saveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 });
