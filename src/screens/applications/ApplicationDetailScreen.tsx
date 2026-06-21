@@ -251,70 +251,63 @@ export default function ApplicationDetailScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Hero job card */}
-      <View style={styles.jobCard}>
-        <View style={styles.jobCardTop}>
-          <View style={[styles.companyIcon, { backgroundColor: color + '18', borderColor: color + '30' }]}>
-            <Text style={[styles.companyInitial, { color }]}>
+      {/* Hero banner */}
+      <View style={[styles.heroBanner, { backgroundColor: color }]}>
+        <View style={styles.heroBannerRow}>
+          <View style={styles.heroIconBox}>
+            <Text style={styles.heroInitial}>
               {application.job.company.charAt(0).toUpperCase()}
             </Text>
           </View>
-          <View style={styles.jobInfo}>
-            <Text style={styles.jobTitle}>{application.job.title}</Text>
-            <Text style={styles.company}>{application.job.company}</Text>
-            <View style={styles.locationRow}>
-              <Ionicons name="location-outline" size={12} color={COLORS.textMuted} />
-              <Text style={styles.location}>{application.job.location}</Text>
-            </View>
+          <View style={styles.heroInfo}>
+            <Text style={styles.heroTitle} numberOfLines={2}>{application.job.title}</Text>
+            <Text style={styles.heroCompany}>{application.job.company}</Text>
+            {application.job.location ? (
+              <View style={styles.heroLocationRow}>
+                <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.75)" />
+                <Text style={styles.heroLocation}>{application.job.location}</Text>
+              </View>
+            ) : null}
           </View>
-          <View style={[styles.statusDotBig, { backgroundColor: STATUS_COLORS[application.status].bg }]}>
-            <Text style={[styles.statusDotBigText, { color: STATUS_COLORS[application.status].text }]}>
-              {STATUS_LABELS[application.status]}
-            </Text>
-          </View>
-        </View>
-        {/* Status timeline */}
-        {!TERMINAL_STATUSES.includes(application.status) && (
-          <View style={styles.timelineWrap}>
-            <StatusTimeline current={application.status} />
-          </View>
-        )}
-        {TERMINAL_STATUSES.includes(application.status) && (
-          <View style={[styles.terminalBanner, {
-            backgroundColor: application.status === 'REJECTED' ? '#FEE2E2' : '#F1F5F9',
-          }]}>
-            <Ionicons
-              name={application.status === 'REJECTED' ? 'close-circle-outline' : 'remove-circle-outline'}
-              size={16}
-              color={application.status === 'REJECTED' ? '#EF4444' : '#94A3B8'}
-            />
-            <Text style={[styles.terminalBannerText, {
-              color: application.status === 'REJECTED' ? '#991B1B' : '#64748B',
-            }]}>
-              Application {STATUS_LABELS[application.status]}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Status + dates */}
-      <View style={styles.metaCard}>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Status</Text>
-          <View style={[styles.badge, { backgroundColor: STATUS_COLORS[application.status].bg }]}>
-            <Text style={[styles.badgeText, { color: STATUS_COLORS[application.status].text }]}>
+          <View style={[styles.heroBadge, { backgroundColor: STATUS_COLORS[application.status].bg }]}>
+            <Text style={[styles.heroBadgeText, { color: STATUS_COLORS[application.status].text }]}>
               {STATUS_LABELS[application.status]}
             </Text>
           </View>
         </View>
         {application.appliedAt && (
-          <View style={styles.metaRow}>
-            <Text style={styles.metaLabel}>Applied</Text>
-            <Text style={styles.metaValue}>
-              {dayjs(application.appliedAt).format('MMM D, YYYY')}
-            </Text>
+          <View style={styles.heroDateRow}>
+            <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.7)" />
+            <Text style={styles.heroDate}>Applied {dayjs(application.appliedAt).format('MMM D, YYYY')}</Text>
           </View>
         )}
+      </View>
+
+      {/* Status timeline card */}
+      {!TERMINAL_STATUSES.includes(application.status) && (
+        <View style={styles.timelineCard}>
+          <StatusTimeline current={application.status} />
+        </View>
+      )}
+      {TERMINAL_STATUSES.includes(application.status) && (
+        <View style={[styles.terminalBanner, {
+          backgroundColor: application.status === 'REJECTED' ? '#FEE2E2' : '#F1F5F9',
+        }]}>
+          <Ionicons
+            name={application.status === 'REJECTED' ? 'close-circle-outline' : 'remove-circle-outline'}
+            size={16}
+            color={application.status === 'REJECTED' ? '#EF4444' : '#94A3B8'}
+          />
+          <Text style={[styles.terminalBannerText, {
+            color: application.status === 'REJECTED' ? '#991B1B' : '#64748B',
+          }]}>
+            Application {STATUS_LABELS[application.status]}
+          </Text>
+        </View>
+      )}
+
+      {/* Status + dates */}
+      <View style={styles.metaCard}>
         {application.lastUpdated && (
           <View style={styles.metaRow}>
             <Text style={styles.metaLabel}>Last updated</Text>
@@ -326,6 +319,14 @@ export default function ApplicationDetailScreen() {
         <View style={styles.metaRow}>
           <Text style={styles.metaLabel}>Resume sent</Text>
           <Text style={styles.metaValue}>{application.resume.versionName}</Text>
+        </View>
+        <View style={styles.metaRow}>
+          <Text style={styles.metaLabel}>Current status</Text>
+          <View style={[styles.badge, { backgroundColor: STATUS_COLORS[application.status].bg }]}>
+            <Text style={[styles.badgeText, { color: STATUS_COLORS[application.status].text }]}>
+              {STATUS_LABELS[application.status]}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -555,31 +556,33 @@ const styles = StyleSheet.create({
   },
   retryText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
-  jobCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, marginBottom: 12,
-    gap: 14,
+  heroBanner: {
+    borderRadius: 18, padding: 18, marginBottom: 10, gap: 10,
   },
-  jobCardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  companyIcon: {
-    width: 52, height: 52, borderRadius: 14, borderWidth: 1,
+  heroBannerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
+  heroIconBox: {
+    width: 52, height: 52, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  companyInitial: { fontSize: 22, fontWeight: '900' },
-  jobInfo: { flex: 1 },
-  jobTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 2, lineHeight: 21 },
-  company: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 4 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  location: { fontSize: 12, color: COLORS.textMuted },
-  statusDotBig: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
-  statusDotBigText: { fontSize: 11, fontWeight: '800' },
-  timelineWrap: {
-    borderTopWidth: 1, borderTopColor: COLORS.border,
-    paddingTop: 14, marginTop: 2,
+  heroInitial: { fontSize: 22, fontWeight: '900', color: '#fff' },
+  heroInfo: { flex: 1 },
+  heroTitle: { fontSize: 17, fontWeight: '800', color: '#fff', lineHeight: 22, marginBottom: 3 },
+  heroCompany: { fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: '600', marginBottom: 4 },
+  heroLocationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  heroLocation: { fontSize: 12, color: 'rgba(255,255,255,0.75)' },
+  heroBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, flexShrink: 0 },
+  heroBadgeText: { fontSize: 11, fontWeight: '800' },
+  heroDateRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  heroDate: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
+
+  timelineCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, marginBottom: 10,
   },
   terminalBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    borderRadius: 10, padding: 10,
+    borderRadius: 12, padding: 12, marginBottom: 10,
   },
   terminalBannerText: { fontSize: 13, fontWeight: '700' },
 
