@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
@@ -13,6 +13,28 @@ import { AppDispatch } from '../../store';
 
 type Step = 'upload' | 'parsing' | 'parsed' | 'scoring' | 'scored' | 'done';
 
+function LoadingStep({ label }: { label: string }) {
+  return (
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.centered}>
+        <View style={styles.loadingIconBox}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+        <Text style={styles.loadingTitle}>{label}</Text>
+        <Text style={styles.loadingHint}>Hang tight — AI is working its magic</Text>
+        <View style={styles.loadingSteps}>
+          {['Reading your resume', 'Extracting skills & experience', 'Generating your score'].map((s, i) => (
+            <View key={i} style={styles.loadingStep}>
+              <View style={[styles.loadingStepDot, { backgroundColor: COLORS.primary + (i === 0 ? 'FF' : '60') }]} />
+              <Text style={styles.loadingStepText}>{s}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 export default function OnboardingFlow() {
   const navigation = useNavigation<any>();
   const [step, setStep] = useState<Step>('upload');
@@ -20,6 +42,7 @@ export default function OnboardingFlow() {
   const [score, setScore] = useState<number | null>(null);
   const [strengths, setStrengths] = useState<string[]>([]);
   const [improvements, setImprovements] = useState<string[]>([]);
+  const [fileName, setFileName] = useState<string>('');
 
   const handlePickResume = async () => {
     try {
@@ -27,6 +50,7 @@ export default function OnboardingFlow() {
       if (result.canceled || !result.assets?.[0]) return;
 
       const file = result.assets[0];
+      setFileName(file.name ?? 'resume.pdf');
       const form = new FormData();
       form.append('file', { uri: file.uri, name: file.name, type: 'application/pdf' } as any);
 
@@ -52,100 +76,297 @@ export default function OnboardingFlow() {
     }
   };
 
-  if (step === 'upload') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <Ionicons name="document-text-outline" size={80} color={COLORS.primary} />
-          <Text style={styles.title}>Welcome to ApplyAI</Text>
-          <Text style={styles.subtitle}>Upload your resume to get started. We'll parse it and give you an instant score.</Text>
-          <TouchableOpacity style={styles.btn} onPress={handlePickResume}>
-            <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
-            <Text style={styles.btnText}>Upload Resume (PDF)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.skipBtn} onPress={() => navigation.replace('Main')}>
-            <Text style={styles.skipText}>Skip for now</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   if (step === 'parsing' || step === 'scoring') {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>
-            {step === 'parsing' ? 'Parsing your resume…' : 'Scoring your resume…'}
-          </Text>
-        </View>
-      </SafeAreaView>
+      <LoadingStep
+        label={step === 'parsing' ? 'Parsing your resume…' : 'Scoring your resume…'}
+      />
     );
   }
 
   if (step === 'scored' || step === 'done') {
-    const scoreColor = score != null && score >= 70 ? COLORS.secondary : score != null && score >= 50 ? COLORS.warning : COLORS.error;
+    const sc = score ?? 0;
+    const sColor = sc >= 70 ? COLORS.success : sc >= 50 ? COLORS.warning : COLORS.error;
+    const sBg = sc >= 70 ? '#D1FAE5' : sc >= 50 ? '#FEF3C7' : '#FEE2E2';
+    const sLabel = sc >= 80 ? 'Excellent' : sc >= 65 ? 'Good' : sc >= 50 ? 'Average' : 'Needs Work';
+
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Resume Score</Text>
-          <View style={styles.scoreCircle}>
-            <Text style={[styles.scoreNum, { color: scoreColor }]}>{score}</Text>
-            <Text style={styles.scoreLabel}>/100</Text>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.scoreScroll}>
+          {/* Hero */}
+          <View style={[styles.scoreHero, { backgroundColor: sColor }]}>
+            <View style={styles.scoreRingOuter}>
+              <View style={[styles.scoreRingInner, { borderColor: sColor + '60' }]}>
+                <View style={[styles.scoreCircle, { borderColor: sColor }]}>
+                  <Text style={[styles.scoreNum, { color: sColor }]}>{sc}</Text>
+                  <Text style={[styles.scoreOutOf, { color: sColor }]}>/100</Text>
+                </View>
+              </View>
+            </View>
+            <Text style={styles.scoreGrade}>{sLabel}</Text>
+            <Text style={styles.scoreSubtitle}>AI Resume Score</Text>
           </View>
 
+          {/* File info */}
+          {fileName ? (
+            <View style={styles.fileRow}>
+              <View style={styles.fileIconBox}>
+                <Ionicons name="document-text" size={20} color={COLORS.primary} />
+              </View>
+              <Text style={styles.fileNameText} numberOfLines={1}>{fileName}</Text>
+              <View style={styles.uploadedBadge}>
+                <Ionicons name="checkmark-circle" size={14} color={COLORS.success} />
+                <Text style={styles.uploadedText}>Uploaded</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {/* Strengths */}
           {strengths.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Strengths</Text>
-              {strengths.map((s, i) => (
-                <Text key={i} style={styles.strengthItem}>✓ {s}</Text>
+            <View style={[styles.resultCard, { borderLeftColor: COLORS.success }]}>
+              <View style={styles.resultCardHead}>
+                <View style={[styles.resultCardIcon, { backgroundColor: '#D1FAE5' }]}>
+                  <Ionicons name="thumbs-up" size={16} color={COLORS.success} />
+                </View>
+                <Text style={styles.resultCardTitle}>Your Strengths</Text>
+              </View>
+              {strengths.slice(0, 3).map((s, i) => (
+                <View key={i} style={styles.resultRow}>
+                  <View style={[styles.resultDot, { backgroundColor: COLORS.success }]} />
+                  <Text style={styles.resultText}>{s}</Text>
+                </View>
               ))}
             </View>
           )}
 
+          {/* Improvements */}
           {improvements.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Improvements</Text>
-              {improvements.map((s, i) => (
-                <Text key={i} style={styles.improvItem}>• {s}</Text>
+            <View style={[styles.resultCard, { borderLeftColor: COLORS.warning }]}>
+              <View style={styles.resultCardHead}>
+                <View style={[styles.resultCardIcon, { backgroundColor: '#FEF3C7' }]}>
+                  <Ionicons name="trending-up" size={16} color={COLORS.warning} />
+                </View>
+                <Text style={styles.resultCardTitle}>Quick Wins</Text>
+              </View>
+              {improvements.slice(0, 3).map((s, i) => (
+                <View key={i} style={styles.resultRow}>
+                  <View style={[styles.resultDot, { backgroundColor: COLORS.warning }]} />
+                  <Text style={styles.resultText}>{s}</Text>
+                </View>
               ))}
             </View>
           )}
 
-          <TouchableOpacity style={styles.btn} onPress={() => navigation.replace('Main')}>
-            <Text style={styles.btnText}>Go to Dashboard</Text>
+          {/* Next steps */}
+          <View style={styles.nextCard}>
+            <Text style={styles.nextTitle}>What's next?</Text>
+            {[
+              { icon: 'briefcase-outline' as const, text: 'Browse AI-matched jobs' },
+              { icon: 'color-wand-outline' as const, text: 'Tailor your resume for a job' },
+              { icon: 'mic-outline' as const, text: 'Practice mock interviews' },
+            ].map((item, i) => (
+              <View key={i} style={styles.nextRow}>
+                <View style={styles.nextIconBox}>
+                  <Ionicons name={item.icon} size={16} color={COLORS.primary} />
+                </View>
+                <Text style={styles.nextRowText}>{item.text}</Text>
+              </View>
+            ))}
+          </View>
+
+          <TouchableOpacity style={styles.dashBtn} onPress={() => navigation.replace('Main')}>
+            <Ionicons name="home-outline" size={18} color="#fff" />
+            <Text style={styles.dashBtnText}>Go to Dashboard</Text>
           </TouchableOpacity>
+
+          <View style={{ height: 24 }} />
         </View>
       </SafeAreaView>
     );
   }
 
-  return null;
+  // Upload step
+  return (
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.uploadScreen}>
+        {/* Header */}
+        <View style={styles.uploadHeader}>
+          <View style={styles.uploadHeaderBadge}>
+            <Text style={styles.uploadHeaderBadgeText}>Step 1 of 1</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.replace('Main')} style={styles.skipLink}>
+            <Text style={styles.skipLinkText}>Skip for now</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Hero */}
+        <View style={styles.uploadHero}>
+          <View style={styles.uploadHeroIconBg}>
+            <View style={styles.uploadHeroIconFg}>
+              <Ionicons name="cloud-upload" size={36} color={COLORS.primary} />
+            </View>
+          </View>
+          <Text style={styles.uploadTitle}>Upload Your Resume</Text>
+          <Text style={styles.uploadSubtitle}>
+            Get an instant AI score, skill breakdown, and personalized tips — in under 15 seconds.
+          </Text>
+        </View>
+
+        {/* What you'll get */}
+        <View style={styles.whatYouGetCard}>
+          <Text style={styles.whatYouGetTitle}>What you'll get instantly</Text>
+          {[
+            { icon: 'analytics-outline' as const, color: COLORS.primary, text: 'ATS score (0–100)' },
+            { icon: 'code-slash-outline' as const, color: '#059669', text: 'Skills & tech stack detected' },
+            { icon: 'trending-up-outline' as const, color: COLORS.warning, text: 'Personalized improvement tips' },
+          ].map((item, i) => (
+            <View key={i} style={styles.whatRow}>
+              <View style={[styles.whatIconBox, { backgroundColor: item.color + '18' }]}>
+                <Ionicons name={item.icon} size={16} color={item.color} />
+              </View>
+              <Text style={styles.whatText}>{item.text}</Text>
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+            </View>
+          ))}
+        </View>
+
+        <TouchableOpacity style={styles.uploadBtn} onPress={handlePickResume} activeOpacity={0.85}>
+          <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
+          <Text style={styles.uploadBtnText}>Upload Resume (PDF)</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.uploadHint}>PDF only · Max 5 MB · Secure & private</Text>
+      </View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  title: { fontSize: 26, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center', marginTop: 20, marginBottom: 10 },
-  subtitle: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
-  btn: {
-    flexDirection: 'row', gap: 8, backgroundColor: COLORS.primary,
-    borderRadius: 12, paddingHorizontal: 28, paddingVertical: 14, alignItems: 'center', marginTop: 16,
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
+  centered: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    padding: 32, gap: 16,
   },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  skipBtn: { marginTop: 16 },
-  skipText: { color: COLORS.textMuted, fontSize: 14 },
-  loadingText: { marginTop: 16, fontSize: 15, color: COLORS.textSecondary },
+  loadingIconBox: {
+    width: 90, height: 90, borderRadius: 28,
+    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 8,
+  },
+  loadingTitle: { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
+  loadingHint: { fontSize: 14, color: COLORS.textMuted, textAlign: 'center' },
+  loadingSteps: { width: '100%', gap: 8, marginTop: 8 },
+  loadingStep: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  loadingStepDot: { width: 7, height: 7, borderRadius: 4 },
+  loadingStepText: { fontSize: 14, color: COLORS.textSecondary },
+
+  // Score screen
+  scoreScroll: { flex: 1, paddingHorizontal: 20, paddingTop: 16, gap: 14 },
+  scoreHero: {
+    borderRadius: 20, paddingVertical: 28, paddingHorizontal: 24,
+    alignItems: 'center', gap: 10,
+  },
+  scoreRingOuter: {
+    width: 110, height: 110, borderRadius: 55,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  scoreRingInner: {
+    width: 96, height: 96, borderRadius: 48,
+    borderWidth: 3, alignItems: 'center', justifyContent: 'center',
+  },
   scoreCircle: {
-    width: 120, height: 120, borderRadius: 60, backgroundColor: COLORS.surface,
-    borderWidth: 4, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center',
-    marginVertical: 20,
+    width: 80, height: 80, borderRadius: 40,
+    borderWidth: 5, backgroundColor: '#FFF',
+    alignItems: 'center', justifyContent: 'center',
   },
-  scoreNum: { fontSize: 42, fontWeight: '800' },
-  scoreLabel: { fontSize: 14, color: COLORS.textMuted },
-  section: { width: '100%', marginTop: 12 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
-  strengthItem: { fontSize: 13, color: COLORS.secondary, marginBottom: 3 },
-  improvItem: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 3 },
+  scoreNum: { fontSize: 26, fontWeight: '900', lineHeight: 30 },
+  scoreOutOf: { fontSize: 11, fontWeight: '600' },
+  scoreGrade: { fontSize: 24, fontWeight: '900', color: '#FFF' },
+  scoreSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+
+  fileRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: COLORS.surface, borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  fileIconBox: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+  },
+  fileNameText: { flex: 1, fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
+  uploadedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  uploadedText: { fontSize: 12, color: COLORS.success, fontWeight: '600' },
+
+  resultCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: COLORS.border, borderLeftWidth: 4, gap: 10,
+  },
+  resultCardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  resultCardIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  resultCardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  resultRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  resultDot: { width: 6, height: 6, borderRadius: 3, marginTop: 7, flexShrink: 0 },
+  resultText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+
+  nextCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, gap: 10,
+  },
+  nextTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  nextRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  nextIconBox: {
+    width: 32, height: 32, borderRadius: 9,
+    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+  },
+  nextRowText: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '500' },
+
+  dashBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: COLORS.primary, borderRadius: 16, paddingVertical: 16,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+  },
+  dashBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+
+  // Upload screen
+  uploadScreen: { flex: 1, padding: 20, gap: 20 },
+  uploadHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  uploadHeaderBadge: {
+    backgroundColor: COLORS.primaryLight, borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 5,
+  },
+  uploadHeaderBadgeText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  skipLink: { paddingHorizontal: 8, paddingVertical: 6 },
+  skipLinkText: { fontSize: 14, color: COLORS.textMuted, fontWeight: '500' },
+
+  uploadHero: { alignItems: 'center', gap: 12, marginTop: 16 },
+  uploadHeroIconBg: {
+    width: 110, height: 110, borderRadius: 30,
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+  },
+  uploadHeroIconFg: {
+    width: 80, height: 80, borderRadius: 22,
+    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+  },
+  uploadTitle: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center', letterSpacing: -0.3 },
+  uploadSubtitle: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
+
+  whatYouGetCard: {
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, gap: 12,
+  },
+  whatYouGetTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  whatRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  whatIconBox: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  whatText: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
+
+  uploadBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: COLORS.primary, borderRadius: 16, paddingVertical: 17,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 10, elevation: 5,
+  },
+  uploadBtnText: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  uploadHint: { fontSize: 12, color: COLORS.textMuted, textAlign: 'center' },
 });
