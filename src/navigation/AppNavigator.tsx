@@ -10,6 +10,7 @@ import { getJwt, clearJwt } from '../utils/auth';
 import apiClient, { setUnauthorizedHandler } from '../api/apiClient';
 import { COLORS } from '../constants';
 import { useFcmDeepLink } from '../hooks/useFcmDeepLink';
+import { initRevenueCat } from '../services/revenueCat';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 
@@ -18,6 +19,7 @@ const Root = createNativeStackNavigator<RootStackParamList>();
 export default function AppNavigator() {
   const dispatch = useDispatch<AppDispatch>();
   const jwt = useSelector((state: RootState) => state.auth.jwt);
+  const authUser = useSelector((state: RootState) => state.auth.user);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const navRef = useRef<NavigationContainerRef<any>>(null);
   const { onNavigationReady } = useFcmDeepLink(navRef, !!jwt);
@@ -30,7 +32,8 @@ export default function AppNavigator() {
       } else {
         try {
           const { data } = await apiClient.get('/api/auth/me');
-          dispatch(setAuth({ jwt: token, user: data as any }));
+          const user = data as any;
+          dispatch(setAuth({ jwt: token, user }));
         } catch {
           await clearJwt();
           dispatch(clearAuth());
@@ -39,6 +42,12 @@ export default function AppNavigator() {
       setIsBootstrapping(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (jwt && authUser?.email) {
+      initRevenueCat(authUser.email);
+    }
+  }, [jwt, authUser?.email]);
 
   useEffect(() => {
     setUnauthorizedHandler(async () => {
