@@ -33,6 +33,8 @@ import CompanyIntelScreen from '../screens/jobs/CompanyIntelScreen';
 import SavedJobsScreen from '../screens/jobs/SavedJobsScreen';
 import JobAlertsScreen from '../screens/jobs/JobAlertsScreen';
 import CompanyProfilesScreen from '../screens/jobs/CompanyProfilesScreen';
+import HrPostJobScreen from '../screens/jobs/HrPostJobScreen';
+import HrMyJobsScreen from '../screens/jobs/HrMyJobsScreen';
 import CareerPathScreen from '../screens/home/CareerPathScreen';
 import ApplicationsListScreen from '../screens/applications/ApplicationsListScreen';
 import ApplicationDetailScreen from '../screens/applications/ApplicationDetailScreen';
@@ -77,6 +79,8 @@ function JobsNavigator() {
       <JobsStack.Screen name="SavedJobs" component={SavedJobsScreen} options={{ title: 'Saved Jobs' }} />
       <JobsStack.Screen name="JobAlerts" component={JobAlertsScreen} options={{ title: 'Job Alerts' }} />
       <JobsStack.Screen name="CompanyProfiles" component={CompanyProfilesScreen} options={{ title: 'Companies' }} />
+      <JobsStack.Screen name="HrPostJob" component={HrPostJobScreen} options={{ headerShown: false }} />
+      <JobsStack.Screen name="HrMyJobs" component={HrMyJobsScreen} options={{ title: 'My Job Postings' }} />
     </JobsStack.Navigator>
   );
 }

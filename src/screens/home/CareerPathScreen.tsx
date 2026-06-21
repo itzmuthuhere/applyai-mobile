@@ -46,8 +46,19 @@ export default function CareerPathScreen() {
     setLoading(true);
     setError(null);
     try {
+      let resumeId = params?.resumeId;
+      if (!resumeId) {
+        const { data: resumes } = await apiClient.get<any[]>(API_ENDPOINTS.RESUMES);
+        const best = resumes.find((r: any) => r.isParsed && r.isOriginal) ?? resumes[0];
+        if (!best) {
+          setError('Please upload and parse a resume first to generate your career path.');
+          setLoading(false);
+          return;
+        }
+        resumeId = best.id;
+      }
       const { data } = await apiClient.post<CareerPathResult>(API_ENDPOINTS.CAREER_PATH, {
-        resumeId: params.resumeId,
+        resumeId,
       });
       setResult(data);
     } catch (e: any) {

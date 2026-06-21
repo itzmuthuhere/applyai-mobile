@@ -14,7 +14,7 @@ export type HomeStackParamList = {
   NegotiationCoach: undefined;
   Paywall: { feature?: string };
   Blacklist: undefined;
-  CareerPath: { resumeId: number };
+  CareerPath: { resumeId?: number };
 };
 
 export type JobsStackParamList = {
@@ -28,6 +28,8 @@ export type JobsStackParamList = {
   SavedJobs: undefined;
   JobAlerts: undefined;
   CompanyProfiles: undefined;
+  HrPostJob: undefined;
+  HrMyJobs: undefined;
 };
 
 export type ResumeStackParamList = {

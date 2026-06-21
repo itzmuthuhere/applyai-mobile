@@ -44,6 +44,9 @@ export const ROUTES = {
   NEGOTIATION_COACH: 'NegotiationCoach',
   BLACKLIST: 'Blacklist',
   CAREER_PATH: 'CareerPath',
+  // HR stack
+  HR_POST_JOB: 'HrPostJob',
+  HR_MY_JOBS: 'HrMyJobs',
 } as const;
 
 export const COLORS = {
@@ -113,6 +116,12 @@ export const API_ENDPOINTS = {
   SKILLS_GAP: '/api/ai/skills-gap',
   CAREER_PATH: '/api/ai/career-path',
   ANALYSE_JOB: '/api/ai/analyse-job',
+  // Dashboard
+  DASHBOARD_SUMMARY: '/api/dashboard/summary',
+  // HR
+  HR_POST_JOB: '/api/hr/jobs',
+  HR_MY_JOBS: '/api/hr/my-jobs',
+  HR_DELETE_JOB: (id: number) => `/api/hr/jobs/${id}`,
 } as const;
 
 export const PLAN_LIMITS = {

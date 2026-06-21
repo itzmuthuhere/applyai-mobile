@@ -1,5 +1,6 @@
 export type SubscriptionPlan = 'FREE' | 'HUNTER' | 'PRO';
 export type RemotePreference = 'REMOTE' | 'HYBRID' | 'ONSITE' | 'ANY';
+export type UserRole = 'JOBSEEKER' | 'HR';
 export type ApplicationStatus =
   | 'APPLIED'
   | 'VIEWED'
@@ -15,6 +16,8 @@ export interface User {
   name: string;
   googleId: string;
   subscriptionPlan: SubscriptionPlan;
+  role: UserRole;
+  headline: string | null;
   targetRole: string | null;
   targetLocation: string | null;
   minSalary: number | null;
@@ -24,6 +27,37 @@ export interface User {
   completenessScore: number;
   completenessHints: string[];
   createdAt: string;
+}
+
+export interface DashboardSummary {
+  resumeCount: number;
+  applicationCount: number;
+  interviewCount: number;
+  avgMatchScore: number | null;
+  avgInterviewScore: number | null;
+  applicationsByStatus: Record<string, number>;
+  recentApplications: Array<{
+    id: number;
+    jobTitle: string;
+    company: string;
+    status: string;
+    appliedAt: string | null;
+  }>;
+}
+
+export interface HrJob {
+  id: number;
+  title: string;
+  company: string;
+  location: string | null;
+  description: string;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  isRemote: boolean | null;
+  category: string | null;
+  tags: string | null;
+  deadline: string | null;
+  scrapedAt: string;
 }
 
 export interface AuthResponse {

@@ -6,9 +6,12 @@ import { View, ActivityIndicator } from 'react-native';
 import { RootStackParamList } from './types';
 import { RootState, AppDispatch } from '../store';
 import { setAuth, clearAuth } from '../store/slices/authSlice';
+import { setResumes } from '../store/slices/resumeSlice';
+import { setApplications } from '../store/slices/applicationSlice';
+import { setHistory } from '../store/slices/interviewSlice';
 import { getJwt, clearJwt } from '../utils/auth';
 import apiClient, { setUnauthorizedHandler } from '../api/apiClient';
-import { COLORS } from '../constants';
+import { COLORS, API_ENDPOINTS } from '../constants';
 import { useFcmDeepLink } from '../hooks/useFcmDeepLink';
 import { initRevenueCat } from '../services/revenueCat';
 import AuthNavigator from './AuthNavigator';
@@ -29,15 +32,29 @@ export default function AppNavigator() {
       const token = await getJwt();
       if (!token) {
         dispatch(clearAuth());
-      } else {
-        try {
-          const { data } = await apiClient.get('/api/auth/me');
-          const user = data as any;
-          dispatch(setAuth({ jwt: token, user }));
-        } catch {
-          await clearJwt();
-          dispatch(clearAuth());
-        }
+        setIsBootstrapping(false);
+        return;
+      }
+      try {
+        // Restore auth from stored JWT
+        const { data: user } = await apiClient.get('/api/auth/me');
+        dispatch(setAuth({ jwt: token, user }));
+
+        // Preload all dashboard data in parallel — makes HomeScreen instant
+        await Promise.allSettled([
+          apiClient.get(API_ENDPOINTS.RESUMES).then(r => {
+            dispatch(setResumes(r.data));
+          }),
+          apiClient.get(`${API_ENDPOINTS.APPLICATIONS}?page=0&size=50`).then(r => {
+            dispatch(setApplications(r.data.content ?? []));
+          }),
+          apiClient.get(API_ENDPOINTS.INTERVIEW_HISTORY).then(r => {
+            dispatch(setHistory(r.data ?? []));
+          }),
+        ]);
+      } catch {
+        await clearJwt();
+        dispatch(clearAuth());
       }
       setIsBootstrapping(false);
     })();

@@ -12,6 +12,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
@@ -19,6 +20,7 @@ import { COLORS, API_ENDPOINTS } from '../../constants';
 import { JobsStackParamList } from '../../navigation/types';
 import { Job, JobFeedResponse } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import { RootState } from '../../store';
 
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'JobFeed'>;
 type SortBy = 'match' | 'recent';
@@ -50,6 +52,8 @@ function formatSalary(min: number | null, max: number | null): string | null {
 
 export default function JobFeedScreen() {
   const navigation = useNavigation<Nav>();
+  const user = useSelector((s: RootState) => s.auth.user);
+  const isHr = user?.role === 'HR';
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
@@ -249,11 +253,22 @@ export default function JobFeedScreen() {
       {/* ── Header ── */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Jobs</Text>
-        {!isLoading && (
-          <Text style={styles.headerCount}>
-            {total.toLocaleString()} {hasFilters ? 'results' : 'jobs'}
-          </Text>
-        )}
+        <View style={styles.headerRight}>
+          {!isLoading && (
+            <Text style={styles.headerCount}>
+              {total.toLocaleString()} {hasFilters ? 'results' : 'jobs'}
+            </Text>
+          )}
+          {isHr && (
+            <TouchableOpacity
+              style={styles.hrPostFab}
+              onPress={() => navigation.navigate('HrPostJob')}
+            >
+              <Ionicons name="add" size={16} color="#fff" />
+              <Text style={styles.hrPostFabText}>Post Job</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* ── Search bar ── */}
@@ -429,8 +444,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerTitle: { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary },
   headerCount: { fontSize: 13, color: COLORS.textSecondary },
+  hrPostFab: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#059669', borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 6,
+  },
+  hrPostFabText: { color: '#fff', fontSize: 13, fontWeight: '700' },
 
   // Search
   searchWrap: {
