@@ -23,6 +23,12 @@ import apiClient from '../../api/apiClient';
 type RouteProps = RouteProp<JobsStackParamList, 'MatchScore'>;
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'MatchScore'>;
 
+const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
+function companyColor(name: string) {
+  if (!name) return COMPANY_COLORS[0];
+  return COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
+}
+
 function scoreColor(score: number) {
   if (score >= 75) return COLORS.success;
   if (score >= 55) return COLORS.warning;
@@ -137,20 +143,25 @@ export default function MatchScoreScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
 
       {/* Job header */}
-      <View style={styles.jobCard}>
-        <View style={styles.companyIcon}>
-          <Text style={styles.companyInitial}>
-            {job?.company ? job.company[0].toUpperCase() : '?'}
-          </Text>
-        </View>
-        <View style={styles.jobInfo}>
-          <Text style={styles.jobTitle} numberOfLines={2}>{job?.title ?? 'Job Match Analysis'}</Text>
-          <Text style={styles.companyName}>{job?.company ?? ''}</Text>
-        </View>
-        <View style={styles.analyticsBadge}>
-          <Ionicons name="analytics" size={18} color={COLORS.primary} />
-        </View>
-      </View>
+      {(() => {
+        const color = companyColor(job?.company ?? '');
+        return (
+          <View style={styles.jobCard}>
+            <View style={[styles.companyIcon, { backgroundColor: color + '18', borderColor: color + '30', borderWidth: 1 }]}>
+              <Text style={[styles.companyInitial, { color }]}>
+                {job?.company ? job.company[0].toUpperCase() : '?'}
+              </Text>
+            </View>
+            <View style={styles.jobInfo}>
+              <Text style={styles.jobTitle} numberOfLines={2}>{job?.title ?? 'Job Match Analysis'}</Text>
+              <Text style={styles.companyName}>{job?.company ?? ''}</Text>
+            </View>
+            <View style={styles.analyticsBadge}>
+              <Ionicons name="analytics" size={18} color={COLORS.primary} />
+            </View>
+          </View>
+        );
+      })()}
 
       {/* Resume picker */}
       <View style={styles.pickerSection}>
@@ -328,11 +339,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: COLORS.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  companyInitial: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
+  companyInitial: { fontSize: 20, fontWeight: '800' },
   jobInfo: { flex: 1 },
   jobTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
   companyName: { fontSize: 13, color: COLORS.textSecondary },
