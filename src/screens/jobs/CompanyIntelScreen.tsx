@@ -13,6 +13,10 @@ import { JobsStackParamList } from '../../navigation/types';
 
 type RouteProps = RouteProp<JobsStackParamList, 'CompanyIntel'>;
 
+const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
+const companyColor = (name: string) =>
+  COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
+
 const DIFFICULTY_COLOR: Record<string, string> = {
   EASY: COLORS.success,
   MEDIUM: COLORS.warning,
@@ -57,11 +61,16 @@ export default function CompanyIntelScreen() {
 
         {/* Header */}
         <View style={styles.headerCard}>
-          <View style={styles.companyIcon}>
-            <Text style={styles.companyInitial}>
-              {params.companyName[0].toUpperCase()}
-            </Text>
-          </View>
+          {(() => {
+            const color = companyColor(params.companyName);
+            return (
+              <View style={[styles.companyIcon, { backgroundColor: color + '18', borderColor: color + '30', borderWidth: 1 }]}>
+                <Text style={[styles.companyInitial, { color }]}>
+                  {params.companyName[0].toUpperCase()}
+                </Text>
+              </View>
+            );
+          })()}
           <View style={{ flex: 1 }}>
             <Text style={styles.companyName}>{data.companyName ?? params.companyName}</Text>
             <Text style={styles.overview}>{data.overview}</Text>
