@@ -117,6 +117,6 @@ export const API_ENDPOINTS = {
 
 export const PLAN_LIMITS = {
   FREE: { applications: 10, interviews: 2 },
-  HUNTER: { applications: 100, interviews: 10 },
+  HUNTER: { applications: 50, interviews: Infinity },
   PRO: { applications: Infinity, interviews: Infinity },
 } as const;
