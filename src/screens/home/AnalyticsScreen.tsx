@@ -1,12 +1,75 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
-  SafeAreaView,
+  SafeAreaView, Animated,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { Ionicons } from '@expo/vector-icons';
 import { AppDispatch, RootState } from '../../store';
 import { fetchAnalyticsOverview, fetchResumePerformance } from '../../store/analyticsSlice';
 import { COLORS } from '../../constants';
+
+const STAT_CONFIG: Array<{
+  key: keyof ReturnType<typeof buildStats>;
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  color: string;
+  bg: string;
+}> = [
+  { key: 'totalApplications', label: 'Applied', icon: 'send-outline', color: COLORS.primary, bg: COLORS.primaryLight },
+  { key: 'pendingApplications', label: 'Pending', icon: 'hourglass-outline', color: '#F59E0B', bg: '#FEF3C7' },
+  { key: 'interviewsScheduled', label: 'Interviews', icon: 'mic-outline', color: '#10B981', bg: '#D1FAE5' },
+  { key: 'offersReceived', label: 'Offers', icon: 'trophy-outline', color: '#7C3AED', bg: '#EDE9FE' },
+];
+
+function buildStats(o: any) {
+  return {
+    totalApplications: o?.totalApplications ?? 0,
+    pendingApplications: o?.pendingApplications ?? 0,
+    interviewsScheduled: o?.interviewsScheduled ?? 0,
+    offersReceived: o?.offersReceived ?? 0,
+  };
+}
+
+function SkeletonBlock({ width, height }: { width: number | string; height: number }) {
+  const opacity = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.8, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.4, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+  return (
+    <Animated.View
+      style={{ width: width as any, height, borderRadius: 8, backgroundColor: COLORS.border, opacity }}
+    />
+  );
+}
+
+function StatCard({ label, value, icon, color, bg }: { label: string; value: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; bg: string }) {
+  return (
+    <View style={[styles.statCard, { borderTopColor: color }]}>
+      <View style={[styles.statIconBox, { backgroundColor: bg }]}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+  return (
+    <View style={styles.progressTrack}>
+      <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: color }]} />
+    </View>
+  );
+}
 
 export default function AnalyticsScreen() {
   const dispatch = useDispatch<AppDispatch>();
@@ -21,114 +84,245 @@ export default function AnalyticsScreen() {
 
   if (loading && !overview) {
     return (
-      <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <SafeAreaView style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <View style={{ height: 8 }} />
+          <View style={styles.statsGrid}>
+            {[1, 2, 3, 4].map(k => (
+              <Animated.View key={k} style={[styles.statCard, { borderTopColor: COLORS.border }]}>
+                <SkeletonBlock width={36} height={36} />
+                <SkeletonBlock width={40} height={28} />
+                <SkeletonBlock width={56} height={12} />
+              </Animated.View>
+            ))}
+          </View>
+          <View style={[styles.card, { gap: 14 }]}>
+            <SkeletonBlock width="50%" height={16} />
+            <SkeletonBlock width="100%" height={32} />
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.center}>
-        <Text style={styles.errorText}>{error}</Text>
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.centered}>
+          <Ionicons name="cloud-offline-outline" size={52} color={COLORS.textMuted} />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
+  const stats = buildStats(overview);
+  const maxMonth = Math.max(...(overview?.applicationsByMonth?.map((m: any) => m.count) ?? [1]), 1);
+  const successRate = stats.totalApplications > 0
+    ? Math.round((stats.offersReceived / stats.totalApplications) * 100)
+    : 0;
+  const interviewRate = stats.totalApplications > 0
+    ? Math.round((stats.interviewsScheduled / stats.totalApplications) * 100)
+    : 0;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Analytics</Text>
 
+        {/* Stat cards */}
+        <View style={styles.statsGrid}>
+          {STAT_CONFIG.map(cfg => (
+            <StatCard
+              key={cfg.key}
+              label={cfg.label}
+              value={stats[cfg.key]}
+              icon={cfg.icon}
+              color={cfg.color}
+              bg={cfg.bg}
+            />
+          ))}
+        </View>
+
+        {/* Match score + funnel */}
         {overview && (
-          <>
-            <View style={styles.row}>
-              <StatCard label="Total Applied" value={overview.totalApplications} />
-              <StatCard label="Pending" value={overview.pendingApplications} />
-            </View>
-            <View style={styles.row}>
-              <StatCard label="Interviews" value={overview.interviewsScheduled} />
-              <StatCard label="Offers" value={overview.offersReceived} />
-            </View>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Avg Match Score</Text>
-              <Text style={styles.bigNumber}>{overview.averageMatchScore}%</Text>
+          <View style={styles.card}>
+            <View style={styles.cardHead}>
+              <Ionicons name="funnel-outline" size={15} color={COLORS.primary} />
+              <Text style={styles.cardTitle}>Application Funnel</Text>
             </View>
 
-            {overview.topAppliedRoles.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Top Applied Roles</Text>
-                {overview.topAppliedRoles.map((r, i) => (
-                  <Text key={i} style={styles.listItem}>• {r}</Text>
-                ))}
+            {/* Score gauge */}
+            {overview.averageMatchScore != null && (
+              <View style={styles.scoreRow}>
+                <View style={styles.scoreGauge}>
+                  <Text style={styles.scoreValue}>{Math.round(overview.averageMatchScore)}%</Text>
+                  <Text style={styles.scoreLabel}>Avg Match</Text>
+                </View>
+                <View style={styles.scoreDivider} />
+                <View style={styles.scoreGauge}>
+                  <Text style={[styles.scoreValue, { color: '#10B981' }]}>{interviewRate}%</Text>
+                  <Text style={styles.scoreLabel}>Interview Rate</Text>
+                </View>
+                <View style={styles.scoreDivider} />
+                <View style={styles.scoreGauge}>
+                  <Text style={[styles.scoreValue, { color: '#7C3AED' }]}>{successRate}%</Text>
+                  <Text style={styles.scoreLabel}>Offer Rate</Text>
+                </View>
               </View>
             )}
 
-            {overview.applicationsByMonth.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Applications by Month</Text>
-                {overview.applicationsByMonth.map((m, i) => (
-                  <View key={i} style={styles.barRow}>
-                    <Text style={styles.barLabel}>{m.month}</Text>
-                    <View style={[styles.bar, { width: Math.min(m.count * 12, 200) }]} />
-                    <Text style={styles.barCount}>{m.count}</Text>
+            {/* Funnel bars */}
+            <View style={styles.funnelBars}>
+              {[
+                { label: 'Applied', value: stats.totalApplications, color: COLORS.primary },
+                { label: 'Pending', value: stats.pendingApplications, color: '#F59E0B' },
+                { label: 'Interview', value: stats.interviewsScheduled, color: '#10B981' },
+                { label: 'Offer', value: stats.offersReceived, color: '#7C3AED' },
+              ].map(item => (
+                <View key={item.label} style={styles.funnelRow}>
+                  <Text style={styles.funnelLabel}>{item.label}</Text>
+                  <View style={{ flex: 1 }}>
+                    <ProgressBar value={item.value} max={stats.totalApplications} color={item.color} />
                   </View>
-                ))}
-              </View>
-            )}
-          </>
+                  <Text style={[styles.funnelCount, { color: item.color }]}>{item.value}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
         )}
 
-        {resumePerformance.length > 0 && (
+        {/* Monthly activity */}
+        {overview != null && (overview.applicationsByMonth?.length ?? 0) > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Resume Performance</Text>
-            {resumePerformance.map((r) => (
-              <View key={r.resumeId} style={styles.resumeRow}>
-                <Text style={styles.resumeName} numberOfLines={1}>{r.fileName}</Text>
-                <Text style={styles.resumeStat}>{r.totalApplications} apps · {r.interviewRate}% interview rate</Text>
+            <View style={styles.cardHead}>
+              <Ionicons name="bar-chart-outline" size={15} color='#059669' />
+              <Text style={styles.cardTitle}>Monthly Activity</Text>
+            </View>
+            <View style={styles.chartArea}>
+              {overview.applicationsByMonth.map((m: any, i: number) => {
+                const barH = Math.max(Math.round((m.count / maxMonth) * 80), 4);
+                return (
+                  <View key={i} style={styles.chartCol}>
+                    <Text style={styles.chartCount}>{m.count > 0 ? m.count : ''}</Text>
+                    <View style={[styles.chartBar, { height: barH }]} />
+                    <Text style={styles.chartMonth}>{m.month?.slice(0, 3) ?? ''}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Top roles */}
+        {overview != null && (overview.topAppliedRoles?.length ?? 0) > 0 && (
+          <View style={styles.card}>
+            <View style={styles.cardHead}>
+              <Ionicons name="briefcase-outline" size={15} color='#D97706' />
+              <Text style={styles.cardTitle}>Top Roles Applied</Text>
+            </View>
+            {overview.topAppliedRoles.map((r: string, i: number) => (
+              <View key={i} style={styles.roleRow}>
+                <View style={[styles.roleDot, { backgroundColor: COLORS.primary }]} />
+                <Text style={styles.roleText}>{r}</Text>
               </View>
             ))}
           </View>
         )}
+
+        {/* Resume performance */}
+        {resumePerformance.length > 0 && (
+          <View style={styles.card}>
+            <View style={styles.cardHead}>
+              <Ionicons name="document-text-outline" size={15} color='#7C3AED' />
+              <Text style={styles.cardTitle}>Resume Performance</Text>
+            </View>
+            {resumePerformance.map((r: any) => (
+              <View key={r.resumeId} style={styles.resumeItem}>
+                <View style={styles.resumeIconBox}>
+                  <Ionicons name="document-outline" size={16} color={COLORS.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.resumeName} numberOfLines={1}>{r.fileName}</Text>
+                  <View style={styles.resumeStats}>
+                    <Text style={styles.resumeStat}>{r.totalApplications} apps</Text>
+                    <View style={styles.statDot} />
+                    <Text style={styles.resumeStat}>{r.interviewRate}% interviews</Text>
+                  </View>
+                </View>
+                <View style={[styles.rateTag, { backgroundColor: r.interviewRate >= 30 ? '#D1FAE5' : COLORS.primaryLight }]}>
+                  <Text style={[styles.rateTagText, { color: r.interviewRate >= 30 ? '#065F46' : COLORS.primary }]}>
+                    {r.interviewRate}%
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={{ height: 24 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <View style={styles.statCard}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
-  scroll: { padding: 16 },
-  title: { fontSize: 24, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 16 },
-  row: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  screen: { flex: 1, backgroundColor: COLORS.background },
+  scroll: { padding: 14, gap: 12 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32 },
+  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statCard: {
-    flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, padding: 16,
-    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+    width: '47%', backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: COLORS.border, borderTopWidth: 3, gap: 6,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
-  statValue: { fontSize: 32, fontWeight: '700', color: COLORS.primary },
-  statLabel: { fontSize: 12, color: COLORS.textSecondary, marginTop: 4 },
+  statIconBox: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontSize: 28, fontWeight: '900', color: COLORS.primary },
+  statLabel: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 16,
-    marginBottom: 12, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, gap: 12,
   },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 12 },
-  bigNumber: { fontSize: 40, fontWeight: '700', color: COLORS.secondary },
-  listItem: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 4 },
-  barRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  barLabel: { width: 48, fontSize: 12, color: COLORS.textSecondary },
-  bar: { height: 12, backgroundColor: COLORS.primary, borderRadius: 6, marginHorizontal: 8 },
-  barCount: { fontSize: 12, color: COLORS.textSecondary },
-  resumeRow: { borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingVertical: 8 },
-  resumeName: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  resumeStat: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  errorText: { color: COLORS.error, fontSize: 16 },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+
+  scoreRow: { flexDirection: 'row', alignItems: 'center' },
+  scoreGauge: { flex: 1, alignItems: 'center', gap: 4 },
+  scoreValue: { fontSize: 22, fontWeight: '900', color: COLORS.primary },
+  scoreLabel: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
+  scoreDivider: { width: 1, height: 36, backgroundColor: COLORS.border },
+
+  funnelBars: { gap: 10 },
+  funnelRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  funnelLabel: { width: 64, fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
+  funnelCount: { width: 24, fontSize: 12, fontWeight: '800', textAlign: 'right' },
+  progressTrack: { height: 8, backgroundColor: COLORS.border, borderRadius: 4, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 4 },
+
+  chartArea: {
+    flexDirection: 'row', alignItems: 'flex-end',
+    gap: 8, height: 110, paddingTop: 24,
+  },
+  chartCol: { flex: 1, alignItems: 'center', gap: 4 },
+  chartCount: { fontSize: 9, color: COLORS.textMuted, fontWeight: '700' },
+  chartBar: { width: '100%', backgroundColor: COLORS.primary + '90', borderRadius: 4 },
+  chartMonth: { fontSize: 9, color: COLORS.textMuted, fontWeight: '500' },
+
+  roleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  roleDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
+  roleText: { fontSize: 13, color: COLORS.textSecondary },
+
+  resumeItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
+  resumeIconBox: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+  },
+  resumeName: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 2 },
+  resumeStats: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  resumeStat: { fontSize: 11, color: COLORS.textMuted },
+  statDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: COLORS.border },
+  rateTag: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  rateTagText: { fontSize: 12, fontWeight: '800' },
 });

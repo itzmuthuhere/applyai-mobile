@@ -1,113 +1,205 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, SafeAreaView, TextInput,
+  StyleSheet, ActivityIndicator, SafeAreaView,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
+import { Ionicons } from '@expo/vector-icons';
 import { AppDispatch, RootState } from '../../store';
 import { fetchInterviewPrepPlan } from '../../store/intelligenceSlice';
 import { COLORS } from '../../constants';
+
+const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
+const companyColor = (name: string) =>
+  COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
+
+const HOUR_COLORS = ['#D1FAE5', '#DBEAFE', '#EDE9FE', '#FEF3C7', '#FEE2E2'];
+const hourColor = (i: number) => HOUR_COLORS[i % HOUR_COLORS.length];
+const hourTextColor = ['#065F46', '#1D4ED8', '#5B21B6', '#92400E', '#991B1B'];
+const hourText = (i: number) => hourTextColor[i % hourTextColor.length];
+
+function SectionHead({ icon, title, color = COLORS.primary }: { icon: React.ComponentProps<typeof Ionicons>['name']; title: string; color?: string }) {
+  return (
+    <View style={styles.sectionHead}>
+      <View style={[styles.sectionIconBox, { backgroundColor: color + '20' }]}>
+        <Ionicons name={icon} size={14} color={color} />
+      </View>
+      <Text style={styles.sectionTitle}>{title}</Text>
+    </View>
+  );
+}
 
 export default function InterviewPrepPlanScreen() {
   const route = useRoute<any>();
   const dispatch = useDispatch<AppDispatch>();
   const { applicationId } = route.params as { applicationId: number };
-  const { interviewPrepResult, loading, error } = useSelector((s: RootState) => s.intelligence);
-  const [interviewDate, setInterviewDate] = useState('');
+  const { interviewPrepResult: plan, loading, error } = useSelector((s: RootState) => s.intelligence);
 
   useEffect(() => {
-    dispatch(fetchInterviewPrepPlan({ applicationId, interviewDate: interviewDate || undefined }));
+    dispatch(fetchInterviewPrepPlan({ applicationId }));
   }, [dispatch, applicationId]);
-
-  const plan = interviewPrepResult;
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.center}>
+      <View style={styles.centered}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Generating your prep plan…</Text>
-      </SafeAreaView>
+        <Text style={styles.loadingText}>Crafting your personalised prep plan…</Text>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.center}>
+      <View style={styles.centered}>
+        <Ionicons name="alert-circle-outline" size={52} color={COLORS.error} />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity onPress={() => dispatch(fetchInterviewPrepPlan({ applicationId }))} style={styles.retryBtn}>
-          <Text style={styles.retryText}>Retry</Text>
+        <TouchableOpacity
+          style={styles.retryBtn}
+          onPress={() => dispatch(fetchInterviewPrepPlan({ applicationId }))}
+        >
+          <Ionicons name="refresh-outline" size={16} color="#fff" />
+          <Text style={styles.retryBtnText}>Retry</Text>
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!plan) return null;
 
+  const color = companyColor(plan.company ?? 'A');
+  const totalHours = plan.days?.reduce((sum: number, d: any) => sum + (d.estimatedHours ?? 0), 0) ?? 0;
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>{plan.targetRole}</Text>
-        <Text style={styles.company}>@ {plan.company} · {plan.totalDays} days</Text>
 
-        {plan.companyInsights && (
-          <View style={styles.infoCard}>
-            <Text style={styles.infoText}>{plan.companyInsights}</Text>
+        {/* Hero header */}
+        <View style={styles.heroCard}>
+          <View style={[styles.companyBadge, { backgroundColor: color + '18', borderColor: color + '30' }]}>
+            <Text style={[styles.companyInitial, { color }]}>{(plan.company ?? 'C')[0].toUpperCase()}</Text>
           </View>
-        )}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.heroRole} numberOfLines={2}>{plan.targetRole}</Text>
+            <Text style={styles.heroCompany}>@ {plan.company}</Text>
+          </View>
+          <View style={styles.heroStats}>
+            <Text style={styles.heroStatNum}>{plan.totalDays}</Text>
+            <Text style={styles.heroStatLabel}>Days</Text>
+          </View>
+          <View style={[styles.heroStatsDivider]} />
+          <View style={styles.heroStats}>
+            <Text style={styles.heroStatNum}>{totalHours}</Text>
+            <Text style={styles.heroStatLabel}>Hours</Text>
+          </View>
+        </View>
 
+        {/* Company insights */}
+        {plan.companyInsights ? (
+          <View style={styles.insightCard}>
+            <View style={styles.insightLeft}>
+              <Ionicons name="information-circle" size={18} color={COLORS.primary} />
+            </View>
+            <Text style={styles.insightText}>{plan.companyInsights}</Text>
+          </View>
+        ) : null}
+
+        {/* Skills to focus */}
         {plan.keySkillsToRevise?.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Skills to Focus On</Text>
-            <View style={styles.chips}>
+            <SectionHead icon="code-slash-outline" title="Skills to Focus On" color={COLORS.primary} />
+            <View style={styles.chipsWrap}>
               {plan.keySkillsToRevise.map((s: string, i: number) => (
-                <View key={i} style={styles.chip}>
-                  <Text style={styles.chipText}>{s}</Text>
+                <View key={i} style={styles.skillChip}>
+                  <Text style={styles.skillChipText}>{s}</Text>
                 </View>
               ))}
             </View>
           </View>
         )}
 
-        <Text style={styles.sectionHeader}>Day-by-Day Plan</Text>
-        {plan.days?.map((d: any) => (
-          <View key={d.day} style={styles.dayCard}>
-            <View style={styles.dayHeader}>
-              <View style={styles.dayBadge}><Text style={styles.dayNum}>Day {d.day}</Text></View>
-              <Text style={styles.dayFocus}>{d.focus}</Text>
-              <Text style={styles.dayHours}>{d.estimatedHours}h</Text>
-            </View>
-            {d.topics?.map((t: string, i: number) => (
-              <Text key={i} style={styles.topic}>• {t}</Text>
-            ))}
-            {d.practiceQuestions?.length > 0 && (
-              <View style={styles.questionsBox}>
-                <Text style={styles.qLabel}>Practice</Text>
-                {d.practiceQuestions.map((q: string, i: number) => (
-                  <Text key={i} style={styles.question}>Q: {q}</Text>
-                ))}
-              </View>
-            )}
-          </View>
-        ))}
+        {/* Day-by-day */}
+        {plan.days?.length > 0 && (
+          <View style={styles.card}>
+            <SectionHead icon="calendar-outline" title="Day-by-Day Plan" color='#7C3AED' />
+            <View style={styles.timelineWrap}>
+              {plan.days.map((d: any, i: number) => (
+                <View key={d.day} style={styles.timelineRow}>
+                  {/* Left: day number + line */}
+                  <View style={styles.timelineLeft}>
+                    <View style={[styles.dayCircle, { backgroundColor: color }]}>
+                      <Text style={styles.dayCircleText}>{d.day}</Text>
+                    </View>
+                    {i < plan.days.length - 1 && <View style={styles.timelineLine} />}
+                  </View>
 
+                  {/* Right: content */}
+                  <View style={styles.timelineContent}>
+                    <View style={styles.dayHeader}>
+                      <Text style={styles.dayFocus}>{d.focus}</Text>
+                      {d.estimatedHours ? (
+                        <View style={[styles.hourBadge, { backgroundColor: hourColor(i) }]}>
+                          <Text style={[styles.hourBadgeText, { color: hourText(i) }]}>{d.estimatedHours}h</Text>
+                        </View>
+                      ) : null}
+                    </View>
+
+                    {d.topics?.length > 0 && (
+                      <View style={styles.topicsList}>
+                        {d.topics.map((t: string, j: number) => (
+                          <View key={j} style={styles.topicRow}>
+                            <View style={[styles.topicDot, { backgroundColor: color }]} />
+                            <Text style={styles.topicText}>{t}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    {d.practiceQuestions?.length > 0 && (
+                      <View style={styles.practiceBox}>
+                        <View style={styles.practiceHeader}>
+                          <Ionicons name="help-circle-outline" size={13} color='#7C3AED' />
+                          <Text style={styles.practiceLabel}>Practice Questions</Text>
+                        </View>
+                        {d.practiceQuestions.map((q: string, j: number) => (
+                          <Text key={j} style={styles.practiceQ}>Q{j + 1}: {q}</Text>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* System Design */}
         {plan.systemDesignTopics?.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>System Design Topics</Text>
+            <SectionHead icon="git-network-outline" title="System Design Topics" color='#059669' />
             {plan.systemDesignTopics.map((t: string, i: number) => (
-              <Text key={i} style={styles.listItem}>• {t}</Text>
+              <View key={i} style={styles.bulletRow}>
+                <View style={[styles.bullet, { backgroundColor: '#059669' }]} />
+                <Text style={styles.bulletText}>{t}</Text>
+              </View>
             ))}
           </View>
         )}
 
+        {/* Behavioral */}
         {plan.behavioralQuestions?.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Behavioral Questions</Text>
+            <SectionHead icon="mic-outline" title="Behavioral Questions" color='#D97706' />
             {plan.behavioralQuestions.map((q: string, i: number) => (
-              <Text key={i} style={styles.listItem}>• {q}</Text>
+              <View key={i} style={styles.bqRow}>
+                <Text style={styles.bqNum}>Q{i + 1}</Text>
+                <Text style={styles.bqText}>{q}</Text>
+              </View>
             ))}
           </View>
         )}
+
+        <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -115,40 +207,99 @@ export default function InterviewPrepPlanScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background, padding: 16 },
-  scroll: { padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary },
-  company: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 16, marginTop: 2 },
-  infoCard: {
-    backgroundColor: COLORS.primaryLight, borderRadius: 10, padding: 12,
-    marginBottom: 16, borderLeftWidth: 4, borderLeftColor: COLORS.primary,
+  scroll: { padding: 14, gap: 12 },
+  centered: {
+    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 32,
+    backgroundColor: COLORS.background,
   },
-  infoText: { fontSize: 13, color: COLORS.primary, lineHeight: 20 },
+  loadingText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  retryBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
+  },
+  retryBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+
+  heroCard: {
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+  },
+  companyBadge: {
+    width: 52, height: 52, borderRadius: 14, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  companyInitial: { fontSize: 22, fontWeight: '900' },
+  heroRole: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
+  heroCompany: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  heroStats: { alignItems: 'center', gap: 2 },
+  heroStatsDivider: { width: 1, height: 28, backgroundColor: COLORS.border },
+  heroStatNum: { fontSize: 20, fontWeight: '900', color: COLORS.primary },
+  heroStatLabel: { fontSize: 10, color: COLORS.textMuted, fontWeight: '500' },
+
+  insightCard: {
+    backgroundColor: COLORS.primaryLight, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: '#BFDBFE',
+    flexDirection: 'row', gap: 10, alignItems: 'flex-start',
+  },
+  insightLeft: {
+    width: 32, height: 32, borderRadius: 10,
+    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  insightText: { flex: 1, fontSize: 13, color: COLORS.primary, lineHeight: 20 },
+
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 16,
-    marginBottom: 12, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, gap: 12,
   },
-  cardTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 10 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { backgroundColor: COLORS.primaryLight, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 5 },
-  chipText: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
-  sectionHeader: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10, marginTop: 4 },
-  dayCard: {
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 14,
-    marginBottom: 10, borderWidth: 1, borderColor: COLORS.border,
+  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sectionIconBox: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  skillChip: {
+    backgroundColor: COLORS.primaryLight, borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1, borderColor: '#BFDBFE',
   },
-  dayHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  dayBadge: { backgroundColor: COLORS.primary, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginRight: 8 },
-  dayNum: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  dayFocus: { flex: 1, fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
-  dayHours: { fontSize: 12, color: COLORS.textSecondary },
-  topic: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 2 },
-  questionsBox: { marginTop: 8, backgroundColor: COLORS.background, borderRadius: 8, padding: 10 },
-  qLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted, marginBottom: 4, textTransform: 'uppercase' },
-  question: { fontSize: 13, color: COLORS.textPrimary, marginBottom: 4 },
-  listItem: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 4 },
-  loadingText: { marginTop: 12, color: COLORS.textSecondary, fontSize: 14 },
-  errorText: { color: COLORS.error, fontSize: 15, textAlign: 'center', marginBottom: 12 },
-  retryBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 8 },
-  retryText: { color: '#fff', fontWeight: '600' },
+  skillChipText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+
+  timelineWrap: { gap: 0 },
+  timelineRow: { flexDirection: 'row', gap: 12 },
+  timelineLeft: { alignItems: 'center', width: 32 },
+  dayCircle: {
+    width: 32, height: 32, borderRadius: 16,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  dayCircleText: { fontSize: 13, fontWeight: '900', color: '#fff' },
+  timelineLine: { flex: 1, width: 2, backgroundColor: COLORS.border, marginVertical: 4 },
+  timelineContent: { flex: 1, paddingBottom: 16, gap: 8 },
+
+  dayHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  dayFocus: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  hourBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  hourBadgeText: { fontSize: 11, fontWeight: '700' },
+
+  topicsList: { gap: 5 },
+  topicRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  topicDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 7, flexShrink: 0 },
+  topicText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+
+  practiceBox: {
+    backgroundColor: COLORS.background, borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: '#EDE9FE', gap: 6,
+  },
+  practiceHeader: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  practiceLabel: { fontSize: 11, fontWeight: '700', color: '#7C3AED', textTransform: 'uppercase', letterSpacing: 0.4 },
+  practiceQ: { fontSize: 13, color: COLORS.textPrimary, lineHeight: 19 },
+
+  bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  bullet: { width: 6, height: 6, borderRadius: 3, marginTop: 7, flexShrink: 0 },
+  bulletText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+
+  bqRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  bqNum: {
+    width: 24, height: 24, borderRadius: 6, backgroundColor: '#FEF3C7',
+    textAlign: 'center', lineHeight: 24, fontSize: 11, fontWeight: '800', color: '#92400E', flexShrink: 0,
+  },
+  bqText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, paddingTop: 2 },
 });
