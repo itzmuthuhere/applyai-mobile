@@ -151,45 +151,68 @@ export default function ProfileSettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ── Avatar + Name ── */}
-        <View style={styles.avatarSection}>
-          {displayUser?.profilePicture ? (
-            <Image source={{ uri: displayUser.profilePicture }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarFallback}>
-              <Text style={styles.avatarInitial}>
-                {(displayUser?.name ?? 'U').charAt(0).toUpperCase()}
-              </Text>
+        {/* ── Hero Card ── */}
+        <View style={styles.heroCard}>
+          {/* Cover banner */}
+          <View style={styles.coverBanner} />
+          {/* Avatar */}
+          <View style={styles.avatarWrapper}>
+            {displayUser?.profilePicture ? (
+              <Image source={{ uri: displayUser.profilePicture }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarInitial}>
+                  {(displayUser?.name ?? 'U').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            {/* Completeness ring overlay */}
+            <View style={[styles.scoreRingSmall, {
+              borderColor: score >= 80 ? '#10B981' : score >= 50 ? COLORS.primary : '#F59E0B',
+            }]}>
+              <Text style={[styles.scoreRingText, {
+                color: score >= 80 ? '#10B981' : score >= 50 ? COLORS.primary : '#F59E0B',
+              }]}>{score}%</Text>
             </View>
-          )}
-          {editMode ? (
-            <TextInput
-              style={styles.nameInput}
-              value={name}
-              onChangeText={setName}
-              placeholder="Your name"
-              placeholderTextColor={COLORS.textMuted}
-            />
-          ) : (
-            <Text style={styles.nameText}>{displayUser?.name ?? 'User'}</Text>
-          )}
-          {editMode ? (
-            <TextInput
-              style={styles.headlineInput}
-              value={headline}
-              onChangeText={setHeadline}
-              placeholder="e.g. Senior Java Developer at Bank of America"
-              placeholderTextColor={COLORS.textMuted}
-              maxLength={200}
-            />
-          ) : displayUser?.headline ? (
-            <Text style={styles.headlineText}>{displayUser.headline}</Text>
-          ) : editMode === false ? (
-            <TouchableOpacity onPress={() => setEditMode(true)}>
-              <Text style={styles.addHeadline}>+ Add headline</Text>
-            </TouchableOpacity>
-          ) : null}
-          <Text style={styles.emailText}>{displayUser?.email}</Text>
+          </View>
+          {/* Info below avatar */}
+          <View style={styles.heroInfo}>
+            {editMode ? (
+              <TextInput
+                style={styles.nameInput}
+                value={name}
+                onChangeText={setName}
+                placeholder="Your name"
+                placeholderTextColor={COLORS.textMuted}
+              />
+            ) : (
+              <Text style={styles.nameText}>{displayUser?.name ?? 'User'}</Text>
+            )}
+            {editMode ? (
+              <TextInput
+                style={styles.headlineInput}
+                value={headline}
+                onChangeText={setHeadline}
+                placeholder="e.g. Senior Java Developer at Bank of America"
+                placeholderTextColor={COLORS.textMuted}
+                maxLength={200}
+              />
+            ) : displayUser?.headline ? (
+              <Text style={styles.headlineText}>{displayUser.headline}</Text>
+            ) : (
+              <TouchableOpacity onPress={() => setEditMode(true)}>
+                <Text style={styles.addHeadline}>+ Add headline</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.emailText}>{displayUser?.email}</Text>
+            {/* Edit button */}
+            {!editMode && (
+              <TouchableOpacity style={styles.editInlineBtn} onPress={() => setEditMode(true)}>
+                <Ionicons name="pencil-outline" size={13} color={COLORS.primary} />
+                <Text style={styles.editInlineBtnText}>Edit Profile</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* ── Profile Completeness ── */}
@@ -470,7 +493,7 @@ function Field({ label, icon, value, placeholder, editMode, onChangeText }: {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { padding: 16, gap: 12 },
+  scroll: { padding: 16, gap: 12, paddingTop: 12 },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -480,28 +503,55 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
   headerAction: { fontSize: 15, fontWeight: '700', color: COLORS.primary },
 
-  // Avatar
-  avatarSection: { alignItems: 'center', paddingVertical: 20, gap: 6 },
-  avatar: { width: 88, height: 88, borderRadius: 44, borderWidth: 3, borderColor: COLORS.primary },
+  // Hero
+  heroCard: {
+    backgroundColor: COLORS.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
+  },
+  coverBanner: {
+    height: 88,
+    backgroundColor: COLORS.primary,
+    opacity: 0.85,
+  },
+  avatarWrapper: {
+    marginTop: -44, marginLeft: 16, position: 'relative',
+    width: 88, alignSelf: 'flex-start',
+  },
+  avatar: { width: 88, height: 88, borderRadius: 44, borderWidth: 3, borderColor: COLORS.surface },
   avatarFallback: {
     width: 88, height: 88, borderRadius: 44,
     backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 3, borderColor: COLORS.surface,
   },
-  avatarInitial: { color: '#fff', fontSize: 36, fontWeight: '700' },
-  nameText: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary },
+  avatarInitial: { color: '#fff', fontSize: 34, fontWeight: '800' },
+  scoreRingSmall: {
+    position: 'absolute', bottom: -4, right: -4,
+    width: 32, height: 32, borderRadius: 16,
+    borderWidth: 2.5, backgroundColor: COLORS.surface,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  scoreRingText: { fontSize: 9, fontWeight: '800' },
+  heroInfo: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 18, alignItems: 'flex-start', gap: 4 },
+  nameText: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
   nameInput: {
-    fontSize: 20, fontWeight: '700', color: COLORS.textPrimary,
+    fontSize: 18, fontWeight: '700', color: COLORS.textPrimary,
     borderBottomWidth: 1.5, borderBottomColor: COLORS.primary,
-    paddingBottom: 2, textAlign: 'center', minWidth: 200,
+    paddingBottom: 2, minWidth: 200,
   },
-  headlineText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  headlineText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 },
   headlineInput: {
-    fontSize: 14, color: COLORS.textPrimary, textAlign: 'center',
+    fontSize: 13, color: COLORS.textPrimary,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
     paddingBottom: 2, minWidth: 260, maxWidth: 320,
   },
   addHeadline: { fontSize: 13, color: COLORS.primary, fontWeight: '600' },
-  emailText: { fontSize: 13, color: COLORS.textMuted },
+  emailText: { fontSize: 12, color: COLORS.textMuted },
+  editInlineBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4,
+    borderWidth: 1, borderColor: COLORS.primary, borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 5,
+  },
+  editInlineBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
 
   // Cards
   card: {
