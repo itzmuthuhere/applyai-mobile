@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Share,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  ActivityIndicator, Share, SafeAreaView,
 } from 'react-native';
 import ResumeDropdown from '../../components/common/ResumeDropdown';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { COLORS, API_ENDPOINTS } from '../../constants';
@@ -21,19 +15,19 @@ import { Resume, CoverLetterResponse } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 
 type RouteProps = RouteProp<ResumeStackParamList, 'CoverLetter'>;
-type Nav = NativeStackNavigationProp<ResumeStackParamList, 'CoverLetter'>;
+
+const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
+const companyColor = (name: string) =>
+  COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
 
 export default function CoverLetterScreen() {
   const { params } = useRoute<RouteProps>();
-  const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
 
   const selectedJob = useSelector((s: RootState) => s.job.selected);
   const resumes = useSelector((s: RootState) => s.resume.list);
 
-  const [selectedResumeId, setSelectedResumeId] = useState<number | null>(
-    params.resumeId ?? null
-  );
+  const [selectedResumeId, setSelectedResumeId] = useState<number | null>(params.resumeId ?? null);
   const [resumesLoading, setResumesLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
@@ -42,9 +36,7 @@ export default function CoverLetterScreen() {
   const parsedResumes = resumes.filter((r) => r.isParsed);
 
   useEffect(() => {
-    if (resumes.length === 0) {
-      loadResumes();
-    }
+    if (resumes.length === 0) loadResumes();
   }, []);
 
   async function loadResumes() {
@@ -52,11 +44,8 @@ export default function CoverLetterScreen() {
     try {
       const { data } = await apiClient.get<Resume[]>(API_ENDPOINTS.RESUMES);
       dispatch(setResumes(data));
-    } catch {
-      // keep empty
-    } finally {
-      setResumesLoading(false);
-    }
+    } catch {}
+    finally { setResumesLoading(false); }
   }
 
   async function handleGenerate() {
@@ -70,251 +59,291 @@ export default function CoverLetterScreen() {
       );
       setCoverLetter(data.coverLetter);
     } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ?? e?.response?.data?.error ?? 'Generation failed. Try again.';
-      setError(msg);
+      setError(e?.response?.data?.message ?? e?.response?.data?.error ?? 'Generation failed. Try again.');
     } finally {
       setIsLoading(false);
     }
   }
 
-  const jobLabel = selectedJob
-    ? `${selectedJob.title} at ${selectedJob.company}`
-    : `Job #${params.jobId}`;
+  const jobTitle = selectedJob?.title ?? `Job #${params.jobId}`;
+  const jobCompany = selectedJob?.company ?? '';
+  const jColor = jobCompany ? companyColor(jobCompany) : COLORS.primary;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.jobHeader}>
-        <Ionicons name="briefcase-outline" size={16} color={COLORS.primary} />
-        <Text style={styles.jobLabel} numberOfLines={1}>
-          {jobLabel}
-        </Text>
-      </View>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.scroll}>
 
-      {!coverLetter && (
-        <>
-          <Text style={styles.sectionTitle}>Select a Resume</Text>
-          <Text style={styles.hint}>Only analyzed resumes can be used.</Text>
+        {/* Hero */}
+        <View style={styles.hero}>
+          <View style={styles.heroIcon}>
+            <Ionicons name="document-text" size={28} color="#fff" />
+          </View>
+          <View style={styles.heroText}>
+            <Text style={styles.heroTitle}>Cover Letter</Text>
+            <Text style={styles.heroSub}>AI writes a tailored letter in seconds</Text>
+          </View>
+        </View>
 
-          <ResumeDropdown
-            resumes={parsedResumes}
-            selectedId={selectedResumeId}
-            onSelect={setSelectedResumeId}
-            loading={resumesLoading}
-          />
+        {/* Job context */}
+        <View style={styles.jobCard}>
+          <View style={[styles.jobIcon, { backgroundColor: jColor + '18', borderColor: jColor + '30' }]}>
+            <Text style={[styles.jobInitial, { color: jColor }]}>
+              {jobCompany ? jobCompany[0].toUpperCase() : 'J'}
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.jobTitle} numberOfLines={1}>{jobTitle}</Text>
+            {jobCompany ? <Text style={styles.jobCompany}>{jobCompany}</Text> : null}
+          </View>
+          <View style={styles.aiChip}>
+            <Ionicons name="sparkles" size={12} color='#7C3AED' />
+            <Text style={styles.aiChipText}>AI</Text>
+          </View>
+        </View>
 
-          {error && (
-            <View style={styles.errorBox}>
-              <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
-              <Text style={styles.errorText}>{error}</Text>
+        {!coverLetter && (
+          <>
+            <View style={styles.card}>
+              <View style={styles.cardHead}>
+                <Ionicons name="document-attach-outline" size={14} color={COLORS.primary} />
+                <Text style={styles.cardTitle}>Select Resume</Text>
+              </View>
+              <Text style={styles.cardHint}>Only analyzed resumes can generate a cover letter</Text>
+              <ResumeDropdown
+                resumes={parsedResumes}
+                selectedId={selectedResumeId}
+                onSelect={setSelectedResumeId}
+                loading={resumesLoading}
+              />
             </View>
-          )}
 
-          <TouchableOpacity
-            style={[styles.ctaBtn, (!selectedResumeId || isLoading) && styles.ctaBtnDisabled]}
-            onPress={handleGenerate}
-            disabled={!selectedResumeId || isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Ionicons name="document-text-outline" size={18} color="#fff" />
-                <Text style={styles.ctaBtnText}>Generate Cover Letter</Text>
-              </>
+            {error && (
+              <View style={styles.errorBox}>
+                <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
             )}
-          </TouchableOpacity>
 
-          {isLoading && (
-            <Text style={styles.loadingHint}>
-              AI is writing your cover letter… this takes ~10 seconds.
-            </Text>
-          )}
-        </>
-      )}
+            <TouchableOpacity
+              style={[styles.generateBtn, (!selectedResumeId || isLoading) && styles.generateBtnDisabled]}
+              onPress={handleGenerate}
+              disabled={!selectedResumeId || isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={styles.generateBtnText}>Writing your letter…</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="sparkles-outline" size={18} color="#fff" />
+                  <Text style={styles.generateBtnText}>Generate Cover Letter</Text>
+                </>
+              )}
+            </TouchableOpacity>
 
-      {coverLetter && (
-        <>
-          <View style={styles.successBanner}>
-            <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
-            <Text style={styles.successText}>Cover letter ready!</Text>
-          </View>
+            {isLoading && (
+              <View style={styles.loadingCard}>
+                <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
+                <Text style={styles.loadingHint}>AI is personalising your letter… ~10 seconds</Text>
+              </View>
+            )}
 
-          <View style={styles.noteBox}>
-            <Ionicons name="information-circle-outline" size={14} color={COLORS.textSecondary} />
-            <Text style={styles.noteText}>
-              This cover letter is not saved — copy or share it before leaving.
-            </Text>
-          </View>
+            {/* What to expect */}
+            {!isLoading && (
+              <View style={styles.expectCard}>
+                <View style={styles.expectHead}>
+                  <Ionicons name="bulb-outline" size={14} color='#D97706' />
+                  <Text style={styles.expectTitle}>What you'll get</Text>
+                </View>
+                {[
+                  'Personalised opening that references the job title',
+                  'Highlights your relevant skills from your resume',
+                  'Professional closing with a strong call-to-action',
+                ].map((t, i) => (
+                  <View key={i} style={styles.expectRow}>
+                    <Ionicons name="checkmark-circle-outline" size={14} color={COLORS.primary} />
+                    <Text style={styles.expectText}>{t}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </>
+        )}
 
-          <Text style={styles.sectionTitle}>Your Cover Letter</Text>
-          <View style={styles.textBox}>
-            <Text style={styles.coverText} selectable>
-              {coverLetter}
-            </Text>
-          </View>
+        {coverLetter && (
+          <>
+            {/* Success banner */}
+            <View style={styles.successBanner}>
+              <View style={styles.successLeft}>
+                <Ionicons name="checkmark-circle" size={22} color={COLORS.success} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.successTitle}>Cover letter ready!</Text>
+                <Text style={styles.successSub}>Copy or share before leaving — it's not saved</Text>
+              </View>
+            </View>
 
-          <TouchableOpacity
-            style={styles.shareBtn}
-            onPress={() => Share.share({ message: coverLetter })}
-          >
-            <Ionicons name="copy-outline" size={18} color="#fff" />
-            <Text style={styles.shareBtnText}>Copy / Share</Text>
-          </TouchableOpacity>
+            {/* Cover letter text */}
+            <View style={styles.letterCard}>
+              <View style={styles.letterHeader}>
+                <Text style={styles.letterHeaderText}>Cover Letter</Text>
+                <TouchableOpacity
+                  style={styles.copyInlineBtn}
+                  onPress={() => Share.share({ message: coverLetter })}
+                >
+                  <Ionicons name="copy-outline" size={15} color={COLORS.primary} />
+                  <Text style={styles.copyInlineBtnText}>Copy</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.letterText} selectable>{coverLetter}</Text>
+            </View>
 
-          <TouchableOpacity
-            style={styles.regenerateBtn}
-            onPress={() => {
-              setCoverLetter(null);
-              setSelectedResumeId(params.resumeId ?? null);
-            }}
-          >
-            <Ionicons name="refresh-outline" size={16} color={COLORS.primary} />
-            <Text style={styles.regenerateBtnText}>Generate Again</Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </ScrollView>
+            {/* Actions */}
+            <TouchableOpacity
+              style={styles.shareBtn}
+              onPress={() => Share.share({ message: coverLetter })}
+            >
+              <Ionicons name="share-outline" size={18} color="#fff" />
+              <Text style={styles.shareBtnText}>Share / Copy</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.regenerateBtn}
+              onPress={() => { setCoverLetter(null); setSelectedResumeId(params.resumeId ?? null); }}
+            >
+              <Ionicons name="refresh-outline" size={16} color={COLORS.primary} />
+              <Text style={styles.regenerateBtnText}>Generate Again</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        <View style={{ height: 32 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: 20, paddingBottom: 40 },
+  screen: { flex: 1, backgroundColor: COLORS.background },
+  scroll: { padding: 14, gap: 12 },
 
-  jobHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: COLORS.primaryLight,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 24,
+  hero: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#7C3AED', borderRadius: 18, padding: 18,
   },
-  jobLabel: { flex: 1, fontSize: 13, color: COLORS.primary, fontWeight: '600' },
-
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8, marginTop: 16 },
-  hint: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 12 },
-
-  spinner: { marginVertical: 20 },
-
-  emptyBox: {
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 16,
+  heroIcon: {
+    width: 52, height: 52, borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center',
   },
-  emptyText: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, marginTop: 8 },
-  emptySubtext: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', marginTop: 4 },
+  heroText: { flex: 1 },
+  heroTitle: { fontSize: 18, fontWeight: '900', color: '#fff', marginBottom: 3 },
+  heroSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)' },
 
-  pickerRow: { paddingVertical: 4, gap: 8 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    maxWidth: 180,
+  jobCard: {
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
   },
-  chipSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
-  chipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500', flexShrink: 1 },
-  chipTextSelected: { color: COLORS.primary, fontWeight: '700' },
-  chipScore: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600' },
-  chipScoreSelected: { color: COLORS.primary },
+  jobIcon: {
+    width: 44, height: 44, borderRadius: 12, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  jobInitial: { fontSize: 18, fontWeight: '900' },
+  jobTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  jobCompany: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  aiChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#EDE9FE', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+  },
+  aiChipText: { fontSize: 11, fontWeight: '800', color: '#7C3AED' },
+
+  card: {
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, gap: 10,
+  },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cardTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  cardHint: { fontSize: 12, color: COLORS.textMuted },
 
   errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: '#FECACA',
   },
   errorText: { flex: 1, fontSize: 13, color: COLORS.error },
 
-  ctaBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginTop: 24,
+  generateBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#7C3AED', borderRadius: 14, paddingVertical: 15,
+    shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3, shadowRadius: 6, elevation: 4,
   },
-  ctaBtnDisabled: { backgroundColor: COLORS.textMuted },
-  ctaBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  loadingHint: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 12,
-    fontStyle: 'italic',
+  generateBtnDisabled: { opacity: 0.5, shadowOpacity: 0 },
+  generateBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+
+  loadingCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center',
+    backgroundColor: COLORS.surface, borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: COLORS.border,
   },
+  loadingHint: { fontSize: 13, color: COLORS.textMuted, fontStyle: 'italic' },
+
+  expectCard: {
+    backgroundColor: '#FFFBEB', borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: '#FCD34D', gap: 8,
+  },
+  expectHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  expectTitle: { fontSize: 13, fontWeight: '700', color: '#92400E' },
+  expectRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  expectText: { flex: 1, fontSize: 13, color: '#78350F', lineHeight: 19 },
 
   successBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#D1FAE5', borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: '#6EE7B7',
   },
-  successText: { fontSize: 14, fontWeight: '600', color: COLORS.success },
-
-  noteBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 6,
-    backgroundColor: '#FFFBEB',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 4,
+  successLeft: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#A7F3D0', alignItems: 'center', justifyContent: 'center',
   },
-  noteText: { flex: 1, fontSize: 12, color: COLORS.textSecondary, lineHeight: 18 },
+  successTitle: { fontSize: 15, fontWeight: '800', color: '#065F46' },
+  successSub: { fontSize: 12, color: '#047857', marginTop: 2 },
 
-  textBox: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  letterCard: {
+    backgroundColor: COLORS.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
+  },
+  letterHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: COLORS.primaryLight,
+    borderBottomWidth: 1, borderBottomColor: '#BFDBFE',
+  },
+  letterHeaderText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  copyInlineBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: COLORS.surface, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  copyInlineBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  letterText: {
+    fontSize: 14, color: COLORS.textPrimary, lineHeight: 23,
     padding: 16,
-    marginBottom: 20,
   },
-  coverText: { fontSize: 14, color: COLORS.textPrimary, lineHeight: 22 },
 
   shareBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 14,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
-  shareBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  shareBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
 
   regenerateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 12,
-    backgroundColor: COLORS.surface,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: 14,
+    paddingVertical: 12, backgroundColor: COLORS.surface,
   },
-  regenerateBtnText: { fontSize: 15, fontWeight: '600', color: COLORS.primary },
+  regenerateBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 });
