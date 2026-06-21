@@ -23,6 +23,15 @@ const SALARY_STEPS = [
   2_000_000, 3_000_000, 5_000_000, 8_000_000, 10_000_000,
 ];
 
+const SECTION_ICONS: Record<string, { icon: React.ComponentProps<typeof Ionicons>['name']; color: string; bg: string }> = {
+  basic: { icon: 'briefcase-outline', color: COLORS.primary, bg: COLORS.primaryLight },
+  desc: { icon: 'document-text-outline', color: '#7C3AED', bg: '#F3E8FF' },
+  category: { icon: 'grid-outline', color: '#059669', bg: '#D1FAE5' },
+  salary: { icon: 'cash-outline', color: '#D97706', bg: '#FEF3C7' },
+  mode: { icon: 'settings-outline', color: '#0891B2', bg: '#E0F2FE' },
+  tags: { icon: 'pricetag-outline', color: '#C026D3', bg: '#FAE8FF' },
+};
+
 export default function HrPostJobScreen() {
   const navigation = useNavigation<any>();
 
@@ -61,7 +70,7 @@ export default function HrPostJobScreen() {
         tags: tags.trim() || undefined,
       });
       Alert.alert(
-        'Job Posted! 🎉',
+        'Job Posted!',
         'Your job is now live and visible to candidates on ApplyAI.',
         [{ text: 'View My Jobs', onPress: () => navigation.navigate('HrMyJobs') }],
       );
@@ -72,31 +81,43 @@ export default function HrPostJobScreen() {
     }
   }
 
+  const isReady = title.trim().length > 0 && company.trim().length > 0 && description.trim().length >= 50;
+
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
+      {/* Sticky header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+        <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="close" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post a Job</Text>
         <TouchableOpacity
-          style={[styles.postBtn, posting && styles.postBtnDisabled]}
+          style={[styles.headerPostBtn, (!isReady || posting) && styles.headerPostBtnDisabled]}
           onPress={handlePost}
-          disabled={posting}
+          disabled={!isReady || posting}
         >
           {posting
             ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={styles.postBtnText}>Post</Text>
+            : <Text style={styles.headerPostBtnText}>Post</Text>
           }
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Basic Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Information</Text>
+      {/* Hero tip */}
+      <View style={styles.heroBanner}>
+        <View style={styles.heroBannerIcon}>
+          <Ionicons name="megaphone" size={20} color={COLORS.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.heroBannerTitle}>Reach thousands of job seekers</Text>
+          <Text style={styles.heroBannerSub}>Fill in the details below to go live instantly</Text>
+        </View>
+      </View>
 
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* Basic Info */}
+        <SectionCard icon="briefcase-outline" color={COLORS.primary} bg={COLORS.primaryLight} title="Basic Information">
           <LabeledInput
             label="Job Title *"
             placeholder="e.g. Senior Java Developer"
@@ -115,11 +136,10 @@ export default function HrPostJobScreen() {
             value={location}
             onChangeText={setLocation}
           />
-        </View>
+        </SectionCard>
 
         {/* Description */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Job Description *</Text>
+        <SectionCard icon="document-text-outline" color="#7C3AED" bg="#F3E8FF" title="Job Description *">
           <TextInput
             style={styles.descInput}
             value={description}
@@ -129,12 +149,18 @@ export default function HrPostJobScreen() {
             multiline
             textAlignVertical="top"
           />
-          <Text style={styles.charCount}>{description.length} characters</Text>
-        </View>
+          <View style={styles.descFooter}>
+            <Text style={[
+              styles.charCount,
+              description.length >= 50 ? styles.charCountOk : styles.charCountWarn,
+            ]}>
+              {description.length} characters {description.length < 50 ? `(${50 - description.length} more needed)` : '✓'}
+            </Text>
+          </View>
+        </SectionCard>
 
         {/* Category */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Category</Text>
+        <SectionCard icon="grid-outline" color="#059669" bg="#D1FAE5" title="Category">
           <View style={styles.catGrid}>
             {CATEGORIES.map(cat => (
               <TouchableOpacity
@@ -142,66 +168,71 @@ export default function HrPostJobScreen() {
                 style={[styles.catChip, category === cat && styles.catChipActive]}
                 onPress={() => setCategory(category === cat ? '' : cat)}
               >
+                {category === cat && (
+                  <Ionicons name="checkmark" size={12} color="#fff" />
+                )}
                 <Text style={[styles.catChipText, category === cat && styles.catChipTextActive]}>
                   {cat}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </SectionCard>
 
         {/* Compensation */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Compensation</Text>
-
+        <SectionCard icon="cash-outline" color="#D97706" bg="#FEF3C7" title="Compensation">
           <Text style={styles.subLabel}>Minimum Salary</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.salaryRow}>
-            {SALARY_STEPS.slice(0, 8).map(v => (
-              <TouchableOpacity
-                key={v}
-                style={[styles.salaryChip, salaryMin === v && styles.salaryChipActive]}
-                onPress={() => setSalaryMin(salaryMin === v ? null : v)}
-              >
-                <Text style={[styles.salaryChipText, salaryMin === v && styles.salaryChipTextActive]}>
-                  {fmt(v)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.salaryScroll}>
+            <View style={styles.salaryRow}>
+              {SALARY_STEPS.slice(0, 8).map(v => (
+                <TouchableOpacity
+                  key={v}
+                  style={[styles.salaryChip, salaryMin === v && styles.salaryChipActive]}
+                  onPress={() => setSalaryMin(salaryMin === v ? null : v)}
+                >
+                  <Text style={[styles.salaryChipText, salaryMin === v && styles.salaryChipTextActive]}>
+                    {fmt(v)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </ScrollView>
 
-          <Text style={[styles.subLabel, { marginTop: 10 }]}>Maximum Salary</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.salaryRow}>
-            {SALARY_STEPS.slice(2).map(v => (
-              <TouchableOpacity
-                key={v}
-                style={[styles.salaryChip, salaryMax === v && styles.salaryChipActive]}
-                onPress={() => setSalaryMax(salaryMax === v ? null : v)}
-              >
-                <Text style={[styles.salaryChipText, salaryMax === v && styles.salaryChipTextActive]}>
-                  {fmt(v)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <Text style={[styles.subLabel, { marginTop: 12 }]}>Maximum Salary</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.salaryScroll}>
+            <View style={styles.salaryRow}>
+              {SALARY_STEPS.slice(2).map(v => (
+                <TouchableOpacity
+                  key={v}
+                  style={[styles.salaryChip, salaryMax === v && styles.salaryChipActive]}
+                  onPress={() => setSalaryMax(salaryMax === v ? null : v)}
+                >
+                  <Text style={[styles.salaryChipText, salaryMax === v && styles.salaryChipTextActive]}>
+                    {fmt(v)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </ScrollView>
 
           {salaryMin && salaryMax && (
             <View style={styles.salaryPreview}>
-              <Ionicons name="cash-outline" size={14} color={COLORS.success} />
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
               <Text style={styles.salaryPreviewText}>
                 {fmt(salaryMin)} – {fmt(salaryMax)} per year
               </Text>
             </View>
           )}
-        </View>
+        </SectionCard>
 
-        {/* Remote + Deadline */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work Mode & Deadline</Text>
-
+        {/* Work Mode & Deadline */}
+        <SectionCard icon="settings-outline" color="#0891B2" bg="#E0F2FE" title="Work Mode & Deadline">
           <View style={styles.toggleRow}>
             <View style={styles.toggleLeft}>
-              <Ionicons name="wifi-outline" size={18} color={isRemote ? '#059669' : COLORS.textSecondary} />
-              <View>
+              <View style={[styles.toggleIcon, isRemote ? styles.toggleIconActive : styles.toggleIconInactive]}>
+                <Ionicons name="wifi-outline" size={18} color={isRemote ? '#059669' : COLORS.textMuted} />
+              </View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.toggleLabel}>Remote Position</Text>
                 <Text style={styles.toggleSub}>Candidates can work from anywhere</Text>
               </View>
@@ -220,24 +251,27 @@ export default function HrPostJobScreen() {
             value={deadline}
             onChangeText={setDeadline}
           />
-        </View>
+        </SectionCard>
 
         {/* Tags */}
-        <View style={styles.section}>
+        <SectionCard icon="pricetag-outline" color="#C026D3" bg="#FAE8FF" title="Tags (optional)">
           <LabeledInput
-            label="Tags (optional)"
+            label="Keywords"
             placeholder="e.g. java, spring-boot, microservices"
             value={tags}
             onChangeText={setTags}
           />
-          <Text style={styles.tagsHint}>Separate with commas. Helps candidates find your job.</Text>
-        </View>
+          <View style={styles.tagsHintRow}>
+            <Ionicons name="information-circle-outline" size={14} color={COLORS.textMuted} />
+            <Text style={styles.tagsHint}>Separate with commas. Helps candidates find your job.</Text>
+          </View>
+        </SectionCard>
 
-        {/* Post button */}
+        {/* Big post button */}
         <TouchableOpacity
-          style={[styles.bigPostBtn, posting && styles.postBtnDisabled]}
+          style={[styles.bigPostBtn, (!isReady || posting) && styles.bigPostBtnDisabled]}
           onPress={handlePost}
-          disabled={posting}
+          disabled={!isReady || posting}
         >
           {posting
             ? <ActivityIndicator color="#fff" />
@@ -248,11 +282,53 @@ export default function HrPostJobScreen() {
           }
         </TouchableOpacity>
 
+        {!isReady && (
+          <Text style={styles.postHint}>
+            Fill in Title, Company, and Description (min 50 chars) to post.
+          </Text>
+        )}
+
         <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+function SectionCard({
+  icon, color, bg, title, children,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  color: string; bg: string; title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={sectionStyles.card}>
+      <View style={sectionStyles.head}>
+        <View style={[sectionStyles.iconBox, { backgroundColor: bg }]}>
+          <Ionicons name={icon} size={16} color={color} />
+        </View>
+        <Text style={sectionStyles.title}>{title}</Text>
+      </View>
+      <View style={sectionStyles.body}>{children}</View>
+    </View>
+  );
+}
+
+const sectionStyles = StyleSheet.create({
+  card: {
+    backgroundColor: COLORS.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
+  },
+  head: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: '#FAFBFC',
+  },
+  iconBox: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  body: { padding: 16, gap: 0 },
+});
 
 function LabeledInput({ label, placeholder, value, onChangeText }: {
   label: string; placeholder: string; value: string; onChangeText: (t: string) => void;
@@ -273,77 +349,108 @@ function LabeledInput({ label, placeholder, value, onChangeText }: {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
+
+  // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 14,
+    paddingHorizontal: 16, paddingVertical: 12,
     backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  postBtn: {
-    backgroundColor: '#059669', borderRadius: 8,
-    paddingHorizontal: 16, paddingVertical: 8, minWidth: 60, alignItems: 'center',
+  closeBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
   },
-  postBtnDisabled: { opacity: 0.5 },
-  postBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  headerPostBtn: {
+    backgroundColor: COLORS.success, borderRadius: 10,
+    paddingHorizontal: 18, paddingVertical: 8, minWidth: 60, alignItems: 'center',
+  },
+  headerPostBtnDisabled: { opacity: 0.45 },
+  headerPostBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
-  scroll: { padding: 16, gap: 4 },
+  // Hero tip
+  heroBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.primaryLight, paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: COLORS.primary + '20',
+  },
+  heroBannerIcon: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center',
+  },
+  heroBannerTitle: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  heroBannerSub: { fontSize: 12, color: COLORS.primary + 'BB', marginTop: 1 },
 
-  section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 12 },
-  subLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 8 },
+  scroll: { padding: 16, gap: 14, paddingBottom: 40 },
 
+  // Inputs
   inputGroup: { marginBottom: 12 },
   inputLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 6 },
   input: {
-    backgroundColor: COLORS.surface, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11,
+    backgroundColor: COLORS.background, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 15, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border,
   },
 
   descInput: {
-    backgroundColor: COLORS.surface, borderRadius: 10, padding: 14,
+    backgroundColor: COLORS.background, borderRadius: 11, padding: 14,
     fontSize: 15, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border,
     minHeight: 160,
   },
-  charCount: { fontSize: 11, color: COLORS.textMuted, textAlign: 'right', marginTop: 4 },
+  descFooter: { alignItems: 'flex-end', marginTop: 6 },
+  charCount: { fontSize: 11, fontWeight: '500' },
+  charCountOk: { color: COLORS.success },
+  charCountWarn: { color: COLORS.textMuted },
+
+  subLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 8 },
 
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   catChip: {
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background,
   },
   catChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   catChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
   catChipTextActive: { color: '#fff', fontWeight: '600' },
 
-  salaryRow: { marginBottom: 4 },
+  salaryScroll: { marginHorizontal: -4 },
+  salaryRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 4, paddingBottom: 4 },
   salaryChip: {
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, marginRight: 8,
-    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background,
   },
-  salaryChipActive: { backgroundColor: '#059669', borderColor: '#059669' },
+  salaryChipActive: { backgroundColor: '#D97706', borderColor: '#D97706' },
   salaryChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
   salaryChipTextActive: { color: '#fff', fontWeight: '600' },
   salaryPreview: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    marginTop: 8, paddingHorizontal: 12, paddingVertical: 8,
-    backgroundColor: '#D1FAE5', borderRadius: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10,
+    backgroundColor: '#D1FAE5', borderRadius: 10, padding: 12,
   },
-  salaryPreviewText: { fontSize: 13, fontWeight: '600', color: '#065F46' },
+  salaryPreviewText: { fontSize: 13, fontWeight: '700', color: '#065F46' },
 
   toggleRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 14,
+    backgroundColor: COLORS.background, borderRadius: 12, padding: 14,
     borderWidth: 1, borderColor: COLORS.border, marginBottom: 12,
   },
   toggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  toggleLabel: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
-  toggleSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  toggleIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  toggleIconActive: { backgroundColor: '#D1FAE5' },
+  toggleIconInactive: { backgroundColor: '#F1F5F9' },
+  toggleLabel: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 1 },
+  toggleSub: { fontSize: 12, color: COLORS.textSecondary },
 
-  tagsHint: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
+  tagsHintRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  tagsHint: { fontSize: 11, color: COLORS.textMuted, flex: 1 },
 
   bigPostBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: '#059669', borderRadius: 14, paddingVertical: 16, marginTop: 8,
+    backgroundColor: COLORS.success, borderRadius: 16, paddingVertical: 17,
+    shadowColor: COLORS.success, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
   },
+  bigPostBtnDisabled: { opacity: 0.5 },
   bigPostBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+
+  postHint: { fontSize: 12, color: COLORS.textMuted, textAlign: 'center', marginTop: -6 },
 });
