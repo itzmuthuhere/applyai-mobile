@@ -61,6 +61,59 @@ const STATUS_COLORS: Record<ApplicationStatus, { bg: string; text: string }> = {
 
 const TERMINAL_STATUSES: ApplicationStatus[] = ['REJECTED', 'WITHDRAWN'];
 
+const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
+const companyColor = (name: string) =>
+  COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
+
+const PROGRESS_STATUSES: ApplicationStatus[] = ['APPLIED', 'VIEWED', 'SHORTLISTED', 'INTERVIEW', 'OFFER'];
+
+function StatusTimeline({ current }: { current: ApplicationStatus }) {
+  const isTerminal = TERMINAL_STATUSES.includes(current);
+  const currentIdx = PROGRESS_STATUSES.indexOf(current);
+  return (
+    <View style={tlStyles.wrap}>
+      {PROGRESS_STATUSES.map((s, i) => {
+        const done = !isTerminal && i <= currentIdx;
+        const active = !isTerminal && i === currentIdx;
+        const sc = STATUS_COLORS[s];
+        return (
+          <React.Fragment key={s}>
+            <View style={tlStyles.step}>
+              <View style={[
+                tlStyles.dot,
+                done && { backgroundColor: sc.bg, borderColor: sc.text },
+                active && { borderWidth: 2.5 },
+              ]}>
+                {done && <View style={[tlStyles.inner, { backgroundColor: sc.text }]} />}
+              </View>
+              <Text style={[tlStyles.label, active && { color: sc.text, fontWeight: '700' }]}>
+                {STATUS_LABELS[s]}
+              </Text>
+            </View>
+            {i < PROGRESS_STATUSES.length - 1 && (
+              <View style={[tlStyles.line, done && i < currentIdx && { backgroundColor: sc.text }]} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </View>
+  );
+}
+
+const tlStyles = StyleSheet.create({
+  wrap: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingVertical: 4 },
+  step: { alignItems: 'center', gap: 5, flex: 0 },
+  dot: {
+    width: 22, height: 22, borderRadius: 11,
+    borderWidth: 1.5, borderColor: COLORS.border,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  inner: { width: 10, height: 10, borderRadius: 5 },
+  label: { fontSize: 9, fontWeight: '500', color: COLORS.textMuted, textAlign: 'center', maxWidth: 52 },
+  line: { flex: 1, height: 1.5, backgroundColor: COLORS.border, marginTop: 11, marginHorizontal: 2 },
+});
+
 export default function ApplicationDetailScreen() {
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
@@ -194,23 +247,54 @@ export default function ApplicationDetailScreen() {
 
   const isTerminal = TERMINAL_STATUSES.includes(application.status);
 
+  const color = companyColor(application.job.company ?? 'A');
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Job card */}
+      {/* Hero job card */}
       <View style={styles.jobCard}>
-        <View style={styles.companyIcon}>
-          <Text style={styles.companyInitial}>
-            {application.job.company.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-        <View style={styles.jobInfo}>
-          <Text style={styles.jobTitle}>{application.job.title}</Text>
-          <Text style={styles.company}>{application.job.company}</Text>
-          <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={13} color={COLORS.textMuted} />
-            <Text style={styles.location}>{application.job.location}</Text>
+        <View style={styles.jobCardTop}>
+          <View style={[styles.companyIcon, { backgroundColor: color + '18', borderColor: color + '30' }]}>
+            <Text style={[styles.companyInitial, { color }]}>
+              {application.job.company.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <View style={styles.jobInfo}>
+            <Text style={styles.jobTitle}>{application.job.title}</Text>
+            <Text style={styles.company}>{application.job.company}</Text>
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={12} color={COLORS.textMuted} />
+              <Text style={styles.location}>{application.job.location}</Text>
+            </View>
+          </View>
+          <View style={[styles.statusDotBig, { backgroundColor: STATUS_COLORS[application.status].bg }]}>
+            <Text style={[styles.statusDotBigText, { color: STATUS_COLORS[application.status].text }]}>
+              {STATUS_LABELS[application.status]}
+            </Text>
           </View>
         </View>
+        {/* Status timeline */}
+        {!TERMINAL_STATUSES.includes(application.status) && (
+          <View style={styles.timelineWrap}>
+            <StatusTimeline current={application.status} />
+          </View>
+        )}
+        {TERMINAL_STATUSES.includes(application.status) && (
+          <View style={[styles.terminalBanner, {
+            backgroundColor: application.status === 'REJECTED' ? '#FEE2E2' : '#F1F5F9',
+          }]}>
+            <Ionicons
+              name={application.status === 'REJECTED' ? 'close-circle-outline' : 'remove-circle-outline'}
+              size={16}
+              color={application.status === 'REJECTED' ? '#EF4444' : '#94A3B8'}
+            />
+            <Text style={[styles.terminalBannerText, {
+              color: application.status === 'REJECTED' ? '#991B1B' : '#64748B',
+            }]}>
+              Application {STATUS_LABELS[application.status]}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Status + dates */}
@@ -472,29 +556,32 @@ const styles = StyleSheet.create({
   retryText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
   jobCard: {
-    flexDirection: 'row',
+    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, marginBottom: 12,
     gap: 14,
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 12,
   },
+  jobCardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   companyIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: COLORS.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 52, height: 52, borderRadius: 14, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  companyInitial: { fontSize: 22, fontWeight: '800', color: COLORS.primary },
+  companyInitial: { fontSize: 22, fontWeight: '900' },
   jobInfo: { flex: 1 },
-  jobTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  company: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 4 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  location: { fontSize: 13, color: COLORS.textMuted },
+  jobTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 2, lineHeight: 21 },
+  company: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 4 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  location: { fontSize: 12, color: COLORS.textMuted },
+  statusDotBig: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
+  statusDotBigText: { fontSize: 11, fontWeight: '800' },
+  timelineWrap: {
+    borderTopWidth: 1, borderTopColor: COLORS.border,
+    paddingTop: 14, marginTop: 2,
+  },
+  terminalBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderRadius: 10, padding: 10,
+  },
+  terminalBannerText: { fontSize: 13, fontWeight: '700' },
 
   metaCard: {
     backgroundColor: COLORS.surface,

@@ -73,6 +73,8 @@ export interface Resume {
   isOriginal: boolean;
   isParsed: boolean;
   createdAt: string;
+  skills?: string | null;
+  experienceYears?: number | null;
 }
 
 export interface ParsedResume {

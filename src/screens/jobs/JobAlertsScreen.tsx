@@ -81,54 +81,66 @@ export default function JobAlertsScreen() {
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="notifications-outline" size={52} color={COLORS.textMuted} />
+            <View style={styles.emptyIcon}>
+              <Ionicons name="notifications-outline" size={38} color={COLORS.primary} />
+            </View>
             <Text style={styles.emptyTitle}>No alerts yet</Text>
-            <Text style={styles.emptyText}>Get notified when matching jobs are posted.</Text>
+            <Text style={styles.emptyText}>Create an alert to get notified when matching jobs are posted.</Text>
           </View>
         }
         ListHeaderComponent={
-          <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(true)}>
-            <Ionicons name="add-circle-outline" size={20} color="#fff" />
-            <Text style={styles.addBtnText}>Create Alert</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(true)} activeOpacity={0.85}>
+              <Ionicons name="notifications-outline" size={18} color="#fff" />
+              <Text style={styles.addBtnText}>Create Job Alert</Text>
+              <Ionicons name="add-circle" size={18} color="rgba(255,255,255,0.8)" />
+            </TouchableOpacity>
+            {alerts.length > 0 && (
+              <View style={styles.countBadge}>
+                <Ionicons name="checkmark-circle" size={14} color={COLORS.primary} />
+                <Text style={styles.countText}>{alerts.length} active alert{alerts.length !== 1 ? 's' : ''}</Text>
+              </View>
+            )}
+          </>
         }
         renderItem={({ item: alert }) => (
           <View style={styles.card}>
-            <View style={styles.cardLeft}>
+            <View style={styles.iconBox}>
               <Ionicons name="notifications" size={18} color={COLORS.primary} />
-              <View style={styles.cardInfo}>
-                {alert.keywords ? (
-                  <Text style={styles.cardTitle}>"{alert.keywords}"</Text>
-                ) : (
-                  <Text style={styles.cardTitle}>All jobs</Text>
+            </View>
+            <View style={styles.cardInfo}>
+              {alert.keywords ? (
+                <Text style={styles.cardTitle}>"{alert.keywords}"</Text>
+              ) : (
+                <Text style={styles.cardTitle}>All matching jobs</Text>
+              )}
+              <View style={styles.chips}>
+                {alert.remote && (
+                  <View style={styles.chipGreen}><Text style={styles.chipGreenText}>Remote</Text></View>
                 )}
-                <View style={styles.chips}>
-                  {alert.remote && (
-                    <View style={styles.chip}><Text style={styles.chipText}>Remote</Text></View>
-                  )}
-                  {alert.minSalary != null && (
-                    <View style={styles.chip}>
-                      <Text style={styles.chipText}>
-                        {alert.minSalary >= 100000
-                          ? `₹${Math.round(alert.minSalary / 100000)}L+`
-                          : `₹${alert.minSalary.toLocaleString('en-IN')}+`}
-                      </Text>
-                    </View>
-                  )}
-                  {alert.category && (
-                    <View style={styles.chip}><Text style={styles.chipText}>{alert.category}</Text></View>
-                  )}
-                </View>
+                {alert.minSalary != null && (
+                  <View style={styles.chipBlue}>
+                    <Text style={styles.chipBlueText}>
+                      {alert.minSalary >= 100000
+                        ? `₹${Math.round(alert.minSalary / 100000)}L+`
+                        : `₹${Math.round(alert.minSalary / 1000)}K+`}
+                    </Text>
+                  </View>
+                )}
+                {alert.category && (
+                  <View style={styles.chipGray}><Text style={styles.chipGrayText}>{alert.category}</Text></View>
+                )}
               </View>
             </View>
             <TouchableOpacity
+              style={styles.deleteBtn}
               onPress={() => handleDelete(alert.id)}
               disabled={deleting === alert.id}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               {deleting === alert.id
                 ? <ActivityIndicator size="small" color={COLORS.error} />
-                : <Ionicons name="trash-outline" size={18} color={COLORS.error} />
+                : <Ionicons name="trash-outline" size={17} color={COLORS.error} />
               }
             </TouchableOpacity>
           </View>
@@ -202,26 +214,47 @@ const styles = StyleSheet.create({
   list: { padding: 14, gap: 10, backgroundColor: COLORS.background, flexGrow: 1 },
   addBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 13, marginBottom: 6,
+    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 14, marginBottom: 10,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25, shadowRadius: 6, elevation: 5,
   },
-  addBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  empty: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  emptyText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  addBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+  countBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: COLORS.primaryLight, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderWidth: 1, borderColor: '#BFDBFE', marginBottom: 10,
+    alignSelf: 'flex-start',
+  },
+  countText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
+  empty: { alignItems: 'center', paddingTop: 50, gap: 12, paddingHorizontal: 32 },
+  emptyIcon: {
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+  },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  emptyText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
   card: {
     backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
     borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center', gap: 12,
   },
-  cardLeft: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  iconBox: {
+    width: 42, height: 42, borderRadius: 12,
+    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
   cardInfo: { flex: 1, gap: 6 },
   cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: {
-    backgroundColor: COLORS.background, borderRadius: 8,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderWidth: 1, borderColor: COLORS.border,
+  chipGreen: { backgroundColor: '#D1FAE5', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  chipGreenText: { fontSize: 11, fontWeight: '700', color: '#065F46' },
+  chipBlue: { backgroundColor: '#DBEAFE', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  chipBlueText: { fontSize: 11, fontWeight: '700', color: '#1D4ED8' },
+  chipGray: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  chipGrayText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
+  deleteBtn: {
+    width: 34, height: 34, borderRadius: 10,
+    backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center',
   },
-  chipText: { fontSize: 12, color: COLORS.textSecondary },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: COLORS.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,

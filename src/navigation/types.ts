@@ -15,6 +15,7 @@ export type HomeStackParamList = {
   Paywall: { feature?: string };
   Blacklist: undefined;
   CareerPath: { resumeId?: number };
+  Notifications: undefined;
 };
 
 export type JobsStackParamList = {

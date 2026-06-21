@@ -116,15 +116,25 @@ export default function HomeScreen() {
               <Text style={[styles.planText, { color: planConfig.text }]}>{planConfig.label} Plan</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
-            {user?.profilePicture ? (
-              <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarFallback}>
-                <Text style={styles.avatarInitial}>{firstName.charAt(0).toUpperCase()}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          <View style={styles.heroRight}>
+            <TouchableOpacity
+              style={styles.bellBtn}
+              onPress={() => navigation.navigate('Notifications')}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
+              <View style={styles.bellBadge} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
+              {user?.profilePicture ? (
+                <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <Text style={styles.avatarInitial}>{firstName.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Profile Completeness Banner ── */}
@@ -371,6 +381,16 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   heroLeft: { flex: 1, marginRight: 12 },
+  heroRight: { alignItems: 'center', gap: 8 },
+  bellBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+  },
+  bellBadge: {
+    position: 'absolute', top: 8, right: 8,
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: '#EF4444', borderWidth: 1.5, borderColor: COLORS.surface,
+  },
   greeting: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '500' },
   name: { fontSize: 24, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 4 },
   headline: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 8 },

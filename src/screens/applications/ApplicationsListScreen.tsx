@@ -1,18 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  SectionList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  ActivityIndicator, RefreshControl, Animated, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+dayjs.extend(relativeTime);
 import { COLORS, API_ENDPOINTS } from '../../constants';
 import { ApplicationsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
@@ -22,57 +19,184 @@ import apiClient from '../../api/apiClient';
 
 type Nav = NativeStackNavigationProp<ApplicationsStackParamList, 'ApplicationsList'>;
 
-interface PagedApplications {
-  content: Application[];
-}
+interface PagedApplications { content: Application[] }
 
-const STATUS_ORDER: ApplicationStatus[] = [
-  'INTERVIEW',
-  'OFFER',
-  'SHORTLISTED',
-  'APPLIED',
-  'VIEWED',
-  'REJECTED',
-  'WITHDRAWN',
+type FilterTab = 'all' | 'active' | 'interview' | 'offer' | 'closed';
+
+const TAB_LABELS: Record<FilterTab, string> = {
+  all: 'All',
+  active: 'Active',
+  interview: 'Interviews',
+  offer: 'Offers',
+  closed: 'Closed',
+};
+
+const ACTIVE_STATUSES: ApplicationStatus[] = ['APPLIED', 'VIEWED', 'SHORTLISTED'];
+const INTERVIEW_STATUSES: ApplicationStatus[] = ['INTERVIEW'];
+const OFFER_STATUSES: ApplicationStatus[] = ['OFFER'];
+const CLOSED_STATUSES: ApplicationStatus[] = ['REJECTED', 'WITHDRAWN'];
+
+const STATUS_CONFIG: Record<ApplicationStatus, { label: string; bg: string; text: string; dot: string }> = {
+  APPLIED:     { label: 'Applied',      bg: '#EFF6FF', text: '#1D4ED8', dot: '#2563EB' },
+  VIEWED:      { label: 'Viewed',       bg: '#F8FAFC', text: '#475569', dot: '#94A3B8' },
+  SHORTLISTED: { label: 'Shortlisted',  bg: '#FFFBEB', text: '#B45309', dot: '#F59E0B' },
+  INTERVIEW:   { label: 'Interview',    bg: '#D1FAE5', text: '#065F46', dot: '#10B981' },
+  OFFER:       { label: 'Offer! 🎉',   bg: '#D1FAE5', text: '#064E3B', dot: '#059669' },
+  REJECTED:    { label: 'Rejected',     bg: '#FEF2F2', text: '#991B1B', dot: '#EF4444' },
+  WITHDRAWN:   { label: 'Withdrawn',    bg: '#F8FAFC', text: '#94A3B8', dot: '#CBD5E1' },
+};
+
+const COMPANY_COLORS = [
+  '#2563EB', '#7C3AED', '#059669', '#DC2626',
+  '#D97706', '#0891B2', '#C026D3', '#65A30D',
 ];
+function companyColor(name: string) {
+  if (!name) return COMPANY_COLORS[0];
+  return COMPANY_COLORS[name.charCodeAt(0) % COMPANY_COLORS.length];
+}
 
-const STATUS_LABELS: Record<ApplicationStatus, string> = {
-  APPLIED: 'Applied',
-  VIEWED: 'Viewed',
-  SHORTLISTED: 'Shortlisted',
-  INTERVIEW: 'Interview',
-  OFFER: 'Offer',
-  REJECTED: 'Rejected',
-  WITHDRAWN: 'Withdrawn',
-};
+function filterByTab(apps: Application[], tab: FilterTab): Application[] {
+  if (tab === 'all') return apps;
+  if (tab === 'active') return apps.filter(a => ACTIVE_STATUSES.includes(a.status));
+  if (tab === 'interview') return apps.filter(a => INTERVIEW_STATUSES.includes(a.status));
+  if (tab === 'offer') return apps.filter(a => OFFER_STATUSES.includes(a.status));
+  if (tab === 'closed') return apps.filter(a => CLOSED_STATUSES.includes(a.status));
+  return apps;
+}
 
-const STATUS_COLORS: Record<ApplicationStatus, { bg: string; text: string }> = {
-  APPLIED: { bg: '#DBEAFE', text: '#1D4ED8' },
-  VIEWED: { bg: '#F1F5F9', text: '#475569' },
-  SHORTLISTED: { bg: '#FEF9C3', text: '#854D0E' },
-  INTERVIEW: { bg: '#D1FAE5', text: '#065F46' },
-  OFFER: { bg: '#D1FAE5', text: '#064E3B' },
-  REJECTED: { bg: '#FEE2E2', text: '#991B1B' },
-  WITHDRAWN: { bg: '#F1F5F9', text: '#94A3B8' },
-};
+// ─── Skeleton ────────────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: ApplicationStatus }) {
-  const c = STATUS_COLORS[status];
+function SkeletonCard() {
+  const opacity = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.85, duration: 750, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.4, duration: 750, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
   return (
-    <View style={[styles.badge, { backgroundColor: c.bg }]}>
-      <Text style={[styles.badgeText, { color: c.text }]}>{STATUS_LABELS[status]}</Text>
+    <Animated.View style={[styles.card, { opacity, marginBottom: 10 }]}>
+      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+        <View style={{ width: 46, height: 46, borderRadius: 12, backgroundColor: COLORS.border }} />
+        <View style={{ flex: 1, gap: 8 }}>
+          <View style={{ height: 14, width: '65%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+          <View style={{ height: 12, width: '45%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+        </View>
+        <View style={{ height: 24, width: 70, backgroundColor: COLORS.border, borderRadius: 12 }} />
+      </View>
+    </Animated.View>
+  );
+}
+
+// ─── Stats bar ───────────────────────────────────────────────────────────────
+
+function StatsBar({ apps }: { apps: Application[] }) {
+  const counts: Record<string, number> = {
+    Applied: apps.filter(a => ACTIVE_STATUSES.includes(a.status)).length,
+    Interview: apps.filter(a => a.status === 'INTERVIEW').length,
+    Offer: apps.filter(a => a.status === 'OFFER').length,
+    Rejected: apps.filter(a => CLOSED_STATUSES.includes(a.status)).length,
+  };
+  const icons: Record<string, { icon: React.ComponentProps<typeof Ionicons>['name']; color: string }> = {
+    Applied:   { icon: 'send-outline', color: COLORS.primary },
+    Interview: { icon: 'mic-outline', color: '#10B981' },
+    Offer:     { icon: 'trophy-outline', color: '#F59E0B' },
+    Rejected:  { icon: 'close-circle-outline', color: COLORS.error },
+  };
+  return (
+    <View style={styles.statsBar}>
+      {Object.entries(counts).map(([label, count]) => (
+        <View key={label} style={styles.statItem}>
+          <Ionicons name={icons[label].icon} size={16} color={icons[label].color} />
+          <Text style={[styles.statCount, { color: icons[label].color }]}>{count}</Text>
+          <Text style={styles.statLabel}>{label}</Text>
+        </View>
+      ))}
     </View>
   );
 }
 
-function SkeletonRow() {
+// ─── Application card ────────────────────────────────────────────────────────
+
+function AppCard({ item, onPress }: { item: Application; onPress: () => void }) {
+  const cfg = STATUS_CONFIG[item.status];
+  const bgColor = companyColor(item.job.company ?? '');
+  const initial = item.job.company ? item.job.company[0].toUpperCase() : '?';
+  const appliedAgo = item.appliedAt ? dayjs(item.appliedAt).fromNow() : null;
+
   return (
-    <View style={styles.skeletonRow}>
-      <View style={styles.skeletonTitle} />
-      <View style={styles.skeletonSub} />
-    </View>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.78}>
+      <View style={styles.cardRow}>
+        {/* Logo */}
+        <View style={[styles.logoCircle, { backgroundColor: bgColor + '18' }]}>
+          <Text style={[styles.logoInitial, { color: bgColor }]}>{initial}</Text>
+        </View>
+
+        {/* Info */}
+        <View style={styles.cardBody}>
+          <Text style={styles.jobTitle} numberOfLines={1}>{item.job.title}</Text>
+          <Text style={styles.company} numberOfLines={1}>{item.job.company}</Text>
+          <View style={styles.cardMeta}>
+            {item.job.location && (
+              <View style={styles.metaItem}>
+                <Ionicons name="location-outline" size={11} color={COLORS.textMuted} />
+                <Text style={styles.metaText} numberOfLines={1}>{item.job.location}</Text>
+              </View>
+            )}
+            {appliedAgo && <Text style={styles.appliedAgo}>{appliedAgo}</Text>}
+          </View>
+        </View>
+
+        {/* Status */}
+        <View style={[styles.statusBadge, { backgroundColor: cfg.bg }]}>
+          <View style={[styles.statusDot, { backgroundColor: cfg.dot }]} />
+          <Text style={[styles.statusText, { color: cfg.text }]}>{cfg.label}</Text>
+        </View>
+      </View>
+
+      {/* Interview date highlight */}
+      {item.interviewDate && (
+        <View style={styles.interviewBanner}>
+          <Ionicons name="calendar-outline" size={13} color="#065F46" />
+          <Text style={styles.interviewBannerText}>
+            Interview: {dayjs(item.interviewDate).format('MMM D, YYYY')}
+          </Text>
+        </View>
+      )}
+
+      {/* Offer highlight */}
+      {item.offerSalary && item.status === 'OFFER' && (
+        <View style={styles.offerBanner}>
+          <Ionicons name="cash-outline" size={13} color="#B45309" />
+          <Text style={styles.offerBannerText}>
+            Offer: ₹{Number(item.offerSalary).toLocaleString('en-IN')} / year
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 }
+
+// ─── Tab pill ────────────────────────────────────────────────────────────────
+
+function TabPill({ label, active, count, onPress }: { label: string; active: boolean; count: number; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={[styles.tabPill, active && styles.tabPillActive]} onPress={onPress} activeOpacity={0.75}>
+      <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
+      {count > 0 && (
+        <View style={[styles.tabCount, active && styles.tabCountActive]}>
+          <Text style={[styles.tabCountText, active && { color: COLORS.primary }]}>{count}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export default function ApplicationsListScreen() {
   const navigation = useNavigation<Nav>();
@@ -81,19 +205,16 @@ export default function ApplicationsListScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
-  useEffect(() => {
-    loadApplications();
-  }, []);
+  useEffect(() => { loadApplications(); }, []);
 
   async function loadApplications(isRefresh = false) {
     if (isRefresh) setRefreshing(true);
     else setIsLoading(true);
     setError(null);
     try {
-      const { data } = await apiClient.get<PagedApplications>(
-        `${API_ENDPOINTS.APPLICATIONS}?page=0&size=50`
-      );
+      const { data } = await apiClient.get<PagedApplications>(`${API_ENDPOINTS.APPLICATIONS}?page=0&size=50`);
       dispatch(setApplications(data.content));
     } catch {
       setError('Could not load applications. Pull to refresh.');
@@ -103,165 +224,179 @@ export default function ApplicationsListScreen() {
     }
   }
 
-  const sections = STATUS_ORDER.map((status) => ({
-    title: STATUS_LABELS[status],
-    status,
-    data: applications.filter((a) => a.status === status),
-  })).filter((s) => s.data.length > 0);
+  const filtered = filterByTab(applications, activeTab);
+
+  const tabCounts: Record<FilterTab, number> = {
+    all: applications.length,
+    active: applications.filter(a => ACTIVE_STATUSES.includes(a.status)).length,
+    interview: applications.filter(a => a.status === 'INTERVIEW').length,
+    offer: applications.filter(a => a.status === 'OFFER').length,
+    closed: applications.filter(a => CLOSED_STATUSES.includes(a.status)).length,
+  };
+
+  const renderItem = useCallback(({ item }: { item: Application }) => (
+    <AppCard
+      item={item}
+      onPress={() => navigation.navigate('ApplicationDetail', { applicationId: item.id })}
+    />
+  ), [navigation]);
+
+  const keyExtractor = useCallback((item: Application) => String(item.id), []);
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        {[0, 1, 2, 3].map((i) => <SkeletonRow key={i} />)}
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.centerState}>
-        <Ionicons name="cloud-offline-outline" size={48} color={COLORS.textMuted} />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={() => loadApplications()}>
-          <Text style={styles.retryText}>Try Again</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (applications.length === 0) {
-    return (
-      <View style={styles.centerState}>
-        <Ionicons name="briefcase-outline" size={56} color={COLORS.textMuted} />
-        <Text style={styles.emptyTitle}>No applications yet</Text>
-        <Text style={styles.emptySubtext}>
-          Apply to jobs from the Jobs tab to track them here.
-        </Text>
+      <View style={styles.screen}>
+        <View style={styles.listContent}>
+          {[1, 2, 3, 4].map(k => <SkeletonCard key={k} />)}
+        </View>
       </View>
     );
   }
 
   return (
-    <SectionList
-      style={styles.container}
-      contentContainerStyle={styles.listContent}
-      sections={sections}
-      keyExtractor={(item) => String(item.id)}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => loadApplications(true)}
-          tintColor={COLORS.primary}
-        />
-      }
-      renderSectionHeader={({ section }) => (
-        <View style={styles.sectionHeader}>
-          <StatusBadge status={section.status} />
-          <Text style={styles.sectionCount}>{section.data.length}</Text>
+    <View style={styles.screen}>
+      {/* Stats */}
+      {applications.length > 0 && <StatsBar apps={applications} />}
+
+      {/* Tabs */}
+      <View style={styles.tabBar}>
+        {(Object.keys(TAB_LABELS) as FilterTab[]).map(tab => (
+          <TabPill
+            key={tab}
+            label={TAB_LABELS[tab]}
+            active={activeTab === tab}
+            count={tabCounts[tab]}
+            onPress={() => setActiveTab(tab)}
+          />
+        ))}
+      </View>
+
+      {error ? (
+        <View style={styles.centerState}>
+          <Ionicons name="cloud-offline-outline" size={52} color={COLORS.textMuted} />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => loadApplications()}>
+            <Text style={styles.retryBtnText}>Try Again</Text>
+          </TouchableOpacity>
         </View>
-      )}
-      renderItem={({ item }: { item: Application }) => (
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate('ApplicationDetail', { applicationId: item.id })}
-          activeOpacity={0.75}
-        >
-          <View style={styles.cardLeft}>
-            <View style={styles.companyIcon}>
-              <Text style={styles.companyInitial}>
-                {item.job.company.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.jobTitle} numberOfLines={1}>{item.job.title}</Text>
-            <Text style={styles.company} numberOfLines={1}>{item.job.company}</Text>
-            <View style={styles.metaRow}>
-              <Text style={styles.resumeVersion} numberOfLines={1}>
-                {item.resume.versionName}
-              </Text>
-              {item.appliedAt && (
-                <Text style={styles.dateText}>
-                  {dayjs(item.appliedAt).format('MMM D')}
-                </Text>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          contentContainerStyle={[styles.listContent, filtered.length === 0 && { flex: 1 }]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={() => loadApplications(true)} tintColor={COLORS.primary} />
+          }
+          removeClippedSubviews={Platform.OS === 'android'}
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          ListEmptyComponent={
+            <View style={styles.centerState}>
+              {applications.length === 0 ? (
+                <>
+                  <Ionicons name="briefcase-outline" size={60} color={COLORS.border} />
+                  <Text style={styles.emptyTitle}>No applications yet</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Apply to jobs from the Jobs tab and track your progress here.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="filter-outline" size={48} color={COLORS.border} />
+                  <Text style={styles.emptyTitle}>No {TAB_LABELS[activeTab].toLowerCase()} applications</Text>
+                  <TouchableOpacity style={styles.retryBtn} onPress={() => setActiveTab('all')}>
+                    <Text style={styles.retryBtnText}>View All</Text>
+                  </TouchableOpacity>
+                </>
               )}
             </View>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
-        </TouchableOpacity>
+          }
+        />
       )}
-      SectionSeparatorComponent={() => <View style={{ height: 4 }} />}
-      stickySectionHeadersEnabled={false}
-    />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  listContent: { padding: 16, paddingBottom: 40 },
+  screen: { flex: 1, backgroundColor: COLORS.background },
 
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 16,
-    marginBottom: 8,
-    paddingHorizontal: 4,
+  // Stats
+  statsBar: {
+    flexDirection: 'row', backgroundColor: COLORS.surface,
+    paddingVertical: 14, paddingHorizontal: 16,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  sectionCount: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '600' },
+  statItem: { flex: 1, alignItems: 'center', gap: 4 },
+  statCount: { fontSize: 18, fontWeight: '900' },
+  statLabel: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
 
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  badgeText: { fontSize: 12, fontWeight: '700' },
+  // Tabs
+  tabBar: {
+    flexDirection: 'row', backgroundColor: COLORS.surface,
+    paddingHorizontal: 12, paddingVertical: 10,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 6,
+  },
+  tabPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 20, borderWidth: 1.5, borderColor: 'transparent',
+    backgroundColor: '#F1F5F9',
+  },
+  tabPillActive: { backgroundColor: COLORS.primaryLight, borderColor: COLORS.primary },
+  tabText: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
+  tabTextActive: { color: COLORS.primary },
+  tabCount: { backgroundColor: '#E2E8F0', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
+  tabCountActive: { backgroundColor: '#BFDBFE' },
+  tabCountText: { fontSize: 10, fontWeight: '800', color: COLORS.textMuted },
 
+  // List
+  listContent: { padding: 14, gap: 10, paddingBottom: 40 },
+
+  // Card
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    gap: 12,
+    backgroundColor: COLORS.surface, borderRadius: 16,
+    padding: 14, borderWidth: 1, borderColor: COLORS.border,
+    gap: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  cardLeft: {},
-  companyIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
-    backgroundColor: COLORS.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  companyInitial: { fontSize: 18, fontWeight: '700', color: COLORS.primary },
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logoCircle: { width: 46, height: 46, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  logoInitial: { fontSize: 19, fontWeight: '800' },
   cardBody: { flex: 1 },
   jobTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
   company: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 4 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  resumeVersion: { fontSize: 12, color: COLORS.textMuted, flex: 1 },
-  dateText: { fontSize: 12, color: COLORS.textMuted },
-
-  skeletonRow: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 16,
-    margin: 16,
-    marginBottom: 0,
-    gap: 8,
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3, flex: 1 },
+  metaText: { fontSize: 11, color: COLORS.textMuted },
+  appliedAgo: { fontSize: 11, color: COLORS.textMuted },
+  statusBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, flexShrink: 0,
   },
-  skeletonTitle: { height: 14, backgroundColor: COLORS.border, borderRadius: 6, width: '60%' },
-  skeletonSub: { height: 12, backgroundColor: COLORS.border, borderRadius: 6, width: '40%' },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  statusText: { fontSize: 12, fontWeight: '700' },
 
-  centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', marginTop: 12 },
-  retryBtn: {
-    marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
+  // Banners
+  interviewBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#D1FAE5', borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 7,
   },
-  retryText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, marginTop: 16 },
-  emptySubtext: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', marginTop: 8 },
+  interviewBannerText: { fontSize: 13, fontWeight: '700', color: '#065F46' },
+  offerBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#FFFBEB', borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 7,
+  },
+  offerBannerText: { fontSize: 13, fontWeight: '700', color: '#B45309' },
+
+  // States
+  centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 14 },
+  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
+  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
+  retryBtn: { backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
+  retryBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 });

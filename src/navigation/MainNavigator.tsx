@@ -36,6 +36,7 @@ import CompanyProfilesScreen from '../screens/jobs/CompanyProfilesScreen';
 import HrPostJobScreen from '../screens/jobs/HrPostJobScreen';
 import HrMyJobsScreen from '../screens/jobs/HrMyJobsScreen';
 import CareerPathScreen from '../screens/home/CareerPathScreen';
+import NotificationsScreen from '../screens/common/NotificationsScreen';
 import ApplicationsListScreen from '../screens/applications/ApplicationsListScreen';
 import ApplicationDetailScreen from '../screens/applications/ApplicationDetailScreen';
 import InterviewPrepPlanScreen from '../screens/applications/InterviewPrepPlanScreen';
@@ -61,6 +62,7 @@ function HomeNavigator() {
       <HomeStack.Screen name="NegotiationCoach" component={NegotiationCoachScreen} options={{ headerShown: true, title: 'Negotiation Coach' }} />
       <HomeStack.Screen name="Blacklist" component={BlacklistScreen} options={{ headerShown: true, title: 'Company Blacklist' }} />
       <HomeStack.Screen name="CareerPath" component={CareerPathScreen} options={{ headerShown: true, title: 'Career Path' }} />
+      <HomeStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
       <HomeStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
     </HomeStack.Navigator>
   );

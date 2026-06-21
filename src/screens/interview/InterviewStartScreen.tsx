@@ -1,16 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
-  Modal,
-  ScrollView,
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  ActivityIndicator, RefreshControl, Modal, ScrollView, Animated,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,29 +17,100 @@ import apiClient from '../../api/apiClient';
 
 type Nav = NativeStackNavigationProp<InterviewStackParamList, 'InterviewStart'>;
 
-const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  TECHNICAL: { bg: '#DBEAFE', text: '#1D4ED8' },
-  BEHAVIORAL: { bg: '#D1FAE5', text: '#065F46' },
-  SITUATIONAL: { bg: '#FEF3C7', text: '#92400E' },
-  HR: { bg: '#EDE9FE', text: '#5B21B6' },
+const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
+const companyColor = (name: string) =>
+  COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
+
+const TYPE_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
+  TECHNICAL:   { bg: '#DBEAFE', text: '#1D4ED8', label: 'Technical' },
+  BEHAVIORAL:  { bg: '#D1FAE5', text: '#065F46', label: 'Behavioral' },
+  SITUATIONAL: { bg: '#FEF3C7', text: '#92400E', label: 'Situational' },
+  HR:          { bg: '#EDE9FE', text: '#5B21B6', label: 'HR Round' },
 };
 
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score == null) return <Text style={styles.scorePending}>In Progress</Text>;
-  const color =
-    score >= 8 ? COLORS.success : score >= 5 ? COLORS.warning : COLORS.error;
+function scoreColor(score: number | null) {
+  if (score == null) return COLORS.textMuted;
+  if (score >= 8) return '#059669';
+  if (score >= 5) return '#D97706';
+  return '#EF4444';
+}
+
+function SkeletonSession() {
+  const opacity = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.8, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.4, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
   return (
-    <View style={[styles.scoreBadge, { borderColor: color }]}>
-      <Text style={[styles.scoreText, { color }]}>{score.toFixed(1)}</Text>
-      <Text style={[styles.scoreMax, { color }]}>/10</Text>
-    </View>
+    <Animated.View style={[styles.sessionCard, { opacity }]}>
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+        <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: COLORS.border }} />
+        <View style={{ flex: 1, gap: 8 }}>
+          <View style={{ height: 13, width: '60%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+          <View style={{ height: 11, width: '40%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+        </View>
+        <View style={{ width: 48, height: 34, borderRadius: 8, backgroundColor: COLORS.border }} />
+      </View>
+      <View style={{ height: 4, backgroundColor: COLORS.border, borderRadius: 2 }} />
+    </Animated.View>
+  );
+}
+
+function SessionCard({ item, onPress }: { item: InterviewSession; onPress: () => void }) {
+  const answered = item.questions.filter(q => q.transcript != null).length;
+  const total = item.questions.length;
+  const progress = total > 0 ? answered / total : 0;
+  const color = companyColor(item.company ?? 'A');
+  const sc = scoreColor(item.overallScore);
+
+  return (
+    <TouchableOpacity style={styles.sessionCard} onPress={onPress} activeOpacity={0.8}>
+      <View style={styles.sessionTop}>
+        <View style={[styles.sessionLogo, { backgroundColor: color + '18', borderColor: color + '30' }]}>
+          <Text style={[styles.sessionLogoText, { color }]}>
+            {(item.company ?? 'A').charAt(0).toUpperCase()}
+          </Text>
+        </View>
+        <View style={styles.sessionMeta}>
+          <Text style={styles.sessionJob} numberOfLines={1}>{item.jobTitle}</Text>
+          <Text style={styles.sessionCompany} numberOfLines={1}>{item.company}</Text>
+          <Text style={styles.sessionDate}>{dayjs(item.createdAt).format('MMM D, YYYY')}</Text>
+        </View>
+        <View style={styles.scoreWrap}>
+          {item.overallScore != null ? (
+            <>
+              <Text style={[styles.scoreNum, { color: sc }]}>{item.overallScore.toFixed(1)}</Text>
+              <Text style={[styles.scoreMax, { color: sc }]}>/10</Text>
+            </>
+          ) : (
+            <Text style={styles.scorePending}>—</Text>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.progressOuter}>
+        <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
+      </View>
+      <View style={styles.sessionFooter}>
+        <Text style={styles.progressLabel}>{answered}/{total} answered</Text>
+        <View style={styles.viewRow}>
+          <Text style={styles.viewReport}>View Report</Text>
+          <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 }
 
 export default function InterviewStartScreen() {
   const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
-
   const history = useSelector((s: RootState) => s.interview.history);
 
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -61,30 +125,22 @@ export default function InterviewStartScreen() {
     try {
       const { data } = await apiClient.get<InterviewSession[]>(API_ENDPOINTS.INTERVIEW_HISTORY);
       dispatch(setHistory(data));
-    } catch {
-      // keep stale
-    } finally {
+    } catch {}
+    finally {
       setHistoryLoading(false);
       setRefreshing(false);
     }
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      loadHistory();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { loadHistory(); }, []));
 
   async function openPicker() {
     setPickerVisible(true);
     setAppsLoading(true);
     try {
       const { data } = await apiClient.get<{ content: Application[] }>(API_ENDPOINTS.APPLICATIONS);
-      const list = Array.isArray(data) ? data : data.content ?? [];
-      const eligible = list.filter(
-        (a) => a.status !== 'WITHDRAWN' && a.status !== 'REJECTED'
-      );
-      setApplications(eligible);
+      const list = Array.isArray(data) ? data : (data.content ?? []);
+      setApplications(list.filter(a => a.status !== 'WITHDRAWN' && a.status !== 'REJECTED'));
     } catch {
       setApplications([]);
     } finally {
@@ -96,162 +152,183 @@ export default function InterviewStartScreen() {
     setStartingId(applicationId);
     try {
       const { data } = await apiClient.post<InterviewSession>(
-        API_ENDPOINTS.INTERVIEW_START,
-        { applicationId }
+        API_ENDPOINTS.INTERVIEW_START, { applicationId }
       );
       dispatch(setCurrentSession(data));
       setPickerVisible(false);
-      navigation.navigate('InterviewQuestion', {
-        sessionId: data.sessionId,
-        questionIndex: 0,
-      });
+      navigation.navigate('InterviewQuestion', { sessionId: data.sessionId, questionIndex: 0 });
     } catch (e: any) {
-      const msg =
-        e?.response?.data?.message ??
-        e?.response?.data?.error ??
-        'Could not start interview. Make sure your resume is analyzed.';
-      alert(msg);
+      alert(e?.response?.data?.message ?? 'Could not start interview. Make sure your resume is analyzed.');
     } finally {
       setStartingId(null);
     }
   }
 
-  function renderSession({ item }: { item: InterviewSession }) {
-    const answered = item.questions.filter((q) => q.transcript != null).length;
-    const total = item.questions.length;
-    return (
-      <TouchableOpacity
-        style={styles.sessionCard}
-        onPress={() =>
-          navigation.navigate('InterviewReport', { sessionId: item.sessionId })
-        }
-        activeOpacity={0.75}
-      >
-        <View style={styles.sessionCardTop}>
-          <View style={styles.sessionInfo}>
-            <Text style={styles.sessionJob} numberOfLines={1}>
-              {item.jobTitle}
-            </Text>
-            <Text style={styles.sessionCompany} numberOfLines={1}>
-              {item.company}
-            </Text>
-            <Text style={styles.sessionDate}>
-              {dayjs(item.createdAt).format('MMM D, YYYY')}
-            </Text>
+  // Stats
+  const completedSessions = history.filter(s => s.overallScore != null);
+  const avgScore = completedSessions.length > 0
+    ? completedSessions.reduce((a, s) => a + (s.overallScore ?? 0), 0) / completedSessions.length
+    : null;
+  const bestScore = completedSessions.length > 0
+    ? Math.max(...completedSessions.map(s => s.overallScore ?? 0))
+    : null;
+
+  const renderSession = useCallback(({ item }: { item: InterviewSession }) => (
+    <SessionCard
+      item={item}
+      onPress={() => navigation.navigate('InterviewReport', { sessionId: item.sessionId })}
+    />
+  ), [navigation]);
+
+  const keyExtractor = useCallback((s: InterviewSession) => String(s.sessionId), []);
+
+  const ListHeader = (
+    <>
+      {/* Hero */}
+      <View style={styles.hero}>
+        <View style={styles.heroIcon}>
+          <Ionicons name="mic" size={28} color="#fff" />
+        </View>
+        <View style={styles.heroText}>
+          <Text style={styles.heroTitle}>AI Mock Interviews</Text>
+          <Text style={styles.heroSub}>7 tailored questions per role · instant AI feedback</Text>
+        </View>
+      </View>
+
+      {/* Stats */}
+      {history.length > 0 && (
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>{history.length}</Text>
+            <Text style={styles.statLbl}>Sessions</Text>
           </View>
-          <ScoreBadge score={item.overallScore} />
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={[styles.statVal, avgScore != null && { color: scoreColor(avgScore) }]}>
+              {avgScore != null ? avgScore.toFixed(1) : '—'}
+            </Text>
+            <Text style={styles.statLbl}>Avg Score</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={[styles.statVal, bestScore != null && { color: scoreColor(bestScore) }]}>
+              {bestScore != null ? bestScore.toFixed(1) : '—'}
+            </Text>
+            <Text style={styles.statLbl}>Best</Text>
+          </View>
         </View>
-        <View style={styles.sessionProgress}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${(answered / Math.max(total, 1)) * 100}%` as any },
-            ]}
-          />
-        </View>
-        <Text style={styles.progressLabel}>
-          {answered}/{total} questions answered
-        </Text>
-        <View style={styles.sessionFooter}>
-          <Text style={styles.viewReport}>View Report</Text>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
-        </View>
+      )}
+
+      {/* Tips */}
+      <View style={styles.tipsCard}>
+        {[
+          { icon: 'checkmark-circle', text: 'AI analyzes your answers for confidence & clarity' },
+          { icon: 'star', text: 'Score improves with each practice session' },
+          { icon: 'people', text: 'Questions adapt to your actual job + resume' },
+        ].map((t, i) => (
+          <View key={i} style={styles.tipRow}>
+            <Ionicons name={t.icon as any} size={15} color={COLORS.primary} />
+            <Text style={styles.tipText}>{t.text}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Start button */}
+      <TouchableOpacity style={styles.startBtn} onPress={openPicker} activeOpacity={0.85}>
+        <Ionicons name="mic-circle" size={22} color="#fff" />
+        <Text style={styles.startBtnText}>Start Mock Interview</Text>
+        <Ionicons name="arrow-forward" size={18} color="rgba(255,255,255,0.8)" />
       </TouchableOpacity>
-    );
-  }
+
+      {history.length > 0 && (
+        <Text style={styles.sectionLabel}>PAST SESSIONS ({history.length})</Text>
+      )}
+    </>
+  );
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.startBtn} onPress={openPicker} activeOpacity={0.85}>
-        <Ionicons name="mic-outline" size={20} color="#fff" />
-        <Text style={styles.startBtnText}>Start Mock Interview</Text>
-      </TouchableOpacity>
-
       {historyLoading && history.length === 0 ? (
-        <ActivityIndicator color={COLORS.primary} style={styles.spinner} />
-      ) : history.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Ionicons name="chatbubbles-outline" size={48} color={COLORS.textMuted} />
-          <Text style={styles.emptyTitle}>No interviews yet</Text>
-          <Text style={styles.emptySubtext}>
-            Tap "Start Mock Interview" to practice with AI-generated questions for any of your job applications.
-          </Text>
-        </View>
-      ) : (
         <>
-          <Text style={styles.sectionTitle}>Past Sessions</Text>
-          <FlatList
-            data={history}
-            keyExtractor={(s) => String(s.sessionId)}
-            renderItem={renderSession}
-            contentContainerStyle={styles.list}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => loadHistory(true)}
-                tintColor={COLORS.primary}
-              />
-            }
-          />
+          {ListHeader}
+          <View style={styles.listPad}>
+            {[1, 2].map(k => <SkeletonSession key={k} />)}
+          </View>
         </>
+      ) : (
+        <FlatList
+          data={history}
+          keyExtractor={keyExtractor}
+          renderItem={renderSession}
+          contentContainerStyle={[styles.listPad, history.length === 0 && { flex: 1 }]}
+          ListHeaderComponent={ListHeader}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={() => loadHistory(true)} tintColor={COLORS.primary} />
+          }
+          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="chatbubbles-outline" size={40} color={COLORS.primary} />
+              </View>
+              <Text style={styles.emptyTitle}>No sessions yet</Text>
+              <Text style={styles.emptySubtext}>
+                Tap "Start Mock Interview" above to practice with AI-generated questions for any of your job applications.
+              </Text>
+            </View>
+          }
+        />
       )}
 
       {/* Application Picker Modal */}
-      <Modal
-        visible={pickerVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setPickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choose an Application</Text>
+      <Modal visible={pickerVisible} animationType="slide" transparent onRequestClose={() => setPickerVisible(false)}>
+        <View style={styles.overlay}>
+          <View style={styles.sheet}>
+            <View style={styles.handle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Choose a Job Application</Text>
               <TouchableOpacity onPress={() => setPickerVisible(false)}>
                 <Ionicons name="close" size={22} color={COLORS.textSecondary} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.modalSubtext}>
-              AI will generate 7 tailored questions based on the job and your resume.
+            <Text style={styles.sheetSub}>
+              AI will generate 7 tailored questions based on the job description and your resume.
             </Text>
-
             {appsLoading ? (
-              <ActivityIndicator color={COLORS.primary} style={styles.spinner} />
+              <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40, marginBottom: 40 }} />
             ) : applications.length === 0 ? (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptySubtext}>
-                  No active applications found. Apply to a job first from the Jobs tab.
-                </Text>
+              <View style={styles.emptyState}>
+                <Ionicons name="briefcase-outline" size={36} color={COLORS.textMuted} />
+                <Text style={styles.emptySubtext}>No active applications found. Apply to a job first.</Text>
               </View>
             ) : (
-              <ScrollView style={styles.appList}>
-                {applications.map((app) => (
-                  <TouchableOpacity
-                    key={app.id}
-                    style={[
-                      styles.appItem,
-                      startingId === app.id && styles.appItemLoading,
-                    ]}
-                    onPress={() => handleStartInterview(app.id)}
-                    disabled={startingId != null}
-                    activeOpacity={0.75}
-                  >
-                    <View style={styles.appItemInfo}>
-                      <Text style={styles.appItemJob} numberOfLines={1}>
-                        {app.job.title}
-                      </Text>
-                      <Text style={styles.appItemCompany} numberOfLines={1}>
-                        {app.job.company} · {app.job.location}
-                      </Text>
-                    </View>
-                    {startingId === app.id ? (
-                      <ActivityIndicator size="small" color={COLORS.primary} />
-                    ) : (
-                      <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
-                    )}
-                  </TouchableOpacity>
-                ))}
+              <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}>
+                {applications.map(app => {
+                  const c = companyColor(app.job.company ?? 'A');
+                  return (
+                    <TouchableOpacity
+                      key={app.id}
+                      style={[styles.appRow, startingId === app.id && { opacity: 0.5 }]}
+                      onPress={() => handleStartInterview(app.id)}
+                      disabled={startingId != null}
+                      activeOpacity={0.75}
+                    >
+                      <View style={[styles.appLogo, { backgroundColor: c + '18' }]}>
+                        <Text style={[styles.appLogoText, { color: c }]}>
+                          {(app.job.company ?? 'A').charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.appInfo}>
+                        <Text style={styles.appTitle} numberOfLines={1}>{app.job.title}</Text>
+                        <Text style={styles.appCompany} numberOfLines={1}>{app.job.company} · {app.job.location}</Text>
+                      </View>
+                      {startingId === app.id
+                        ? <ActivityIndicator size="small" color={COLORS.primary} />
+                        : <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+                      }
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             )}
           </View>
@@ -263,145 +340,115 @@ export default function InterviewStartScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
+  listPad: { padding: 14, paddingBottom: 40 },
+
+  hero: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: COLORS.primary, borderRadius: 18,
+    padding: 18, marginBottom: 12,
+  },
+  heroIcon: {
+    width: 54, height: 54, borderRadius: 27,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  heroText: { flex: 1 },
+  heroTitle: { fontSize: 19, fontWeight: '900', color: '#fff', marginBottom: 3 },
+  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 19 },
+
+  statsRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: COLORS.surface, borderRadius: 14,
+    borderWidth: 1, borderColor: COLORS.border,
+    padding: 16, marginBottom: 12,
+  },
+  statBox: { flex: 1, alignItems: 'center' },
+  statVal: { fontSize: 22, fontWeight: '900', color: COLORS.textPrimary },
+  statLbl: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500', marginTop: 2 },
+  statDivider: { width: 1, height: 36, backgroundColor: COLORS.border },
+
+  tipsCard: {
+    backgroundColor: COLORS.primaryLight, borderRadius: 14,
+    borderWidth: 1, borderColor: '#BFDBFE',
+    padding: 14, gap: 8, marginBottom: 14,
+  },
+  tipRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tipText: { flex: 1, fontSize: 13, color: COLORS.primary, fontWeight: '500', lineHeight: 18 },
 
   startBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: COLORS.primary,
-    margin: 16,
-    borderRadius: 14,
-    paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 15, marginBottom: 20,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
   },
-  startBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  startBtnText: { fontSize: 16, fontWeight: '800', color: '#fff' },
 
-  spinner: { marginTop: 40 },
-
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginHorizontal: 16,
-    marginBottom: 8,
+  sectionLabel: {
+    fontSize: 11, fontWeight: '800', color: COLORS.textMuted,
+    textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10,
   },
-
-  list: { paddingHorizontal: 16, paddingBottom: 32 },
 
   sessionCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  sessionCardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+  sessionTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  sessionLogo: {
+    width: 44, height: 44, borderRadius: 12, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  sessionInfo: { flex: 1, marginRight: 12 },
-  sessionJob: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  sessionCompany: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  sessionDate: { fontSize: 12, color: COLORS.textMuted, marginTop: 4 },
+  sessionLogoText: { fontSize: 18, fontWeight: '800' },
+  sessionMeta: { flex: 1 },
+  sessionJob: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
+  sessionCompany: { fontSize: 12, color: COLORS.textSecondary, marginBottom: 2 },
+  sessionDate: { fontSize: 11, color: COLORS.textMuted },
+  scoreWrap: { flexDirection: 'row', alignItems: 'baseline' },
+  scoreNum: { fontSize: 20, fontWeight: '900' },
+  scoreMax: { fontSize: 11, fontWeight: '600' },
+  scorePending: { fontSize: 14, color: COLORS.textMuted, fontWeight: '500' },
 
-  scoreBadge: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    borderWidth: 1.5,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  scoreText: { fontSize: 18, fontWeight: '800' },
-  scoreMax: { fontSize: 11, fontWeight: '600', marginLeft: 1 },
-  scorePending: { fontSize: 12, color: COLORS.textMuted, fontStyle: 'italic' },
-
-  sessionProgress: {
-    height: 4,
-    backgroundColor: COLORS.border,
-    borderRadius: 2,
-    marginBottom: 4,
-    overflow: 'hidden',
-  },
+  progressOuter: { height: 4, backgroundColor: COLORS.border, borderRadius: 2, overflow: 'hidden', marginBottom: 8 },
   progressFill: { height: '100%', backgroundColor: COLORS.primary, borderRadius: 2 },
-  progressLabel: { fontSize: 12, color: COLORS.textSecondary, marginBottom: 10 },
+  sessionFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  progressLabel: { fontSize: 12, color: COLORS.textSecondary },
+  viewRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  viewReport: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
 
-  sessionFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
-  viewReport: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
+  emptyState: { alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12, marginTop: 20 },
+  emptyIcon: {
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+  },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  emptySubtext: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
 
-  emptyBox: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    maxHeight: '78%', paddingBottom: 24,
   },
-  emptyTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginTop: 12,
-    marginBottom: 8,
+  handle: {
+    width: 38, height: 4, backgroundColor: COLORS.border,
+    borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4,
   },
-  emptySubtext: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
+  sheetHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
+  sheetTitle: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+  sheetSub: { fontSize: 13, color: COLORS.textSecondary, paddingHorizontal: 20, paddingVertical: 12 },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
+  appRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  modalSheet: {
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 40,
-    maxHeight: '75%',
+  appLogo: {
+    width: 44, height: 44, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
   },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    backgroundColor: COLORS.border,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
-  modalSubtext: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-
-  appList: { paddingHorizontal: 16 },
-  appItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  appItemLoading: { opacity: 0.5 },
-  appItemInfo: { flex: 1 },
-  appItemJob: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
-  appItemCompany: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  appLogoText: { fontSize: 18, fontWeight: '800' },
+  appInfo: { flex: 1 },
+  appTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
+  appCompany: { fontSize: 12, color: COLORS.textSecondary },
 });
