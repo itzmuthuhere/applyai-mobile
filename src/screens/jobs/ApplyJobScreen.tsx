@@ -70,7 +70,7 @@ export default function ApplyJobScreen() {
           const { data: apps } = await apiClient.get<Application[]>(API_ENDPOINTS.APPLICATIONS);
           if (apps.some(a => a.job.id === params.jobId)) { setSubmitted(true); return; }
         } catch {}
-        setError('Applying is taking longer than expected. Check your Applications tab or try again.');
+        setError('Server is warming up — your application may already be submitted. Check the Applications tab or tap Submit again.');
       } else if (serverMsg) {
         setError(serverMsg);
       } else {

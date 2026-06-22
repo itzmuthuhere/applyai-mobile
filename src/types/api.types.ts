@@ -1,4 +1,19 @@
 export type SubscriptionPlan = 'FREE' | 'HUNTER' | 'PRO';
+export type AutoApplyStatus = 'PENDING' | 'APPLYING' | 'APPLIED' | 'FAILED' | 'SKIPPED';
+
+export interface AutoApplyQueueItem {
+  id: number;
+  jobId: number;
+  jobTitle: string;
+  company: string;
+  location: string | null;
+  sourceUrl: string | null;
+  status: AutoApplyStatus;
+  matchScore: number | null;
+  tailoredResumeText: string | null;
+  queuedAt: string;
+  appliedAt: string | null;
+}
 export type RemotePreference = 'REMOTE' | 'HYBRID' | 'ONSITE' | 'ANY';
 export type UserRole = 'JOBSEEKER' | 'HR';
 export type ApplicationStatus =

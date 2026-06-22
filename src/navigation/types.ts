@@ -31,6 +31,7 @@ export type JobsStackParamList = {
   CompanyProfiles: undefined;
   HrPostJob: undefined;
   HrMyJobs: undefined;
+  AutoApplyQueue: undefined;
 };
 
 export type ResumeStackParamList = {

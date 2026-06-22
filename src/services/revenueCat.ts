@@ -3,7 +3,7 @@ import Purchases, { LOG_LEVEL, PurchasesPackage } from 'react-native-purchases';
 const PUBLIC_SDK_KEY = 'test_uCObpUtEmbfTmNyvPiknMOltvND';
 
 export function initRevenueCat(userEmail: string) {
-  Purchases.setLogLevel(LOG_LEVEL.WARN);
+  Purchases.setLogLevel(LOG_LEVEL.ERROR);
   Purchases.configure({ apiKey: PUBLIC_SDK_KEY });
   Purchases.logIn(userEmail);
 }

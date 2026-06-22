@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, RefreshControl, TextInput, ScrollView,
-  Keyboard, Animated, Platform,
+  Keyboard, Animated, Platform, Alert, Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
@@ -13,7 +13,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
 import { COLORS, API_ENDPOINTS } from '../../constants';
 import { JobsStackParamList } from '../../navigation/types';
-import { Job, JobFeedResponse } from '../../types/api.types';
+import { Job, JobFeedResponse, Resume } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { RootState } from '../../store';
 
@@ -62,12 +62,14 @@ function matchColors(score: number) {
 // ─── Job Card ────────────────────────────────────────────────────────────────
 
 const JobCard = memo(function JobCard({
-  item, onPress, onSave, onQuickApply,
+  item, onPress, onSave, onQuickApply, selectMode, selected,
 }: {
   item: Job;
   onPress: () => void;
   onSave: () => void;
   onQuickApply: () => void;
+  selectMode?: boolean;
+  selected?: boolean;
 }) {
   const salary = formatSalary(item.salaryMin, item.salaryMax);
   const initial = item.company ? item.company[0].toUpperCase() : '?';
@@ -76,7 +78,18 @@ const JobCard = memo(function JobCard({
   const postedAgo = item.scrapedAt ? dayjs(item.scrapedAt).fromNow() : null;
 
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.82} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.card, selected && styles.cardSelected]}
+      activeOpacity={0.82}
+      onPress={onPress}
+    >
+      {selectMode && (
+        <View style={styles.checkOverlay}>
+          <View style={[styles.checkCircle, selected && styles.checkCircleActive]}>
+            {selected && <Ionicons name="checkmark" size={14} color="#fff" />}
+          </View>
+        </View>
+      )}
       {/* Top row */}
       <View style={styles.cardHeader}>
         <View style={[styles.logoCircle, { backgroundColor: bgColor + '20' }]}>
@@ -213,6 +226,13 @@ export default function JobFeedScreen() {
   const [applyingId, setApplyingId] = useState<number | null>(null);
   const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
 
+  // Auto-apply select mode
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedJobs, setSelectedJobs] = useState<Set<number>>(new Set());
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState<number | null>(null);
+  const [isQueuing, setIsQueuing] = useState(false);
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList>(null);
 
@@ -294,6 +314,60 @@ export default function JobFeedScreen() {
     navigation.navigate('JobDetail', { jobId: job.id });
   }
 
+  const handleToggleSelect = useCallback((jobId: number) => {
+    setSelectedJobs(prev => {
+      const next = new Set(prev);
+      if (next.has(jobId)) next.delete(jobId);
+      else next.add(jobId);
+      return next;
+    });
+  }, []);
+
+  const enterSelectMode = useCallback(async () => {
+    try {
+      const { data } = await apiClient.get<Resume[]>(API_ENDPOINTS.RESUMES);
+      const parsed = data.filter(r => r.isParsed);
+      setResumes(parsed);
+      if (parsed.length > 0) setSelectedResumeId(parsed[0].id);
+    } catch { setResumes([]); }
+    setSelectMode(true);
+    setSelectedJobs(new Set());
+  }, []);
+
+  const exitSelectMode = useCallback(() => {
+    setSelectMode(false);
+    setSelectedJobs(new Set());
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedJobs(new Set(jobs.map(j => j.id)));
+  }, [jobs]);
+
+  const handleAutoApply = useCallback(async () => {
+    if (selectedJobs.size === 0) {
+      Alert.alert('No Jobs Selected', 'Tap jobs to select them, then tap Auto Apply.');
+      return;
+    }
+    if (resumes.length === 0) {
+      Alert.alert('No Parsed Resume', 'Upload and parse a resume first so we can tailor it for each job.');
+      return;
+    }
+    setIsQueuing(true);
+    try {
+      await apiClient.post(API_ENDPOINTS.AUTO_APPLY_QUEUE, {
+        jobIds: Array.from(selectedJobs),
+        resumeId: selectedResumeId,
+      });
+      exitSelectMode();
+      (navigation as any).navigate('AutoApplyQueue');
+    } catch (e: any) {
+      const msg = e?.response?.data?.message ?? 'Could not queue jobs. Please try again.';
+      Alert.alert('Error', msg);
+    } finally {
+      setIsQueuing(false);
+    }
+  }, [selectedJobs, selectedResumeId, resumes, exitSelectMode, navigation]);
+
   const hasFilters = !!debouncedQuery.trim() || filterSalary > 0 || activeTab !== 'all';
   const filterCount = (filterSalary > 0 ? 1 : 0) + (!!debouncedQuery.trim() ? 1 : 0);
 
@@ -306,11 +380,17 @@ export default function JobFeedScreen() {
   const renderItem = useCallback(({ item }: { item: Job }) => (
     <JobCard
       item={{ ...item, saved: savedMap[item.id] ?? item.saved }}
-      onPress={() => navigation.navigate('JobDetail', { jobId: item.id })}
-      onSave={() => handleSave(item)}
-      onQuickApply={() => handleQuickApply(item)}
+      onPress={selectMode
+        ? () => handleToggleSelect(item.id)
+        : () => navigation.navigate('JobDetail', { jobId: item.id })}
+      onSave={selectMode ? () => {} : () => handleSave(item)}
+      onQuickApply={selectMode
+        ? () => handleToggleSelect(item.id)
+        : () => handleQuickApply(item)}
+      selectMode={selectMode}
+      selected={selectedJobs.has(item.id)}
     />
-  ), [savedMap, navigation]);
+  ), [savedMap, navigation, selectMode, selectedJobs, handleToggleSelect]);
 
   const keyExtractor = useCallback((item: Job) => String(item.id), []);
 
@@ -397,14 +477,37 @@ export default function JobFeedScreen() {
         </ScrollView>
       </View>
 
-      {/* Results count */}
+      {/* Results count + Select toggle */}
       {!isLoading && !loadError && (
         <View style={styles.resultsMeta}>
           <Text style={styles.resultsCount}>
-            {total > 0 ? `${total.toLocaleString()} job${total !== 1 ? 's' : ''}` : 'No jobs found'}
+            {selectMode
+              ? `${selectedJobs.size} selected`
+              : total > 0 ? `${total.toLocaleString()} job${total !== 1 ? 's' : ''}` : 'No jobs found'}
           </Text>
+          {!isHr && !selectMode && jobs.length > 0 && (
+            <TouchableOpacity onPress={enterSelectMode} style={styles.selectBtn} activeOpacity={0.8}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={COLORS.primary} />
+              <Text style={styles.selectBtnText}>Select</Text>
+            </TouchableOpacity>
+          )}
+          {selectMode && (
+            <View style={styles.selectActions}>
+              <TouchableOpacity onPress={handleSelectAll} style={styles.selectAllBtn} activeOpacity={0.8}>
+                <Text style={styles.selectAllText}>All</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={exitSelectMode} style={styles.cancelSelectBtn} activeOpacity={0.8}>
+                <Text style={styles.cancelSelectText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       )}
+
+      {/* Resume picker modal */}
+      <Modal visible={false} transparent animationType="slide">
+        {/* placeholder — resume picked inline in bottom bar */}
+      </Modal>
 
       {/* List */}
       {isLoading ? (
@@ -456,6 +559,58 @@ export default function JobFeedScreen() {
             ) : null
           }
         />
+      )}
+
+      {/* Auto Apply sticky bottom bar */}
+      {selectMode && (
+        <View style={styles.autoApplyBar}>
+          {resumes.length > 0 && (
+            <ScrollView
+              horizontal showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.resumePickerRow}
+            >
+              {resumes.map(r => (
+                <TouchableOpacity
+                  key={r.id}
+                  style={[styles.resumeChip, selectedResumeId === r.id && styles.resumeChipActive]}
+                  onPress={() => setSelectedResumeId(r.id)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name="document-text-outline" size={12}
+                    color={selectedResumeId === r.id ? COLORS.primary : COLORS.textSecondary}
+                  />
+                  <Text
+                    style={[styles.resumeChipText, selectedResumeId === r.id && styles.resumeChipTextActive]}
+                    numberOfLines={1}
+                  >
+                    {r.versionName}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+          {resumes.length === 0 && (
+            <Text style={styles.noResumeHint}>No parsed resume found. Parse a resume first.</Text>
+          )}
+          <TouchableOpacity
+            style={[styles.autoApplyBtn, (selectedJobs.size === 0 || isQueuing) && styles.autoApplyBtnDisabled]}
+            onPress={handleAutoApply}
+            activeOpacity={0.85}
+            disabled={isQueuing}
+          >
+            {isQueuing ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="rocket-outline" size={16} color="#fff" />
+                <Text style={styles.autoApplyBtnText}>
+                  Auto Apply{selectedJobs.size > 0 ? ` (${selectedJobs.size})` : ''}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -517,10 +672,58 @@ const styles = StyleSheet.create({
   },
   clearChipText: { fontSize: 12, fontWeight: '600', color: COLORS.error },
 
-  resultsMeta: { paddingHorizontal: 18, paddingVertical: 8 },
+  resultsMeta: {
+    paddingHorizontal: 18, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
   resultsCount: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
 
+  selectBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 8, backgroundColor: COLORS.primaryLight,
+  },
+  selectBtnText: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
+  selectActions: { flexDirection: 'row', gap: 8 },
+  selectAllBtn: {
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 8, backgroundColor: COLORS.primaryLight,
+  },
+  selectAllText: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
+  cancelSelectBtn: {
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 8, backgroundColor: '#F1F5F9',
+  },
+  cancelSelectText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '600' },
+
   listContent: { paddingHorizontal: 14, paddingBottom: 32, gap: 12, paddingTop: 4 },
+
+  // Auto Apply bar
+  autoApplyBar: {
+    backgroundColor: COLORS.surface,
+    borderTopWidth: 1, borderTopColor: COLORS.border,
+    paddingHorizontal: 16, paddingVertical: 12, gap: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 8,
+  },
+  resumePickerRow: { gap: 8, paddingBottom: 2 },
+  resumeChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 20, borderWidth: 1.5, borderColor: COLORS.border,
+    backgroundColor: '#F8FAFC', maxWidth: 160,
+  },
+  resumeChipActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  resumeChipText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500', flexShrink: 1 },
+  resumeChipTextActive: { color: COLORS.primary, fontWeight: '600' },
+  noResumeHint: { fontSize: 12, color: COLORS.textMuted, textAlign: 'center', marginVertical: 4 },
+  autoApplyBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: COLORS.primary, borderRadius: 12,
+    paddingVertical: 14,
+  },
+  autoApplyBtnDisabled: { backgroundColor: COLORS.textMuted },
+  autoApplyBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 
   // Job card
   card: {
@@ -530,6 +733,17 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
+  cardSelected: { borderColor: COLORS.primary, borderWidth: 2 },
+  checkOverlay: {
+    position: 'absolute', top: 12, right: 12, zIndex: 10,
+  },
+  checkCircle: {
+    width: 22, height: 22, borderRadius: 11,
+    borderWidth: 2, borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  checkCircleActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   logoCircle: {
     width: 48, height: 48, borderRadius: 13,

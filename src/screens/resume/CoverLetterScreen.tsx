@@ -55,11 +55,17 @@ export default function CoverLetterScreen() {
     try {
       const { data } = await apiClient.post<CoverLetterResponse>(
         API_ENDPOINTS.COVER_LETTER,
-        { resumeId: selectedResumeId, jobId: params.jobId }
+        { resumeId: selectedResumeId, jobId: params.jobId },
+        { timeout: 90000 }
       );
       setCoverLetter(data.coverLetter);
     } catch (e: any) {
-      setError(e?.response?.data?.message ?? e?.response?.data?.error ?? 'Generation failed. Try again.');
+      if (!e?.response) {
+        setError('Server is warming up. Wait 10 seconds and tap Generate again.');
+      } else {
+        const msg = e?.response?.data?.message ?? e?.response?.data?.error;
+        setError(msg ?? 'Generation failed. Try again.');
+      }
     } finally {
       setIsLoading(false);
     }
