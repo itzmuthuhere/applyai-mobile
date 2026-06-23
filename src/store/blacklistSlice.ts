@@ -27,7 +27,7 @@ export const fetchBlacklist = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await apiClient.get(API_ENDPOINTS.BLACKLIST);
-      return res.data;
+      return Array.isArray(res.data) ? res.data : (res.data.blacklist ?? []);
     } catch (e: any) {
       return rejectWithValue(e.response?.data?.error ?? 'Failed to load blacklist');
     }
