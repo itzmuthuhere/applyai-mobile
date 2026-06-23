@@ -34,14 +34,16 @@ describe('AnalyticsScreen', () => {
   it('renders overview stats when data is loaded', () => {
     const store = makeStore({ overview: mockOverview });
     render(<Provider store={store}><AnalyticsScreen /></Provider>);
-    expect(screen.getByText('15')).toBeTruthy();
+    // '15' appears in multiple stat cards — use getAllByText
+    expect(screen.getAllByText('15').length).toBeGreaterThan(0);
     expect(screen.getByText('78%')).toBeTruthy();
   });
 
   it('shows top applied roles when loaded', () => {
     const store = makeStore({ overview: mockOverview });
     render(<Provider store={store}><AnalyticsScreen /></Provider>);
-    expect(screen.getByText('• SWE')).toBeTruthy();
+    // Roles rendered as plain text without '• ' prefix
+    expect(screen.getByText('SWE')).toBeTruthy();
   });
 
   it('shows resume performance section when data present', () => {

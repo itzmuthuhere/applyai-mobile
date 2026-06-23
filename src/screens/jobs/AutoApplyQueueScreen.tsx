@@ -69,6 +69,7 @@ function QueueCard({
       </View>
       {canRemove && (
         <TouchableOpacity
+          testID={`remove-btn-${item.id}`}
           style={styles.removeBtn}
           onPress={() => onRemove(item.id)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -135,7 +136,7 @@ export default function AutoApplyQueueScreen() {
     <View style={styles.screen}>
       {/* Summary bar */}
       {items.length > 0 && (
-        <View style={styles.summaryBar}>
+        <View testID="queue-summary-bar" style={styles.summaryBar}>
           {Object.entries(counts).map(([status, count]) => {
             const cfg = STATUS_CONFIG[status];
             if (!cfg) return null;
@@ -150,7 +151,7 @@ export default function AutoApplyQueueScreen() {
       )}
 
       {/* Extension hint banner */}
-      <View style={styles.hintBanner}>
+      <View testID="extension-hint-banner" style={styles.hintBanner}>
         <Ionicons name="extension-puzzle-outline" size={15} color={COLORS.primary} />
         <Text style={styles.hintText}>
           Install the ApplyAI Chrome extension — it picks up queued jobs and auto-fills applications on Naukri, LinkedIn & Indeed.
@@ -158,9 +159,9 @@ export default function AutoApplyQueueScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 60 }} />
+        <View testID="queue-loading"><ActivityIndicator color={COLORS.primary} style={{ marginTop: 60 }} /></View>
       ) : error ? (
-        <View style={styles.centerState}>
+        <View testID="queue-error" style={styles.centerState}>
           <Ionicons name="cloud-offline-outline" size={52} color={COLORS.textMuted} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => load()}>
@@ -181,7 +182,7 @@ export default function AutoApplyQueueScreen() {
             />
           }
           ListEmptyComponent={
-            <View style={styles.centerState}>
+            <View testID="queue-empty-state" style={styles.centerState}>
               <Ionicons name="rocket-outline" size={56} color={COLORS.border} />
               <Text style={styles.emptyTitle}>Queue is empty</Text>
               <Text style={styles.emptySubtitle}>

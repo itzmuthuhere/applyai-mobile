@@ -33,8 +33,9 @@ export default function ApplyJobScreen() {
 
   const [selectedResumeId, setSelectedResumeId] = useState<number | null>(null);
   const [coverLetter, setCoverLetter] = useState('');
-  const [resumesLoading, setResumesLoading] = useState(false);
+  const [resumesLoading, setResumesLoading] = useState(resumes.length === 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showWarmup, setShowWarmup] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -54,6 +55,7 @@ export default function ApplyJobScreen() {
     if (!selectedResumeId) return;
     setIsSubmitting(true);
     setError(null);
+    const warmupTimer = setTimeout(() => setShowWarmup(true), 5000);
     try {
       const body: Record<string, unknown> = { jobId: params.jobId, resumeId: selectedResumeId };
       if (coverLetter.trim()) body.coverLetter = coverLetter.trim();
@@ -77,6 +79,8 @@ export default function ApplyJobScreen() {
         setError('Failed to submit application. Please try again.');
       }
     } finally {
+      clearTimeout(warmupTimer);
+      setShowWarmup(false);
       setIsSubmitting(false);
     }
   }
@@ -85,10 +89,21 @@ export default function ApplyJobScreen() {
   const jobCompany = selectedJob?.company ?? '';
   const jColor = jobCompany ? companyColor(jobCompany) : COLORS.primary;
 
+  // ── Loading Guard ─────────────────────────────────────────────────────────
+  if (resumesLoading && resumes.length === 0) {
+    return (
+      <SafeAreaView testID="apply-loading" style={styles.safe}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // ── Success State ──────────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView testID="apply-success" style={styles.safe}>
         <ScrollView contentContainerStyle={styles.successScroll} showsVerticalScrollIndicator={false}>
           {/* Success illustration */}
           <View style={styles.successBurst}>
@@ -217,6 +232,7 @@ export default function ApplyJobScreen() {
             <Text style={styles.sectionTitle}>Cover Letter <Text style={styles.optional}>(optional)</Text></Text>
           </View>
           <TextInput
+            testID="cover-letter-input"
             style={styles.textArea}
             placeholder="Paste or write your cover letter here…&#10;&#10;Tip: Use our AI Cover Letter generator for a personalised letter."
             placeholderTextColor={COLORS.textMuted}
@@ -241,7 +257,7 @@ export default function ApplyJobScreen() {
 
         {/* Error */}
         {error && (
-          <View style={styles.errorBox}>
+          <View testID="apply-error" style={styles.errorBox}>
             <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
@@ -249,6 +265,7 @@ export default function ApplyJobScreen() {
 
         {/* Submit */}
         <TouchableOpacity
+          testID="apply-submit-btn"
           style={[styles.submitBtn, (!selectedResumeId || isSubmitting) && styles.submitBtnDisabled]}
           onPress={handleApply}
           disabled={!selectedResumeId || isSubmitting}
@@ -267,10 +284,10 @@ export default function ApplyJobScreen() {
           )}
         </TouchableOpacity>
 
-        {isSubmitting && (
-          <View style={styles.submittingNote}>
+        {isSubmitting && showWarmup && (
+          <View testID="warmup-message" style={styles.submittingNote}>
             <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
-            <Text style={styles.submittingNoteText}>This may take up to 30 seconds on first request</Text>
+            <Text style={styles.submittingNoteText}>Server is warming up — this may take up to 30 seconds</Text>
           </View>
         )}
 

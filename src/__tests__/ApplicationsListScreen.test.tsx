@@ -1,5 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
@@ -9,16 +11,23 @@ jest.mock('../api/apiClient', () => ({
 }));
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ navigate: jest.fn() }),
+  useNavigation: jest.fn(() => ({ navigate: jest.fn() })),
 }));
 
 jest.mock('../constants', () => ({
+  COLORS: {
+    primary: '#2563EB', primaryLight: '#DBEAFE', secondary: '#10B981',
+    background: '#F8FAFC', surface: '#FFFFFF', textPrimary: '#0F172A',
+    textSecondary: '#64748B', textMuted: '#94A3B8', border: '#E2E8F0',
+    error: '#EF4444', warning: '#F59E0B', success: '#10B981',
+  },
   API_ENDPOINTS: {
     APPLICATIONS: '/api/applications',
   },
 }));
 
 import apiClient from '../api/apiClient';
+import applicationReducer from '../store/slices/applicationSlice';
 import ApplicationsListScreen from '../screens/applications/ApplicationsListScreen';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
@@ -42,8 +51,18 @@ const INTERVIEW_APP = { ...APPLIED_APP, id: 2, status: 'INTERVIEW' };
 const OFFER_APP = { ...APPLIED_APP, id: 3, status: 'OFFER' };
 const REJECTED_APP = { ...APPLIED_APP, id: 4, status: 'REJECTED' };
 
+function makeStore() {
+  return configureStore({
+    reducer: { application: applicationReducer },
+  });
+}
+
 function renderScreen() {
-  return render(<ApplicationsListScreen />);
+  return render(
+    <Provider store={makeStore()}>
+      <ApplicationsListScreen />
+    </Provider>
+  );
 }
 
 describe('ApplicationsListScreen', () => {
@@ -65,8 +84,8 @@ describe('ApplicationsListScreen', () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('Senior Engineer')).toBeTruthy();
-      expect(screen.getByText('Acme Corp')).toBeTruthy();
+      expect(screen.getAllByText('Senior Engineer').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Acme Corp').length).toBeGreaterThan(0);
     });
   });
 
@@ -91,7 +110,7 @@ describe('ApplicationsListScreen', () => {
     fireEvent.press(screen.getByTestId('tab-INTERVIEW'));
 
     await waitFor(() => {
-      expect(screen.getAllByText('INTERVIEW').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Interview').length).toBeGreaterThan(0);
     });
   });
 
@@ -122,8 +141,8 @@ describe('ApplicationsListScreen', () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('APPLIED')).toBeTruthy();
-      expect(screen.getByText('REJECTED')).toBeTruthy();
+      expect(screen.getAllByText('Applied').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Rejected').length).toBeGreaterThan(0);
     });
   });
 

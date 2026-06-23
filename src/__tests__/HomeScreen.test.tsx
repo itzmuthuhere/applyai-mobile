@@ -7,12 +7,21 @@ jest.mock('../api/apiClient', () => ({
 }));
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ navigate: jest.fn() }),
+  useNavigation: jest.fn(() => ({ navigate: jest.fn() })),
 }));
 
 jest.mock('../constants', () => ({
+  COLORS: {
+    primary: '#2563EB', primaryLight: '#DBEAFE', secondary: '#10B981',
+    background: '#F8FAFC', surface: '#FFFFFF', textPrimary: '#0F172A',
+    textSecondary: '#64748B', textMuted: '#94A3B8', border: '#E2E8F0',
+    error: '#EF4444', warning: '#F59E0B', success: '#10B981',
+  },
   API_ENDPOINTS: {
     DASHBOARD_SUMMARY: '/api/dashboard/summary',
+    RESUMES: '/api/resumes',
+    APPLICATIONS: '/api/applications',
+    INTERVIEW_HISTORY: '/api/interviews/history',
   },
 }));
 
@@ -21,6 +30,9 @@ import HomeScreen from '../screens/home/HomeScreen';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../store/slices/authSlice';
+import resumeReducer from '../store/slices/resumeSlice';
+import applicationReducer from '../store/slices/applicationSlice';
+import interviewReducer from '../store/slices/interviewSlice';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
 
@@ -39,7 +51,12 @@ const DASHBOARD_DATA = {
 
 function makeStore(plan = 'FREE') {
   return configureStore({
-    reducer: { auth: authReducer },
+    reducer: {
+      auth: authReducer,
+      resume: resumeReducer,
+      application: applicationReducer,
+      interview: interviewReducer,
+    },
     preloadedState: {
       auth: {
         jwt: 'test-token',
@@ -72,26 +89,26 @@ describe('HomeScreen', () => {
   });
 
   it('renders summary stats after load', async () => {
-    mockGet.mockResolvedValueOnce({ data: DASHBOARD_DATA });
+    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('15')).toBeTruthy(); // applicationCount
-      expect(screen.getByText('3')).toBeTruthy();  // interviewCount
+      expect(screen.getByText('15')).toBeTruthy();
+      expect(screen.getByText('3')).toBeTruthy();
     });
   });
 
   it('shows avg match score', async () => {
-    mockGet.mockResolvedValueOnce({ data: DASHBOARD_DATA });
+    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('72.5')).toBeTruthy();
+      expect(screen.getByText('72.5%')).toBeTruthy();
     });
   });
 
   it('shows recent applications section', async () => {
-    mockGet.mockResolvedValueOnce({ data: DASHBOARD_DATA });
+    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
     renderScreen();
 
     await waitFor(() => {
@@ -101,7 +118,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows FREE plan badge for free users', async () => {
-    mockGet.mockResolvedValueOnce({ data: DASHBOARD_DATA });
+    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
     renderScreen('FREE');
 
     await waitFor(() => {
@@ -110,7 +127,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows PRO plan badge for pro users', async () => {
-    mockGet.mockResolvedValueOnce({ data: DASHBOARD_DATA });
+    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
     renderScreen('PRO');
 
     await waitFor(() => {
@@ -119,7 +136,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows error state on API failure', async () => {
-    mockGet.mockRejectedValueOnce(new Error('Server error'));
+    mockGet.mockRejectedValue(new Error('Server error'));
     renderScreen();
 
     await waitFor(() => {
@@ -128,7 +145,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows application status breakdown', async () => {
-    mockGet.mockResolvedValueOnce({ data: DASHBOARD_DATA });
+    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
     renderScreen();
 
     await waitFor(() => {
@@ -137,7 +154,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows user greeting with name', async () => {
-    mockGet.mockResolvedValueOnce({ data: DASHBOARD_DATA });
+    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
     renderScreen();
 
     await waitFor(() => {

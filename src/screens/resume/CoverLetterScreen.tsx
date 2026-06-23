@@ -30,6 +30,7 @@ export default function CoverLetterScreen() {
   const [selectedResumeId, setSelectedResumeId] = useState<number | null>(params.resumeId ?? null);
   const [resumesLoading, setResumesLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showWarmup, setShowWarmup] = useState(false);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +53,7 @@ export default function CoverLetterScreen() {
     if (!selectedResumeId) return;
     setIsLoading(true);
     setError(null);
+    const warmupTimer = setTimeout(() => setShowWarmup(true), 5000);
     try {
       const { data } = await apiClient.post<CoverLetterResponse>(
         API_ENDPOINTS.COVER_LETTER,
@@ -67,6 +69,8 @@ export default function CoverLetterScreen() {
         setError(msg ?? 'Generation failed. Try again.');
       }
     } finally {
+      clearTimeout(warmupTimer);
+      setShowWarmup(false);
       setIsLoading(false);
     }
   }
@@ -124,13 +128,14 @@ export default function CoverLetterScreen() {
             </View>
 
             {error && (
-              <View style={styles.errorBox}>
+              <View testID="cover-letter-error" style={styles.errorBox}>
                 <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
 
             <TouchableOpacity
+              testID="generate-btn"
               style={[styles.generateBtn, (!selectedResumeId || isLoading) && styles.generateBtnDisabled]}
               onPress={handleGenerate}
               disabled={!selectedResumeId || isLoading}
@@ -149,9 +154,16 @@ export default function CoverLetterScreen() {
             </TouchableOpacity>
 
             {isLoading && (
-              <View style={styles.loadingCard}>
+              <View testID="cover-letter-loading" style={styles.loadingCard}>
                 <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
                 <Text style={styles.loadingHint}>AI is personalising your letter… ~10 seconds</Text>
+              </View>
+            )}
+
+            {isLoading && showWarmup && (
+              <View testID="warmup-message" style={styles.loadingCard}>
+                <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
+                <Text style={styles.loadingHint}>Server warming up — please wait a moment…</Text>
               </View>
             )}
 
@@ -195,6 +207,7 @@ export default function CoverLetterScreen() {
               <View style={styles.letterHeader}>
                 <Text style={styles.letterHeaderText}>Cover Letter</Text>
                 <TouchableOpacity
+                  testID="copy-btn"
                   style={styles.copyInlineBtn}
                   onPress={() => Share.share({ message: coverLetter })}
                 >
@@ -215,8 +228,9 @@ export default function CoverLetterScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
+              testID="regenerate-btn"
               style={styles.regenerateBtn}
-              onPress={() => { setCoverLetter(null); setSelectedResumeId(params.resumeId ?? null); }}
+              onPress={() => { setCoverLetter(null); setSelectedResumeId(params.resumeId ?? null); handleGenerate(); }}
             >
               <Ionicons name="refresh-outline" size={16} color={COLORS.primary} />
               <Text style={styles.regenerateBtnText}>Generate Again</Text>

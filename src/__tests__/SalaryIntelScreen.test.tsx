@@ -46,7 +46,8 @@ describe('SalaryIntelScreen', () => {
     });
     render(<Provider store={store}><SalaryIntelScreen /></Provider>);
     expect(screen.getByText('10–15 LPA')).toBeTruthy();
-    expect(screen.getByText('• High demand')).toBeTruthy();
+    // Insights rendered as plain text, no bullet prefix in the Text node
+    expect(screen.getByText('High demand')).toBeTruthy();
   });
 
   it('shows button even when loading', () => {

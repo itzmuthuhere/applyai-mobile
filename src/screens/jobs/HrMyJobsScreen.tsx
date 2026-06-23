@@ -200,6 +200,7 @@ export default function HrMyJobsScreen() {
                   <Text style={styles.company} numberOfLines={1}>{item.company}</Text>
                 </View>
                 <TouchableOpacity
+                  testID="delete-job-btn"
                   style={styles.deleteBtn}
                   onPress={() => handleDelete(item)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}

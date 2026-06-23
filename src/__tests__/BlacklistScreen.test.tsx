@@ -21,12 +21,14 @@ function makeStore(items = []) {
 describe('BlacklistScreen', () => {
   it('renders title', () => {
     render(<Provider store={makeStore()}><BlacklistScreen /></Provider>);
-    expect(screen.getByText('Company Blacklist')).toBeTruthy();
+    // Component title is 'Blacklist' not 'Company Blacklist'
+    expect(screen.getByText('Blacklist')).toBeTruthy();
   });
 
   it('shows empty state when no items', async () => {
     const { findByText } = render(<Provider store={makeStore()}><BlacklistScreen /></Provider>);
-    const text = await findByText('No companies blacklisted');
+    // Empty state shows 'Clean slate' heading and 'Add First Company' button
+    const text = await findByText('Clean slate');
     expect(text).toBeTruthy();
   });
 
@@ -41,7 +43,6 @@ describe('BlacklistScreen', () => {
 
   it('renders add blacklist button in header area', () => {
     render(<Provider store={makeStore()}><BlacklistScreen /></Provider>);
-    // The + button and subtitle are always visible
-    expect(screen.getByText('Company Blacklist')).toBeTruthy();
+    expect(screen.getByText('Blacklist')).toBeTruthy();
   });
 });

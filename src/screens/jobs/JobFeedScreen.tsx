@@ -79,6 +79,7 @@ const JobCard = memo(function JobCard({
 
   return (
     <TouchableOpacity
+      testID={`job-card-${item.id}`}
       style={[styles.card, selected && styles.cardSelected]}
       activeOpacity={0.82}
       onPress={onPress}
@@ -480,23 +481,23 @@ export default function JobFeedScreen() {
       {/* Results count + Select toggle */}
       {!isLoading && !loadError && (
         <View style={styles.resultsMeta}>
-          <Text style={styles.resultsCount}>
+          <Text testID={selectMode ? 'selected-count' : undefined} style={styles.resultsCount}>
             {selectMode
               ? `${selectedJobs.size} selected`
               : total > 0 ? `${total.toLocaleString()} job${total !== 1 ? 's' : ''}` : 'No jobs found'}
           </Text>
           {!isHr && !selectMode && jobs.length > 0 && (
-            <TouchableOpacity onPress={enterSelectMode} style={styles.selectBtn} activeOpacity={0.8}>
+            <TouchableOpacity testID="select-btn" onPress={enterSelectMode} style={styles.selectBtn} activeOpacity={0.8}>
               <Ionicons name="checkmark-circle-outline" size={14} color={COLORS.primary} />
               <Text style={styles.selectBtnText}>Select</Text>
             </TouchableOpacity>
           )}
           {selectMode && (
             <View style={styles.selectActions}>
-              <TouchableOpacity onPress={handleSelectAll} style={styles.selectAllBtn} activeOpacity={0.8}>
+              <TouchableOpacity testID="select-all-btn" onPress={handleSelectAll} style={styles.selectAllBtn} activeOpacity={0.8}>
                 <Text style={styles.selectAllText}>All</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={exitSelectMode} style={styles.cancelSelectBtn} activeOpacity={0.8}>
+              <TouchableOpacity testID="cancel-select-btn" onPress={exitSelectMode} style={styles.cancelSelectBtn} activeOpacity={0.8}>
                 <Text style={styles.cancelSelectText}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -511,7 +512,7 @@ export default function JobFeedScreen() {
 
       {/* List */}
       {isLoading ? (
-        <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+        <ScrollView testID="jobs-loading" contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
           {[1, 2, 3, 4, 5].map(k => <SkeletonCard key={k} />)}
         </ScrollView>
       ) : loadError ? (
@@ -539,7 +540,7 @@ export default function JobFeedScreen() {
           maxToRenderPerBatch={8}
           windowSize={8}
           ListEmptyComponent={
-            <View style={styles.centerState}>
+            <View testID="jobs-empty-state" style={styles.centerState}>
               <Ionicons name="search-outline" size={56} color={COLORS.border} />
               <Text style={styles.emptyTitle}>
                 {activeTab === 'saved' ? 'No saved jobs yet' : hasFilters ? 'No matching jobs' : 'No jobs yet'}
@@ -563,7 +564,7 @@ export default function JobFeedScreen() {
 
       {/* Auto Apply sticky bottom bar */}
       {selectMode && (
-        <View style={styles.autoApplyBar}>
+        <View testID="auto-apply-bar" style={styles.autoApplyBar}>
           {resumes.length > 0 && (
             <ScrollView
               horizontal showsHorizontalScrollIndicator={false}
@@ -594,6 +595,7 @@ export default function JobFeedScreen() {
             <Text style={styles.noResumeHint}>No parsed resume found. Parse a resume first.</Text>
           )}
           <TouchableOpacity
+            testID="auto-apply-submit-btn"
             style={[styles.autoApplyBtn, (selectedJobs.size === 0 || isQueuing) && styles.autoApplyBtnDisabled]}
             onPress={handleAutoApply}
             activeOpacity={0.85}

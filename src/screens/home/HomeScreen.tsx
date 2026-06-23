@@ -69,6 +69,7 @@ export default function HomeScreen() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [dashError, setDashError] = useState(false);
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
   const plan = user?.subscriptionPlan ?? 'FREE';
@@ -86,9 +87,10 @@ export default function HomeScreen() {
         apiClient.get(API_ENDPOINTS.INTERVIEW_HISTORY),
       ]);
       if (summaryRes.status === 'fulfilled') setSummary(summaryRes.value.data);
-      if (resumesRes.status === 'fulfilled') dispatch(setResumes(resumesRes.value.data));
-      if (appsRes.status === 'fulfilled') dispatch(setApplications(appsRes.value.data.content ?? []));
-      if (interviewsRes.status === 'fulfilled') dispatch(setHistory(interviewsRes.value.data ?? []));
+      else if (summaryRes.status === 'rejected') setDashError(true);
+      if (resumesRes.status === 'fulfilled') dispatch(setResumes(resumesRes.value?.data ?? []));
+      if (appsRes.status === 'fulfilled') dispatch(setApplications(appsRes.value?.data?.content ?? []));
+      if (interviewsRes.status === 'fulfilled') dispatch(setHistory(interviewsRes.value?.data ?? []));
     } catch {}
     setInitialLoading(false);
     if (isRefresh) setIsRefreshing(false);
@@ -127,7 +129,7 @@ export default function HomeScreen() {
               {user?.headline ? (
                 <Text style={styles.headline} numberOfLines={1}>{user.headline}</Text>
               ) : null}
-              <View style={[styles.planBadge, { backgroundColor: planCfg.bg, borderColor: planCfg.border }]}>
+              <View testID={`plan-badge-${plan}`} style={[styles.planBadge, { backgroundColor: planCfg.bg, borderColor: planCfg.border }]}>
                 <Ionicons name={planCfg.icon as any} size={11} color={planCfg.text} />
                 <Text style={[styles.planText, { color: planCfg.text }]}>{planCfg.label} Plan</Text>
               </View>
@@ -191,7 +193,7 @@ export default function HomeScreen() {
         {/* ── Stats Row ── */}
         <View style={styles.statsSection}>
           {initialLoading ? (
-            <View style={styles.statsRow}>
+            <View testID="dashboard-loading" style={styles.statsRow}>
               {[1, 2, 3, 4].map(k => (
                 <View key={k} style={styles.statCard}>
                   <SkeletonPulse w={32} h={32} r={10} />
@@ -200,8 +202,13 @@ export default function HomeScreen() {
                 </View>
               ))}
             </View>
+          ) : dashError ? (
+            <View testID="dashboard-error" style={styles.errorBanner}>
+              <Ionicons name="cloud-offline-outline" size={20} color={COLORS.error} />
+              <Text style={styles.errorBannerText}>Could not load dashboard. Pull to refresh.</Text>
+            </View>
           ) : (
-            <View style={styles.statsRow}>
+            <View testID="status-breakdown" style={styles.statsRow}>
               {STATS.map(s => (
                 <View key={s.label} style={styles.statCard}>
                   <View style={[styles.statIconBox, { backgroundColor: s.bg }]}>
@@ -416,6 +423,12 @@ const styles = StyleSheet.create({
   // Stats
   statsSection: { paddingHorizontal: 16, paddingTop: 16 },
   statsRow: { flexDirection: 'row', gap: 10 },
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#FECACA',
+  },
+  errorBannerText: { flex: 1, fontSize: 13, color: '#991B1B', fontWeight: '600' },
   statCard: {
     flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 8,
     alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 5,

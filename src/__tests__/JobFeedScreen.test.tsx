@@ -7,10 +7,16 @@ jest.mock('../api/apiClient', () => ({
 }));
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ navigate: jest.fn() }),
+  useNavigation: jest.fn(() => ({ navigate: jest.fn() })),
 }));
 
 jest.mock('../constants', () => ({
+  COLORS: {
+    primary: '#2563EB', primaryLight: '#DBEAFE', secondary: '#10B981',
+    background: '#F8FAFC', surface: '#FFFFFF', textPrimary: '#0F172A',
+    textSecondary: '#64748B', textMuted: '#94A3B8', border: '#E2E8F0',
+    error: '#EF4444', warning: '#F59E0B', success: '#10B981',
+  },
   API_ENDPOINTS: {
     JOBS: '/api/jobs',
     RESUMES: '/api/resumes',

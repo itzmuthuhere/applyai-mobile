@@ -92,6 +92,7 @@ function JobCard({
           )}
         </View>
         <TouchableOpacity
+          testID="unsave-btn"
           style={styles.unsaveBtn}
           onPress={onUnsave}
           disabled={isUnsaving}

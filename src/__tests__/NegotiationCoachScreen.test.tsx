@@ -53,7 +53,8 @@ describe('NegotiationCoachScreen', () => {
       },
     });
     render(<Provider store={store}><NegotiationCoachScreen /></Provider>);
-    expect(screen.getByText('Red Flags')).toBeTruthy();
-    expect(screen.getByText('⚠ Startup — equity risk')).toBeTruthy();
+    // Section title in component is "Watch Out", flag text rendered without ⚠ prefix
+    expect(screen.getByText('Watch Out')).toBeTruthy();
+    expect(screen.getByText('Startup — equity risk')).toBeTruthy();
   });
 });

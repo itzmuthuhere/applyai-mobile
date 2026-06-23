@@ -129,7 +129,7 @@ function AppCard({ item, onPress }: { item: Application; onPress: () => void }) 
   const appliedAgo = item.appliedAt ? dayjs(item.appliedAt).fromNow() : null;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.78}>
+    <TouchableOpacity testID={`app-item-${item.id}`} style={styles.card} onPress={onPress} activeOpacity={0.78}>
       <View style={styles.cardRow}>
         {/* Logo */}
         <View style={[styles.logoCircle, { backgroundColor: bgColor + '18' }]}>
@@ -183,9 +183,9 @@ function AppCard({ item, onPress }: { item: Application; onPress: () => void }) 
 
 // ─── Tab pill ────────────────────────────────────────────────────────────────
 
-function TabPill({ label, active, count, onPress }: { label: string; active: boolean; count: number; onPress: () => void }) {
+function TabPill({ label, active, count, onPress, testID }: { label: string; active: boolean; count: number; onPress: () => void; testID?: string }) {
   return (
-    <TouchableOpacity style={[styles.tabPill, active && styles.tabPillActive]} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity testID={testID} style={[styles.tabPill, active && styles.tabPillActive]} onPress={onPress} activeOpacity={0.75}>
       <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
       {count > 0 && (
         <View style={[styles.tabCount, active && styles.tabCountActive]}>
@@ -245,7 +245,7 @@ export default function ApplicationsListScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.screen}>
+      <View testID="apps-loading" style={styles.screen}>
         <View style={styles.listContent}>
           {[1, 2, 3, 4].map(k => <SkeletonCard key={k} />)}
         </View>
@@ -263,6 +263,7 @@ export default function ApplicationsListScreen() {
         {(Object.keys(TAB_LABELS) as FilterTab[]).map(tab => (
           <TabPill
             key={tab}
+            testID={`tab-${tab.toUpperCase()}`}
             label={TAB_LABELS[tab]}
             active={activeTab === tab}
             count={tabCounts[tab]}
@@ -272,7 +273,7 @@ export default function ApplicationsListScreen() {
       </View>
 
       {error ? (
-        <View style={styles.centerState}>
+        <View testID="apps-error" style={styles.centerState}>
           <Ionicons name="cloud-offline-outline" size={52} color={COLORS.textMuted} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => loadApplications()}>
@@ -292,7 +293,7 @@ export default function ApplicationsListScreen() {
           initialNumToRender={10}
           maxToRenderPerBatch={8}
           ListEmptyComponent={
-            <View style={styles.centerState}>
+            <View testID="apps-empty-state" style={styles.centerState}>
               {applications.length === 0 ? (
                 <>
                   <Ionicons name="briefcase-outline" size={60} color={COLORS.border} />

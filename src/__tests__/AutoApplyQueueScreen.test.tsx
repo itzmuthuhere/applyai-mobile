@@ -10,7 +10,17 @@ jest.mock('../api/apiClient', () => ({
   },
 }));
 
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: jest.fn(() => ({ goBack: jest.fn() })),
+}));
+
 jest.mock('../constants', () => ({
+  COLORS: {
+    primary: '#2563EB', primaryLight: '#DBEAFE', secondary: '#10B981',
+    background: '#F8FAFC', surface: '#FFFFFF', textPrimary: '#0F172A',
+    textSecondary: '#64748B', textMuted: '#94A3B8', border: '#E2E8F0',
+    error: '#EF4444', warning: '#F59E0B', success: '#10B981',
+  },
   API_ENDPOINTS: {
     AUTO_APPLY_QUEUE: '/api/auto-apply/queue',
     AUTO_APPLY_DELETE: (id: number) => `/api/auto-apply/${id}`,
@@ -65,8 +75,8 @@ describe('AutoApplyQueueScreen', () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('Senior Engineer')).toBeTruthy();
-      expect(screen.getByText('Acme Corp')).toBeTruthy();
+      expect(screen.getAllByText('Senior Engineer').length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Acme Corp/).length).toBeGreaterThan(0);
     });
   });
 
@@ -75,7 +85,7 @@ describe('AutoApplyQueueScreen', () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('PENDING')).toBeTruthy();
+      expect(screen.getAllByText('Queued').length).toBeGreaterThan(0);
     });
   });
 
@@ -84,7 +94,7 @@ describe('AutoApplyQueueScreen', () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('APPLIED')).toBeTruthy();
+      expect(screen.getAllByText('Applied').length).toBeGreaterThan(0);
     });
   });
 
@@ -93,7 +103,7 @@ describe('AutoApplyQueueScreen', () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('82%')).toBeTruthy();
+      expect(screen.getByText('82% match')).toBeTruthy();
     });
   });
 
@@ -102,7 +112,7 @@ describe('AutoApplyQueueScreen', () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('Tailored')).toBeTruthy();
+      expect(screen.getByText('Resume tailored')).toBeTruthy();
     });
   });
 

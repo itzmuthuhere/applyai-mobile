@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import { COLORS, API_ENDPOINTS, ROUTES } from '../../constants';
 import { ResumeStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
-import { setResumes, setLoading, setError } from '../../store/slices/resumeSlice';
+import { setResumes, setLoading, setError, clearError } from '../../store/slices/resumeSlice';
 import { Resume } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 
@@ -27,10 +27,13 @@ function scoreGrade(score: number | null): { label: string; color: string; bg: s
 
 // ─── Score gauge ─────────────────────────────────────────────────────────────
 
-function ScoreGauge({ score }: { score: number | null }) {
+function ScoreGauge({ score, itemId }: { score: number | null; itemId?: number }) {
   const g = scoreGrade(score);
   return (
-    <View style={[gaugeStyles.circle, { borderColor: g.ring, backgroundColor: g.bg }]}>
+    <View
+      testID={score === null && itemId != null ? `resume-no-score-${itemId}` : undefined}
+      style={[gaugeStyles.circle, { borderColor: g.ring, backgroundColor: g.bg }]}
+    >
       <Text style={[gaugeStyles.num, { color: g.color }]}>{score ?? '—'}</Text>
       {score !== null && <Text style={[gaugeStyles.label, { color: g.color }]}>{g.label}</Text>}
     </View>
@@ -78,7 +81,7 @@ function SkeletonCard() {
 function ResumeCard({ item, onPress }: { item: Resume; onPress: () => void }) {
   const g = scoreGrade(item.aiScore);
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity testID={`resume-card-${item.id}`} style={styles.card} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.cardRow}>
         {/* Icon */}
         <View style={[styles.fileIcon, { backgroundColor: item.isOriginal ? COLORS.primaryLight : '#F3E8FF' }]}>
@@ -102,7 +105,7 @@ function ResumeCard({ item, onPress }: { item: Resume; onPress: () => void }) {
           <Text style={styles.dateText}>{dayjs(item.createdAt).format('MMM D, YYYY')}</Text>
           <View style={styles.metaRow}>
             {item.isParsed ? (
-              <View style={styles.parsedBadge}>
+              <View testID={`parsed-badge-${item.id}`} style={styles.parsedBadge}>
                 <Ionicons name="checkmark-circle" size={11} color="#065F46" />
                 <Text style={styles.parsedText}>Parsed</Text>
               </View>
@@ -119,7 +122,7 @@ function ResumeCard({ item, onPress }: { item: Resume; onPress: () => void }) {
         </View>
 
         {/* Score gauge */}
-        <ScoreGauge score={item.aiScore} />
+        <ScoreGauge score={item.aiScore} itemId={item.id} />
       </View>
 
       {/* Skills preview */}
@@ -145,7 +148,7 @@ export default function ResumeListScreen() {
 
   const loadResumes = useCallback(async () => {
     dispatch(setLoading(true));
-    dispatch(setError(''));
+    dispatch(clearError());
     try {
       const res = await apiClient.get<Resume[]>(API_ENDPOINTS.RESUMES);
       dispatch(setResumes(res.data));
@@ -167,12 +170,22 @@ export default function ResumeListScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.screen}>
+      <View testID="resumes-loading" style={styles.screen}>
         <View style={styles.tipCard}>
           <View style={{ width: 120, height: 14, backgroundColor: COLORS.border, borderRadius: 6, opacity: 0.4 }} />
         </View>
         <View style={styles.listContent}>
           {[1, 2, 3].map(k => <SkeletonCard key={k} />)}
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View testID="resumes-error" style={styles.screen}>
+        <View style={[styles.tipCard, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+          <Text style={[styles.tipText, { color: '#991B1B' }]}>{error}</Text>
         </View>
       </View>
     );
@@ -197,7 +210,7 @@ export default function ResumeListScreen() {
           ) : null
         }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
+          <View testID="resumes-empty-state" style={styles.emptyState}>
             <View style={styles.emptyIcon}>
               <Ionicons name="document-text-outline" size={48} color={COLORS.primary} />
             </View>
@@ -206,6 +219,7 @@ export default function ResumeListScreen() {
               Upload your resume and let AI parse, score, and tailor it for each job you apply to.
             </Text>
             <TouchableOpacity
+              testID="upload-resume-btn"
               style={styles.emptyBtn}
               onPress={() => navigation.navigate('ResumeUpload')}
               activeOpacity={0.85}
@@ -220,6 +234,7 @@ export default function ResumeListScreen() {
       {/* FAB */}
       {list.length > 0 && (
         <TouchableOpacity
+          testID="upload-resume-btn"
           style={styles.fab}
           activeOpacity={0.85}
           onPress={() => navigation.navigate('ResumeUpload')}
