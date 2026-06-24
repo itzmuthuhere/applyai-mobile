@@ -9,8 +9,11 @@ jest.mock('../api/apiClient', () => ({
   default: { post: jest.fn() },
 }));
 
+const mockNavigate = jest.fn();
+const mockGoBack = jest.fn();
+
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }),
+  useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
 }));
 
 jest.mock('../constants', () => ({
@@ -49,7 +52,11 @@ function renderScreen() {
 }
 
 describe('ResumeUploadScreen', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockNavigate.mockReset();
+    mockGoBack.mockReset();
+  });
 
   it('renders file picker trigger', () => {
     renderScreen();
@@ -100,7 +107,7 @@ describe('ResumeUploadScreen', () => {
     });
   });
 
-  it('calls upload API and navigates on success', async () => {
+  it('calls upload API and navigates to ResumeList on success', async () => {
     mockGetDocument.mockResolvedValueOnce({
       canceled: false,
       assets: [{ uri: 'file://resume.pdf', name: 'resume.pdf', size: 100 * 1024, mimeType: 'application/pdf' }],
@@ -124,6 +131,7 @@ describe('ResumeUploadScreen', () => {
         expect.any(Object),
         expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } }),
       );
+      expect(mockNavigate).toHaveBeenCalledWith('ResumeList');
     });
   });
 

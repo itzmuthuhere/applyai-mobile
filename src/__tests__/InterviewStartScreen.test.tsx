@@ -30,10 +30,27 @@ jest.mock('../constants', () => ({
 
 import apiClient from '../api/apiClient';
 import interviewReducer from '../store/slices/interviewSlice';
+import applicationReducer from '../store/slices/applicationSlice';
 import InterviewStartScreen from '../screens/interview/InterviewStartScreen';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
 const mockPost = apiClient.post as jest.MockedFunction<typeof apiClient.post>;
+
+const APP_ITEM = {
+  id: 42,
+  status: 'APPLIED',
+  appliedAt: '2026-06-01T10:00:00',
+  lastUpdated: null,
+  notes: null,
+  coverLetter: null,
+  interviewDate: null,
+  interviewNotes: null,
+  offerSalary: null,
+  offerDeadline: null,
+  offerDetails: null,
+  job: { id: 1, title: 'Frontend Dev', company: 'Acme', location: 'Remote' },
+  resume: { id: 5, versionName: 'v1' },
+};
 
 const SESSION = {
   sessionId: 1,
@@ -47,16 +64,19 @@ const SESSION = {
   ],
 };
 
-function makeStore(history: any[] = []) {
+function makeStore(history: any[] = [], applications: any[] = []) {
   return configureStore({
-    reducer: { interview: interviewReducer },
-    preloadedState: { interview: { currentSession: null, history, isLoading: false, error: null } },
+    reducer: { interview: interviewReducer, application: applicationReducer },
+    preloadedState: {
+      interview: { currentSession: null, history, isLoading: false, error: null },
+      application: { list: applications, selected: null, isLoading: false, error: null },
+    },
   });
 }
 
-function renderScreen(history: any[] = []) {
+function renderScreen(history: any[] = [], applications: any[] = []) {
   return render(
-    <Provider store={makeStore(history)}>
+    <Provider store={makeStore(history, applications)}>
       <InterviewStartScreen />
     </Provider>
   );
@@ -154,6 +174,39 @@ describe('InterviewStartScreen', () => {
 
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith('/api/interviews/history');
+    });
+  });
+
+  it('shows applications from Redux store when API call fails', async () => {
+    mockGet
+      .mockResolvedValueOnce({ data: [] }) // history call
+      .mockRejectedValueOnce(new Error('Network error')); // applications call fails
+
+    renderScreen([], [APP_ITEM]);
+
+    await waitFor(() => expect(screen.getByText('Start Mock Interview')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('Start Mock Interview'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Frontend Dev')).toBeTruthy();
+      expect(screen.getByText('Acme · Remote')).toBeTruthy();
+    });
+  });
+
+  it('shows empty state in picker when no active applications', async () => {
+    mockGet
+      .mockResolvedValueOnce({ data: [] }) // history call
+      .mockResolvedValueOnce({ data: { content: [] } }); // applications call returns empty
+
+    renderScreen([], []);
+
+    await waitFor(() => expect(screen.getByText('Start Mock Interview')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('Start Mock Interview'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/No active applications found/i)).toBeTruthy();
     });
   });
 });

@@ -113,6 +113,8 @@ export default function InterviewStartScreen() {
   const dispatch = useDispatch();
   const history = useSelector((s: RootState) => s.interview.history);
 
+  const allApplications = useSelector((s: RootState) => s.application.list);
+
   const [historyLoading, setHistoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -135,6 +137,9 @@ export default function InterviewStartScreen() {
   useFocusEffect(useCallback(() => { loadHistory(); }, []));
 
   async function openPicker() {
+    // Pre-populate from Redux so the user sees their applications immediately
+    const filtered = allApplications.filter(a => a.status !== 'WITHDRAWN' && a.status !== 'REJECTED');
+    setApplications(filtered);
     setPickerVisible(true);
     setAppsLoading(true);
     try {
@@ -142,7 +147,7 @@ export default function InterviewStartScreen() {
       const list = Array.isArray(data) ? data : (data.content ?? []);
       setApplications(list.filter(a => a.status !== 'WITHDRAWN' && a.status !== 'REJECTED'));
     } catch {
-      setApplications([]);
+      // API failed — keep Redux data already shown, do not clear to empty
     } finally {
       setAppsLoading(false);
     }
@@ -294,7 +299,7 @@ export default function InterviewStartScreen() {
             <Text style={styles.sheetSub}>
               AI will generate 7 tailored questions based on the job description and your resume.
             </Text>
-            {appsLoading ? (
+            {appsLoading && applications.length === 0 ? (
               <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40, marginBottom: 40 }} />
             ) : applications.length === 0 ? (
               <View style={styles.emptyState}>

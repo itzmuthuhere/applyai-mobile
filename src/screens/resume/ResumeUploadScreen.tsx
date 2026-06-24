@@ -85,7 +85,7 @@ export default function ResumeUploadScreen() {
         createdAt: new Date().toISOString(),
       };
       dispatch(addResume(newResume));
-      navigation.goBack();
+      navigation.navigate('ResumeList');
     } catch (err: any) {
       const msg: string =
         err?.response?.data?.message ||
