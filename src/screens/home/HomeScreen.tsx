@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, SafeAreaView, RefreshControl, Animated,
@@ -49,11 +49,10 @@ function getGreeting() {
 
 function SkeletonPulse({ w, h, r = 8 }: { w: number | string; h: number; r?: number }) {
   const colors = useTheme();
-  const styles = makeStyles(colors);
   const opacity = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const a = Animated.loop(Animated.sequence([
-      Animated.timing(opacity, { toValue: 0.8, duration: 700, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 0.85, duration: 700, useNativeDriver: true }),
       Animated.timing(opacity, { toValue: 0.4, duration: 700, useNativeDriver: true }),
     ]));
     a.start();
@@ -110,12 +109,27 @@ export default function HomeScreen() {
   const recentApps = summary?.recentApplications ?? [];
 
   const STATS = [
-    { icon: 'document-text' as const, color: '#2563EB', bg: '#EFF6FF', label: 'Resumes', value: resumeCount },
-    { icon: 'briefcase' as const, color: '#10B981', bg: '#D1FAE5', label: 'Applied', value: appCount },
-    { icon: 'mic' as const, color: '#F59E0B', bg: '#FFFBEB', label: 'Interviews', value: interviewCount },
+    { icon: 'document-text' as const, color: '#2563EB', bg: '#EFF6FF', label: 'Resumes',    value: resumeCount },
+    { icon: 'briefcase'     as const, color: '#10B981', bg: '#D1FAE5', label: 'Applied',    value: appCount },
+    { icon: 'mic'           as const, color: '#F59E0B', bg: '#FFFBEB', label: 'Interviews', value: interviewCount },
     ...(summary?.avgMatchScore != null
       ? [{ icon: 'star' as const, color: '#8B5CF6', bg: '#EDE9FE', label: 'Avg Match', value: `${summary.avgMatchScore}%` }]
       : []),
+  ];
+
+  const QUICK_ACTIONS = [
+    { icon: 'cloud-upload-outline' as const, label: 'Upload Resume', sub: 'AI scoring',    color: '#2563EB', onPress: () => navigation.navigate('ResumeTab', { screen: 'ResumeUpload' }) },
+    { icon: 'search-outline'        as const, label: 'Browse Jobs',   sub: `${appCount} applied`, color: '#10B981', onPress: () => navigation.navigate('JobsTab', { screen: 'JobFeed' }) },
+    { icon: 'mic-circle-outline'    as const, label: 'Mock Interview', sub: 'AI coaching', color: '#F59E0B', onPress: () => navigation.navigate('InterviewTab', { screen: 'InterviewStart' }) },
+    { icon: 'list-circle-outline'   as const, label: 'Applications',  sub: 'Track status', color: '#8B5CF6', onPress: () => navigation.navigate('ApplicationsTab', { screen: 'ApplicationsList' }) },
+    ...(isHr ? [{ icon: 'add-circle-outline' as const, label: 'Post a Job', sub: 'HR posting', color: '#059669', onPress: () => navigation.navigate('JobsTab', { screen: 'HrPostJob' }) }] : []),
+  ];
+
+  const AI_TOOLS = [
+    { icon: 'cash-outline'       as const, label: 'Salary Intel',  sub: 'Know your worth',  color: '#F59E0B', bg: '#FFFBEB', onPress: () => navigation.navigate('SalaryIntel') },
+    { icon: 'trending-up-outline' as const, label: 'Negotiate',     sub: 'Get best offer',   color: '#10B981', bg: '#D1FAE5', onPress: () => navigation.navigate('NegotiationCoach') },
+    { icon: 'bar-chart-outline'  as const, label: 'Analytics',     sub: 'Track funnel',     color: '#2563EB', bg: '#EFF6FF', onPress: () => navigation.navigate('Analytics') },
+    { icon: 'rocket-outline'     as const, label: 'Career Path',   sub: 'AI roadmap',       color: '#8B5CF6', bg: '#EDE9FE', onPress: () => navigation.navigate('CareerPath', { resumeId: undefined }) },
   ];
 
   return (
@@ -125,60 +139,42 @@ export default function HomeScreen() {
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.primary} />}
       >
 
-        {/* ── Hero Header ── */}
+        {/* ── Hero ────────────────────────────────────────────── */}
         <View style={styles.hero}>
           <View style={styles.heroAccent} />
-          <View style={styles.heroContent}>
-            <View style={styles.heroLeft}>
-              <Text style={styles.greeting}>{getGreeting()}</Text>
-              <Text style={styles.name}>{firstName} 👋</Text>
-              {user?.headline ? (
-                <Text style={styles.headline} numberOfLines={1}>{user.headline}</Text>
-              ) : null}
+          <View style={styles.heroInner}>
+            <View style={styles.heroTop}>
+              <View style={styles.heroText}>
+                <Text style={styles.greeting}>{getGreeting()}</Text>
+                <Text style={styles.name}>{firstName} 👋</Text>
+                {user?.headline ? (
+                  <Text style={styles.heroHeadline} numberOfLines={1}>{user.headline}</Text>
+                ) : null}
+              </View>
               <View testID={`plan-badge-${plan}`} style={[styles.planBadge, { backgroundColor: planCfg.bg, borderColor: planCfg.border }]}>
-                <Ionicons name={planCfg.icon as any} size={11} color={planCfg.text} />
+                <Ionicons name={planCfg.icon as any} size={12} color={planCfg.text} />
                 <Text style={[styles.planText, { color: planCfg.text }]}>{planCfg.label} Plan</Text>
               </View>
             </View>
-            <View style={styles.heroRight}>
-              <TouchableOpacity
-                style={styles.bellBtn}
-                onPress={() => navigation.navigate('Notifications')}
-                activeOpacity={0.75}
-              >
-                <Ionicons name="notifications-outline" size={22} color={colors.textPrimary} />
-                <View style={styles.bellBadge} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
-                {user?.profilePicture ? (
-                  <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatarFallback, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.avatarInitial}>{firstName.charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
+
+            {/* Inline stat row inside hero */}
+            {!initialLoading && !dashError && (
+              <View testID="status-breakdown" style={styles.heroStats}>
+                {STATS.map((s, i) => (
+                  <React.Fragment key={s.label}>
+                    {i > 0 && <View style={styles.heroStatDivider} />}
+                    <View style={styles.heroStatItem}>
+                      <Text style={[styles.heroStatValue, { color: s.color }]}>{s.value}</Text>
+                      <Text style={styles.heroStatLabel}>{s.label}</Text>
+                    </View>
+                  </React.Fragment>
+                ))}
+              </View>
+            )}
           </View>
         </View>
 
-        {/* ── Profile Completeness ── */}
-        {score < 80 && (
-          <TouchableOpacity style={styles.completenessBanner} onPress={() => navigation.navigate('Profile')} activeOpacity={0.85}>
-            <View style={[styles.completenessIcon, { backgroundColor: colors.primary }]}>
-              <Ionicons name="person" size={14} color="#fff" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.completenessTitle}>Complete your profile — {score}% done</Text>
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${score}%` as any }]} />
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-          </TouchableOpacity>
-        )}
-
-        {/* ── HR Mode Banner ── */}
+        {/* ── HR Banner ─────────────────────────────────────────── */}
         {isHr && (
           <TouchableOpacity
             style={styles.hrBanner}
@@ -196,51 +192,52 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* ── Stats Row ── */}
-        <View style={styles.statsSection}>
-          {initialLoading ? (
-            <View testID="dashboard-loading" style={styles.statsRow}>
-              {[1, 2, 3, 4].map(k => (
-                <View key={k} style={styles.statCard}>
-                  <SkeletonPulse w={32} h={32} r={10} />
-                  <SkeletonPulse w={36} h={22} />
-                  <SkeletonPulse w={48} h={10} />
-                </View>
-              ))}
+        {/* ── Profile Completeness ────────────────────────────── */}
+        {score < 80 && (
+          <TouchableOpacity style={styles.completeCard} onPress={() => navigation.navigate('Profile')} activeOpacity={0.85}>
+            <View style={[styles.completeDot, { backgroundColor: score === 0 ? '#EF4444' : score < 50 ? '#F59E0B' : '#10B981' }]} />
+            <View style={{ flex: 1 }}>
+              <View style={styles.completeHeader}>
+                <Text style={styles.completeTitle}>Complete your profile</Text>
+                <Text style={styles.completePct}>{score}%</Text>
+              </View>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${Math.max(score, 3)}%` as any }]} />
+              </View>
+              <Text style={styles.completeSub}>
+                {score === 0 ? 'Add your headline, skills & photo to unlock AI matching' : `${80 - score}% more to unlock full AI features`}
+              </Text>
             </View>
-          ) : dashError ? (
-            <View testID="dashboard-error" style={styles.errorBanner}>
-              <Ionicons name="cloud-offline-outline" size={20} color={colors.error} />
-              <Text style={styles.errorBannerText}>Could not load dashboard. Pull to refresh.</Text>
-            </View>
-          ) : (
-            <View testID="status-breakdown" style={styles.statsRow}>
-              {STATS.map(s => (
-                <View key={s.label} style={styles.statCard}>
-                  <View style={[styles.statIconBox, { backgroundColor: s.bg }]}>
-                    <Ionicons name={s.icon} size={17} color={s.color} />
-                  </View>
-                  <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
-                  <Text style={styles.statLabel}>{s.label}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </TouchableOpacity>
+        )}
 
-        {/* ── Quick Actions ── */}
+        {/* ── Stats cards (shown when loading) ────────────────── */}
+        {initialLoading && (
+          <View testID="dashboard-loading" style={styles.skeletonRow}>
+            {[1, 2, 3, 4].map(k => (
+              <View key={k} style={styles.statCard}>
+                <SkeletonPulse w={32} h={32} r={10} />
+                <SkeletonPulse w={36} h={22} />
+                <SkeletonPulse w={48} h={10} />
+              </View>
+            ))}
+          </View>
+        )}
+        {dashError && (
+          <View testID="dashboard-error" style={styles.errorBanner}>
+            <Ionicons name="cloud-offline-outline" size={20} color={colors.error} />
+            <Text style={styles.errorBannerText}>Could not load dashboard. Pull to refresh.</Text>
+          </View>
+        )}
+
+        {/* ── Quick Actions ────────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsGrid}>
-            {[
-              { icon: 'cloud-upload-outline' as const, label: 'Upload Resume', sub: 'AI scoring', color: '#2563EB', onPress: () => navigation.navigate('ResumeTab', { screen: 'ResumeUpload' }) },
-              { icon: 'search-outline' as const, label: 'Browse Jobs', sub: `${appCount} applied`, color: '#10B981', onPress: () => navigation.navigate('JobsTab', { screen: 'JobFeed' }) },
-              { icon: 'mic-circle-outline' as const, label: 'Mock Interview', sub: 'AI coaching', color: '#F59E0B', onPress: () => navigation.navigate('InterviewTab', { screen: 'InterviewStart' }) },
-              { icon: 'list-circle-outline' as const, label: 'Applications', sub: 'Track status', color: '#8B5CF6', onPress: () => navigation.navigate('ApplicationsTab', { screen: 'ApplicationsList' }) },
-              ...(isHr ? [{ icon: 'add-circle-outline' as const, label: 'Post a Job', sub: 'HR posting', color: '#059669', onPress: () => navigation.navigate('JobsTab', { screen: 'HrPostJob' }) }] : []),
-            ].map(item => (
+            {QUICK_ACTIONS.map(item => (
               <TouchableOpacity key={item.label} style={styles.actionCard} onPress={item.onPress} activeOpacity={0.8}>
-                <View style={[styles.actionIconBox, { backgroundColor: item.color + '18' }]}>
+                <View style={[styles.actionIconBox, { backgroundColor: item.color + '15' }]}>
                   <Ionicons name={item.icon} size={26} color={item.color} />
                 </View>
                 <Text style={styles.actionLabel}>{item.label}</Text>
@@ -250,7 +247,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* ── Recent Applications ── */}
+        {/* ── Recent Applications ──────────────────────────────── */}
         {recentApps.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -259,19 +256,19 @@ export default function HomeScreen() {
                 <Text style={styles.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.recentList}>
+            <View style={styles.recentCard}>
               {recentApps.map((app, idx) => {
                 const sc = STATUS_COLORS[app.status] ?? STATUS_COLORS.APPLIED;
                 const color = companyColor(app.company ?? 'A');
                 return (
                   <TouchableOpacity
                     key={app.id}
-                    style={[styles.appCard, idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}
+                    style={[styles.appRow, idx > 0 && styles.appRowBorder]}
                     onPress={() => navigation.navigate('ApplicationsTab', { screen: 'ApplicationDetail', params: { applicationId: app.id } })}
                     activeOpacity={0.75}
                   >
-                    <View style={[styles.appIcon, { backgroundColor: color + '18', borderColor: color + '30', borderWidth: 1 }]}>
-                      <Text style={[styles.appIconText, { color }]}>{app.company.charAt(0).toUpperCase()}</Text>
+                    <View style={[styles.appLogo, { backgroundColor: color + '18', borderColor: color + '30' }]}>
+                      <Text style={[styles.appLogoText, { color }]}>{app.company.charAt(0).toUpperCase()}</Text>
                     </View>
                     <View style={styles.appBody}>
                       <Text style={styles.appTitle} numberOfLines={1}>{app.jobTitle}</Text>
@@ -291,28 +288,26 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ── AI Career Tools ── */}
+        {/* ── AI Career Tools ─────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>AI Career Tools</Text>
           <View style={styles.aiGrid}>
-            {[
-              { icon: 'cash-outline' as const, label: 'Salary Intel', sub: 'Know your worth', color: '#F59E0B', bg: '#FFFBEB', onPress: () => navigation.navigate('SalaryIntel') },
-              { icon: 'trending-up-outline' as const, label: 'Negotiate', sub: 'Get the best offer', color: '#10B981', bg: '#D1FAE5', onPress: () => navigation.navigate('NegotiationCoach') },
-              { icon: 'bar-chart-outline' as const, label: 'Analytics', sub: 'Track funnel', color: '#2563EB', bg: '#EFF6FF', onPress: () => navigation.navigate('Analytics') },
-              { icon: 'rocket-outline' as const, label: 'Career Path', sub: 'AI roadmap', color: '#8B5CF6', bg: '#EDE9FE', onPress: () => navigation.navigate('CareerPath', { resumeId: undefined }) },
-            ].map(item => (
+            {AI_TOOLS.map(item => (
               <TouchableOpacity key={item.label} style={styles.aiCard} onPress={item.onPress} activeOpacity={0.8}>
                 <View style={[styles.aiIconBox, { backgroundColor: item.bg }]}>
                   <Ionicons name={item.icon} size={22} color={item.color} />
                 </View>
-                <Text style={styles.aiLabel}>{item.label}</Text>
-                <Text style={styles.aiSub}>{item.sub}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.aiLabel}>{item.label}</Text>
+                  <Text style={styles.aiSub}>{item.sub}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* ── Upgrade Banner (Free users) ── */}
+        {/* ── Upgrade Banner ──────────────────────────────────── */}
         {plan === 'FREE' && (
           <TouchableOpacity
             style={styles.upgradeBanner}
@@ -320,12 +315,12 @@ export default function HomeScreen() {
             activeOpacity={0.85}
           >
             <View style={styles.upgradeBannerLeft}>
-              <View style={styles.upgradeIconBox}>
-                <Ionicons name="rocket" size={22} color="#fff" />
+              <View style={styles.upgradeIcon}>
+                <Ionicons name="rocket" size={20} color="#fff" />
               </View>
               <View>
                 <Text style={styles.upgradeBannerTitle}>Unlock Pro Features</Text>
-                <Text style={styles.upgradeBannerSub}>AI interviews, unlimited apply, career AI</Text>
+                <Text style={styles.upgradeBannerSub}>AI interviews · unlimited apply · career AI</Text>
               </View>
             </View>
             <View style={styles.upgradeChip}>
@@ -334,7 +329,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* ── First-time Onboarding ── */}
+        {/* ── First-time Onboarding ────────────────────────────── */}
         {resumeCount === 0 && appCount === 0 && (
           <View style={styles.onboardCard}>
             <View style={styles.onboardHead}>
@@ -342,26 +337,21 @@ export default function HomeScreen() {
               <Text style={styles.onboardTitle}>Get started in 3 steps</Text>
             </View>
             {[
-              { step: '1', text: 'Upload your resume for AI scoring', done: false },
-              { step: '2', text: 'Browse and apply to jobs instantly', done: false },
-              { step: '3', text: 'Practice with AI mock interviews', done: false },
+              { step: '1', text: 'Upload your resume for AI scoring' },
+              { step: '2', text: 'Browse and apply to jobs instantly' },
+              { step: '3', text: 'Practice with AI mock interviews' },
             ].map(s => (
               <View key={s.step} style={styles.onboardStep}>
-                <View style={[styles.onboardBullet, s.done && { backgroundColor: colors.success }]}>
-                  {s.done
-                    ? <Ionicons name="checkmark" size={12} color="#fff" />
-                    : <Text style={styles.onboardNum}>{s.step}</Text>
-                  }
+                <View style={styles.onboardBullet}>
+                  <Text style={styles.onboardNum}>{s.step}</Text>
                 </View>
-                <Text style={[styles.onboardText, s.done && { color: colors.textMuted, textDecorationLine: 'line-through' }]}>
-                  {s.text}
-                </Text>
+                <Text style={styles.onboardText}>{s.text}</Text>
               </View>
             ))}
           </View>
         )}
 
-        <View style={{ height: 28 }} />
+        <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -369,155 +359,195 @@ export default function HomeScreen() {
 
 function makeStyles(colors: AppColors) {
   return StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+    safe: { flex: 1, backgroundColor: colors.background },
 
-  // Hero
-  hero: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, overflow: 'hidden' },
-  heroAccent: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 4,
-    backgroundColor: colors.primary,
-  },
-  heroContent: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
-    paddingHorizontal: 20, paddingTop: 20, paddingBottom: 18,
-  },
-  heroLeft: { flex: 1, marginRight: 12 },
-  heroRight: { alignItems: 'center', gap: 8 },
-  greeting: { fontSize: 13, color: colors.textMuted, fontWeight: '500', marginBottom: 2 },
-  name: { fontSize: 24, fontWeight: '900', color: colors.textPrimary, marginBottom: 4 },
-  headline: { fontSize: 13, color: colors.textSecondary, marginBottom: 10 },
-  planBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 20, borderWidth: 1,
-  },
-  planText: { fontSize: 12, fontWeight: '700' },
-  bellBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
-  },
-  bellBadge: {
-    position: 'absolute', top: 8, right: 8,
-    width: 8, height: 8, borderRadius: 4,
-    backgroundColor: '#EF4444', borderWidth: 1.5, borderColor: colors.surface,
-  },
-  avatar: { width: 52, height: 52, borderRadius: 26, borderWidth: 2.5, borderColor: colors.primary },
-  avatarFallback: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  avatarInitial: { color: '#fff', fontSize: 22, fontWeight: '800' },
+    // ── Hero ─────────────────────────────────────────────
+    hero: {
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    heroAccent: {
+      height: 4,
+      backgroundColor: colors.primary,
+    },
+    heroInner: {
+      paddingHorizontal: 20,
+      paddingTop: 18,
+      paddingBottom: 16,
+      gap: 16,
+    },
+    heroTop: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    heroText: { flex: 1 },
+    greeting: { fontSize: 12, color: colors.textMuted, fontWeight: '500', letterSpacing: 0.3, marginBottom: 2 },
+    name: { fontSize: 26, fontWeight: '900', color: colors.textPrimary, letterSpacing: -0.5 },
+    heroHeadline: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
+    planBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      paddingHorizontal: 10, paddingVertical: 5,
+      borderRadius: 20, borderWidth: 1, flexShrink: 0, marginTop: 2,
+    },
+    planText: { fontSize: 12, fontWeight: '700' },
 
-  // Profile Completeness
-  completenessBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: colors.primaryLight, borderRadius: 14, padding: 14,
-    marginHorizontal: 16, marginTop: 14,
-    borderWidth: 1, borderColor: '#BFDBFE',
-  },
-  completenessIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  completenessTitle: { fontSize: 13, fontWeight: '700', color: colors.primary, marginBottom: 6 },
-  progressTrack: { height: 5, backgroundColor: '#BFDBFE', borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: 5, backgroundColor: colors.primary, borderRadius: 3 },
+    // Inline stats inside hero
+    heroStats: {
+      flexDirection: 'row',
+      backgroundColor: colors.background,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 12,
+    },
+    heroStatItem: { flex: 1, alignItems: 'center', gap: 2 },
+    heroStatDivider: { width: 1, backgroundColor: colors.border, marginVertical: 4 },
+    heroStatValue: { fontSize: 22, fontWeight: '900' },
+    heroStatLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
 
-  // HR Banner
-  hrBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#059669', borderRadius: 14, padding: 14,
-    marginHorizontal: 16, marginTop: 10,
-  },
-  hrBannerIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  hrBannerTitle: { fontSize: 14, fontWeight: '800', color: '#fff' },
-  hrBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 1 },
+    // ── Profile Completeness ─────────────────────────────
+    completeCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: 16,
+      marginHorizontal: 16,
+      marginTop: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.04,
+      shadowRadius: 3,
+      elevation: 1,
+    },
+    completeDot: { width: 10, height: 10, borderRadius: 5, flexShrink: 0 },
+    completeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    completeTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+    completePct: { fontSize: 13, fontWeight: '800', color: colors.primary },
+    progressTrack: { height: 5, backgroundColor: colors.border, borderRadius: 3, overflow: 'hidden', marginBottom: 6 },
+    progressFill: { height: 5, backgroundColor: colors.primary, borderRadius: 3 },
+    completeSub: { fontSize: 12, color: colors.textSecondary, lineHeight: 16 },
 
-  // Stats
-  statsSection: { paddingHorizontal: 16, paddingTop: 16 },
-  statsRow: { flexDirection: 'row', gap: 10 },
-  errorBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#FECACA',
-  },
-  errorBannerText: { flex: 1, fontSize: 13, color: '#991B1B', fontWeight: '600' },
-  statCard: {
-    flex: 1, backgroundColor: colors.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 8,
-    alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 5,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
-  },
-  statIconBox: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  statValue: { fontSize: 22, fontWeight: '900' },
-  statLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '600', textAlign: 'center' },
+    // ── HR Banner ────────────────────────────────────────
+    hrBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      backgroundColor: '#059669', borderRadius: 16, padding: 16,
+      marginHorizontal: 16, marginTop: 14,
+    },
+    hrBannerIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+    hrBannerTitle: { fontSize: 14, fontWeight: '800', color: '#fff' },
+    hrBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 1 },
 
-  // Sections
-  section: { paddingHorizontal: 16, paddingTop: 22 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, marginBottom: 12 },
-  seeAll: { fontSize: 13, fontWeight: '700', color: colors.primary, marginBottom: 12 },
+    // ── Loading skeleton row ──────────────────────────────
+    skeletonRow: {
+      flexDirection: 'row', gap: 10,
+      paddingHorizontal: 16, paddingTop: 16,
+    },
+    statCard: {
+      flex: 1, backgroundColor: colors.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 8,
+      alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 5,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
+    },
 
-  // Quick Actions
-  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  actionCard: {
-    width: '47.5%', backgroundColor: colors.surface, borderRadius: 16, padding: 16,
-    alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
-  },
-  actionIconBox: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  actionLabel: { fontSize: 13, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
-  actionSub: { fontSize: 11, color: colors.textSecondary, textAlign: 'center' },
+    errorBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14,
+      borderWidth: 1, borderColor: '#FECACA',
+      marginHorizontal: 16, marginTop: 14,
+    },
+    errorBannerText: { flex: 1, fontSize: 13, color: '#991B1B', fontWeight: '600' },
 
-  // Recent Applications
-  recentList: {
-    backgroundColor: colors.surface, borderRadius: 16, overflow: 'hidden',
-    borderWidth: 1, borderColor: colors.border,
-  },
-  appCard: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
-  appIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  appIconText: { fontSize: 18, fontWeight: '900' },
-  appBody: { flex: 1 },
-  appTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
-  appCompany: { fontSize: 12, color: colors.textSecondary },
-  appRight: { alignItems: 'flex-end', gap: 4 },
-  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 },
-  statusDot: { width: 5, height: 5, borderRadius: 2.5 },
-  statusText: { fontSize: 11, fontWeight: '700' },
-  appDate: { fontSize: 10, color: colors.textMuted },
+    // ── Sections ─────────────────────────────────────────
+    section: { paddingHorizontal: 16, paddingTop: 24 },
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, marginBottom: 12 },
+    seeAll: { fontSize: 13, fontWeight: '700', color: colors.primary, marginBottom: 12 },
 
-  // AI Tools
-  aiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  aiCard: {
-    width: '47.5%', backgroundColor: colors.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: colors.border, gap: 6,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
-  },
-  aiIconBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  aiLabel: { fontSize: 13, fontWeight: '800', color: colors.textPrimary },
-  aiSub: { fontSize: 11, color: colors.textSecondary },
+    // ── Quick Actions (2-col grid) ────────────────────────
+    actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    actionCard: {
+      width: '47.5%', backgroundColor: colors.surface, borderRadius: 18, padding: 16,
+      alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    },
+    actionIconBox: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+    actionLabel: { fontSize: 13, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
+    actionSub: { fontSize: 11, color: colors.textSecondary, textAlign: 'center' },
 
-  // Upgrade Banner
-  upgradeBanner: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: colors.primary, borderRadius: 16, padding: 16,
-    marginHorizontal: 16, marginTop: 22,
-    shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
-  },
-  upgradeBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  upgradeIconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  upgradeBannerTitle: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  upgradeBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
-  upgradeChip: { backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7 },
-  upgradeChipText: { fontSize: 13, fontWeight: '800', color: colors.primary },
+    // ── Recent Applications ───────────────────────────────
+    recentCard: {
+      backgroundColor: colors.surface, borderRadius: 18,
+      borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    },
+    appRow: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+    appRowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
+    appLogo: { width: 46, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center', flexShrink: 0, borderWidth: 1 },
+    appLogoText: { fontSize: 19, fontWeight: '900' },
+    appBody: { flex: 1 },
+    appTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+    appCompany: { fontSize: 12, color: colors.textSecondary },
+    appRight: { alignItems: 'flex-end', gap: 4 },
+    statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 9, paddingVertical: 4 },
+    statusDot: { width: 5, height: 5, borderRadius: 2.5 },
+    statusText: { fontSize: 11, fontWeight: '700' },
+    appDate: { fontSize: 10, color: colors.textMuted },
 
-  // Onboarding
-  onboardCard: {
-    backgroundColor: colors.surface, borderRadius: 16, padding: 18,
-    borderWidth: 1, borderColor: colors.border, gap: 14,
-    marginHorizontal: 16, marginTop: 22,
-  },
-  onboardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  onboardTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
-  onboardStep: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  onboardBullet: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  onboardNum: { fontSize: 13, fontWeight: '800', color: colors.primary },
-  onboardText: { flex: 1, fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
+    // ── AI Tools (full-width rows) ────────────────────────
+    aiGrid: {
+      backgroundColor: colors.surface, borderRadius: 18,
+      borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    },
+    aiCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 14,
+      padding: 16,
+      borderBottomWidth: 1, borderBottomColor: colors.border,
+    },
+    aiIconBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    aiLabel: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+    aiSub: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
+
+    // ── Upgrade Banner ────────────────────────────────────
+    upgradeBanner: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      backgroundColor: colors.primary, borderRadius: 18, padding: 18,
+      marginHorizontal: 16, marginTop: 24,
+      shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6,
+    },
+    upgradeBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+    upgradeIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+    upgradeBannerTitle: { fontSize: 15, fontWeight: '800', color: '#fff' },
+    upgradeBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+    upgradeChip: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8, flexShrink: 0 },
+    upgradeChipText: { fontSize: 13, fontWeight: '800', color: colors.primary },
+
+    // ── Onboarding ────────────────────────────────────────
+    onboardCard: {
+      backgroundColor: colors.surface, borderRadius: 18, padding: 20,
+      borderWidth: 1, borderColor: colors.border, gap: 14,
+      marginHorizontal: 16, marginTop: 24,
+    },
+    onboardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    onboardTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+    onboardStep: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+    onboardBullet: {
+      width: 28, height: 28, borderRadius: 14,
+      backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    },
+    onboardNum: { fontSize: 13, fontWeight: '800', color: colors.primary },
+    onboardText: { flex: 1, fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
   });
 }
