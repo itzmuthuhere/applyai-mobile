@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, Animated,
@@ -9,7 +9,9 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 import { Job } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
@@ -28,6 +30,8 @@ function fmtSalary(min: number | null, max: number | null) {
 }
 
 function SkeletonCard() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const opacity = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -42,16 +46,16 @@ function SkeletonCard() {
   return (
     <Animated.View style={[styles.card, { opacity }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <View style={{ width: 48, height: 48, borderRadius: 13, backgroundColor: COLORS.border }} />
+        <View style={{ width: 48, height: 48, borderRadius: 13, backgroundColor: colors.border }} />
         <View style={{ flex: 1, gap: 8 }}>
-          <View style={{ height: 14, width: '65%', backgroundColor: COLORS.border, borderRadius: 6 }} />
-          <View style={{ height: 11, width: '40%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+          <View style={{ height: 14, width: '65%', backgroundColor: colors.border, borderRadius: 6 }} />
+          <View style={{ height: 11, width: '40%', backgroundColor: colors.border, borderRadius: 6 }} />
         </View>
-        <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: COLORS.border }} />
+        <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: colors.border }} />
       </View>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         {[60, 80, 50].map((w, i) => (
-          <View key={i} style={{ height: 24, width: w, backgroundColor: COLORS.border, borderRadius: 8 }} />
+          <View key={i} style={{ height: 24, width: w, backgroundColor: colors.border, borderRadius: 8 }} />
         ))}
       </View>
     </Animated.View>
@@ -66,6 +70,8 @@ function JobCard({
   onApply: () => void;
   isUnsaving: boolean;
 }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const nav = useNavigation<Nav>();
   const color = companyColor(job.company ?? 'A');
   const salary = fmtSalary(job.salaryMin, job.salaryMax);
@@ -86,7 +92,7 @@ function JobCard({
           <Text style={styles.company} numberOfLines={1}>{job.company}</Text>
           {job.location && (
             <View style={styles.locRow}>
-              <Ionicons name="location-outline" size={11} color={COLORS.textMuted} />
+              <Ionicons name="location-outline" size={11} color={colors.textMuted} />
               <Text style={styles.locText}>{job.location}</Text>
             </View>
           )}
@@ -98,7 +104,7 @@ function JobCard({
           disabled={isUnsaving}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name={isUnsaving ? 'hourglass-outline' : 'bookmark'} size={20} color={COLORS.primary} />
+          <Ionicons name={isUnsaving ? 'hourglass-outline' : 'bookmark'} size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -129,7 +135,7 @@ function JobCard({
       <View style={styles.bottomRow}>
         {job.matchScore != null ? (
           <View style={styles.matchPill}>
-            <Ionicons name="analytics-outline" size={12} color={COLORS.primary} />
+            <Ionicons name="analytics-outline" size={12} color={colors.primary} />
             <Text style={styles.matchText}>{job.matchScore}% match</Text>
           </View>
         ) : <View />}
@@ -143,6 +149,8 @@ function JobCard({
 }
 
 export default function SavedJobsScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<Nav>();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,13 +217,13 @@ export default function SavedJobsScreen() {
         renderItem={renderItem}
         contentContainerStyle={[styles.list, jobs.length === 0 && { flex: 1 }]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={COLORS.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary} />
         }
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         ListHeaderComponent={
           jobs.length > 0 ? (
             <View style={styles.headerChip}>
-              <Ionicons name="bookmark" size={14} color={COLORS.primary} />
+              <Ionicons name="bookmark" size={14} color={colors.primary} />
               <Text style={styles.headerChipText}>{jobs.length} saved job{jobs.length !== 1 ? 's' : ''}</Text>
             </View>
           ) : null
@@ -223,7 +231,7 @@ export default function SavedJobsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="bookmark-outline" size={40} color={COLORS.primary} />
+              <Ionicons name="bookmark-outline" size={40} color={colors.primary} />
             </View>
             <Text style={styles.emptyTitle}>No saved jobs</Text>
             <Text style={styles.emptySubtitle}>
@@ -244,22 +252,23 @@ export default function SavedJobsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   list: { padding: 14, paddingBottom: 40 },
 
   headerChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: COLORS.primaryLight, borderRadius: 10,
+    backgroundColor: colors.primaryLight, borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8,
     borderWidth: 1, borderColor: '#BFDBFE',
     marginBottom: 12, alignSelf: 'flex-start',
   },
-  headerChipText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  headerChipText: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: colors.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
@@ -270,13 +279,13 @@ const styles = StyleSheet.create({
   },
   logoText: { fontSize: 20, fontWeight: '800' },
   cardInfo: { flex: 1 },
-  jobTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, lineHeight: 20, marginBottom: 2 },
-  company: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 3 },
+  jobTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, lineHeight: 20, marginBottom: 2 },
+  company: { fontSize: 13, color: colors.textSecondary, marginBottom: 3 },
   locRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  locText: { fontSize: 11, color: COLORS.textMuted },
+  locText: { fontSize: 11, color: colors.textMuted },
   unsaveBtn: {
     width: 34, height: 34, borderRadius: 10,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
 
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginBottom: 10 },
@@ -288,31 +297,32 @@ const styles = StyleSheet.create({
   tagRemote: { backgroundColor: '#D1FAE5', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   tagRemoteText: { fontSize: 11, fontWeight: '700', color: '#065F46' },
   tagNeutral: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  tagNeutralText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
-  postedAgo: { fontSize: 11, color: COLORS.textMuted, marginLeft: 'auto' as any },
+  tagNeutralText: { fontSize: 11, color: colors.textSecondary, fontWeight: '500' },
+  postedAgo: { fontSize: 11, color: colors.textMuted, marginLeft: 'auto' as any },
 
   bottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   matchPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: COLORS.primaryLight, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5,
+    backgroundColor: colors.primaryLight, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5,
   },
-  matchText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  matchText: { fontSize: 12, fontWeight: '700', color: colors.primary },
   applyBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
+    backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
   },
   applyBtnText: { fontSize: 12, fontWeight: '700', color: '#fff' },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 36 },
   emptyIcon: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21 },
   browsBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12,
   },
   browsBtnText: { fontSize: 14, fontWeight: '800', color: '#fff' },
-});
+  });
+}

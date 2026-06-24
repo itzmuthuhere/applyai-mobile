@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   Animated, RefreshControl, SafeAreaView,
@@ -7,7 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 
 interface JobAlert {
@@ -41,8 +43,8 @@ function buildNotifications(alerts: JobAlert[]): NotifItem[] {
       id: `alert-${alert.id}`,
       type: 'alert',
       icon: 'notifications-outline',
-      iconColor: COLORS.primary,
-      iconBg: COLORS.primaryLight,
+      iconColor: '#2563EB',
+      iconBg: '#DBEAFE',
       title: `Job Alert: ${alert.keywords}`,
       body: [
         alert.remote && 'Remote only',
@@ -93,8 +95,8 @@ function buildNotifications(alerts: JobAlert[]): NotifItem[] {
       id: 'tip-ats',
       type: 'tip',
       icon: 'shield-checkmark-outline',
-      iconColor: COLORS.primary,
-      iconBg: COLORS.primaryLight,
+      iconColor: '#2563EB',
+      iconBg: '#DBEAFE',
       title: 'Check your ATS score',
       body: '80% of resumes are filtered by ATS before a human sees them. Check yours.',
       time: '2 days ago',
@@ -106,6 +108,8 @@ function buildNotifications(alerts: JobAlert[]): NotifItem[] {
 }
 
 function SkeletonNotif() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const opacity = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -119,16 +123,18 @@ function SkeletonNotif() {
   }, []);
   return (
     <Animated.View style={[styles.item, { opacity }]}>
-      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.border }} />
+      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.border }} />
       <View style={{ flex: 1, gap: 8 }}>
-        <View style={{ height: 13, width: '70%', backgroundColor: COLORS.border, borderRadius: 6 }} />
-        <View style={{ height: 11, width: '90%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+        <View style={{ height: 13, width: '70%', backgroundColor: colors.border, borderRadius: 6 }} />
+        <View style={{ height: 11, width: '90%', backgroundColor: colors.border, borderRadius: 6 }} />
       </View>
     </Animated.View>
   );
 }
 
 export default function NotificationsScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const [alerts, setAlerts] = useState<JobAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -213,7 +219,7 @@ export default function NotificationsScreen() {
           renderItem={renderItem}
           contentContainerStyle={[styles.listContent, notifs.length === 0 && { flex: 1 }]}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={COLORS.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary} />
           }
           ItemSeparatorComponent={() => <View style={styles.sep} />}
           ListHeaderComponent={
@@ -226,7 +232,7 @@ export default function NotificationsScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
-                <Ionicons name="notifications-outline" size={40} color={COLORS.primary} />
+                <Ionicons name="notifications-outline" size={40} color={colors.primary} />
               </View>
               <Text style={styles.emptyTitle}>All caught up!</Text>
               <Text style={styles.emptySubtitle}>
@@ -240,47 +246,49 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
 
   header: {
     flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  headerTitle: { fontSize: 24, fontWeight: '900', color: COLORS.textPrimary },
-  headerSub: { fontSize: 13, color: COLORS.textMuted, fontWeight: '500', marginTop: 2 },
-  markAllBtn: { paddingHorizontal: 14, paddingVertical: 7, backgroundColor: COLORS.primaryLight, borderRadius: 20 },
-  markAllText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  headerTitle: { fontSize: 24, fontWeight: '900', color: colors.textPrimary },
+  headerSub: { fontSize: 13, color: colors.textMuted, fontWeight: '500', marginTop: 2 },
+  markAllBtn: { paddingHorizontal: 14, paddingVertical: 7, backgroundColor: colors.primaryLight, borderRadius: 20 },
+  markAllText: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
   listContent: { paddingBottom: 40 },
   sectionLabel: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
   sectionLabelText: {
-    fontSize: 11, fontWeight: '800', color: COLORS.textMuted,
+    fontSize: 11, fontWeight: '800', color: colors.textMuted,
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
 
   item: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 14,
     paddingHorizontal: 20, paddingVertical: 14,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
   },
   itemUnread: { backgroundColor: '#F0F7FF' },
   iconWrap: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   itemBody: { flex: 1 },
   itemTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
-  itemTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },
-  itemTitleUnread: { fontWeight: '800', color: COLORS.textPrimary },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary, flexShrink: 0 },
-  itemBodyText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 19, marginBottom: 4 },
-  itemTime: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
-  sep: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 20 },
+  itemTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+  itemTitleUnread: { fontWeight: '800', color: colors.textPrimary },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary, flexShrink: 0 },
+  itemBodyText: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: 4 },
+  itemTime: { fontSize: 11, color: colors.textMuted, fontWeight: '500' },
+  sep: { height: 1, backgroundColor: colors.border, marginHorizontal: 20 },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 40, marginTop: 80 },
   emptyIcon: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
-});
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21 },
+  });
+}

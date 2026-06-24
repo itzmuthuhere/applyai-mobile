@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, SafeAreaView,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { HomeStackParamList } from '../../navigation/types';
 import apiClient from '../../api/apiClient';
 
@@ -41,6 +43,8 @@ function difficultyConfig(d: string): { label: string; bg: string; text: string 
 }
 
 function SkillChip({ skill, primary }: { skill: string; primary?: boolean }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={[styles.chip, primary && styles.chipPrimary]}>
       <Text style={[styles.chipText, primary && styles.chipTextPrimary]}>{skill}</Text>
@@ -49,6 +53,8 @@ function SkillChip({ skill, primary }: { skill: string; primary?: boolean }) {
 }
 
 export default function CareerPathScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<CareerPathResult | null>(null);
@@ -83,7 +89,7 @@ export default function CareerPathScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={COLORS.primary} size="large" />
+        <ActivityIndicator color={colors.primary} size="large" />
         <Text style={styles.loadingText}>Analysing your career trajectory...</Text>
       </View>
     );
@@ -92,7 +98,7 @@ export default function CareerPathScreen() {
   if (error || !result) {
     return (
       <View style={styles.centered}>
-        <Ionicons name="alert-circle-outline" size={52} color={COLORS.error} />
+        <Ionicons name="alert-circle-outline" size={52} color={colors.error} />
         <Text style={styles.errorText}>{error ?? 'No result.'}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={load}>
           <Ionicons name="refresh-outline" size={16} color="#fff" />
@@ -110,7 +116,7 @@ export default function CareerPathScreen() {
         <View style={styles.currentCard}>
           <View style={styles.currentLeft}>
             <View style={styles.youAreHereDot}>
-              <Ionicons name="location" size={14} color={COLORS.primary} />
+              <Ionicons name="location" size={14} color={colors.primary} />
             </View>
             <Text style={styles.currentLabel}>You are here</Text>
             <Text style={styles.currentLevel}>{result.currentLevel}</Text>
@@ -130,7 +136,7 @@ export default function CareerPathScreen() {
         {result.nextRoles.length > 0 && (
           <View style={styles.card}>
             <View style={styles.cardHead}>
-              <Ionicons name="map-outline" size={16} color={COLORS.primary} />
+              <Ionicons name="map-outline" size={16} color={colors.primary} />
               <Text style={styles.cardTitle}>Your Career Roadmap</Text>
             </View>
             {result.nextRoles.map((role, i) => {
@@ -158,13 +164,13 @@ export default function CareerPathScreen() {
                       <View style={styles.stepMeta}>
                         {role.timeline ? (
                           <View style={styles.metaItem}>
-                            <Ionicons name="time-outline" size={11} color={COLORS.textMuted} />
+                            <Ionicons name="time-outline" size={11} color={colors.textMuted} />
                             <Text style={styles.metaText}>{role.timeline}</Text>
                           </View>
                         ) : null}
                         {role.salaryRange ? (
                           <View style={styles.metaItem}>
-                            <Ionicons name="cash-outline" size={11} color={COLORS.textMuted} />
+                            <Ionicons name="cash-outline" size={11} color={colors.textMuted} />
                             <Text style={styles.metaText}>{role.salaryRange}</Text>
                           </View>
                         ) : null}
@@ -238,23 +244,24 @@ export default function CareerPathScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 14, gap: 12 },
   centered: {
     flex: 1, alignItems: 'center', justifyContent: 'center',
-    gap: 14, padding: 32, backgroundColor: COLORS.background,
+    gap: 14, padding: 32, backgroundColor: colors.background,
   },
-  loadingText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
-  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  loadingText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
   retryBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
   },
   retryBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 
   currentCard: {
-    backgroundColor: COLORS.primary, borderRadius: 20, padding: 22,
+    backgroundColor: colors.primary, borderRadius: 20, padding: 22,
     flexDirection: 'row', alignItems: 'center', overflow: 'hidden',
   },
   currentLeft: { flex: 1, gap: 6 },
@@ -270,26 +277,26 @@ const styles = StyleSheet.create({
   currentSalary: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
 
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 14,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 14,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
 
   roadmapStep: { flexDirection: 'row', gap: 12 },
   stepLeft: { alignItems: 'center', width: 28 },
   stepNum: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   stepNumText: { fontSize: 12, fontWeight: '900', color: '#fff' },
-  stepLine: { flex: 1, width: 2, backgroundColor: COLORS.border, marginTop: 4, marginBottom: -12 },
+  stepLine: { flex: 1, width: 2, backgroundColor: colors.border, marginTop: 4, marginBottom: -12 },
   stepContent: { flex: 1, paddingBottom: 14, gap: 6 },
   stepHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' },
-  stepTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, flex: 1 },
+  stepTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, flex: 1 },
   stepMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { fontSize: 12, color: COLORS.textMuted },
+  metaText: { fontSize: 12, color: colors.textMuted },
   diffBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start' },
   diffText: { fontSize: 11, fontWeight: '700' },
 
@@ -297,22 +304,22 @@ const styles = StyleSheet.create({
   chip: {
     backgroundColor: '#F1F5F9', borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 4,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: colors.border,
   },
-  chipText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
-  chipPrimary: { backgroundColor: COLORS.primaryLight, borderColor: COLORS.primary },
-  chipTextPrimary: { color: COLORS.primary, fontWeight: '700' },
+  chipText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
+  chipPrimary: { backgroundColor: colors.primaryLight, borderColor: colors.primary },
+  chipTextPrimary: { color: colors.primary, fontWeight: '700' },
 
   companiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   companyCard: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.background, borderRadius: 10,
+    backgroundColor: colors.background, borderRadius: 10,
     paddingHorizontal: 10, paddingVertical: 8,
-    borderWidth: 1, borderColor: COLORS.border, borderLeftWidth: 3,
+    borderWidth: 1, borderColor: colors.border, borderLeftWidth: 3,
   },
   companyDot: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   companyInitial: { fontSize: 11, fontWeight: '800', color: '#fff' },
-  companyName: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
+  companyName: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
 
   adviceCard: {
     backgroundColor: '#FFFBEB', borderRadius: 16, padding: 16,
@@ -323,4 +330,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   adviceText: { flex: 1, fontSize: 14, color: '#78350F', lineHeight: 22 },
-});
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   StyleSheet, ActivityIndicator, SafeAreaView, Platform,
@@ -7,7 +7,9 @@ import { useRoute, useNavigation, RouteProp, CommonActions } from '@react-naviga
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { setResumes } from '../../store/slices/resumeSlice';
@@ -24,6 +26,8 @@ const companyColor = (name: string) =>
   COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
 
 export default function ApplyJobScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
@@ -87,14 +91,14 @@ export default function ApplyJobScreen() {
 
   const jobTitle = selectedJob?.title ?? `Job #${params.jobId}`;
   const jobCompany = selectedJob?.company ?? '';
-  const jColor = jobCompany ? companyColor(jobCompany) : COLORS.primary;
+  const jColor = jobCompany ? companyColor(jobCompany) : colors.primary;
 
   // ── Loading Guard ─────────────────────────────────────────────────────────
   if (resumesLoading && resumes.length === 0) {
     return (
       <SafeAreaView testID="apply-loading" style={styles.safe}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
@@ -125,7 +129,7 @@ export default function ApplyJobScreen() {
           {/* What happens next */}
           <View style={styles.nextCard}>
             <View style={styles.nextHead}>
-              <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
+              <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
               <Text style={styles.nextTitle}>What happens next?</Text>
             </View>
             {[
@@ -135,7 +139,7 @@ export default function ApplyJobScreen() {
             ].map((item, i) => (
               <View key={i} style={styles.nextRow}>
                 <View style={styles.nextIconBox}>
-                  <Ionicons name={item.icon} size={14} color={COLORS.primary} />
+                  <Ionicons name={item.icon} size={14} color={colors.primary} />
                 </View>
                 <Text style={styles.nextText}>{item.text}</Text>
               </View>
@@ -156,7 +160,7 @@ export default function ApplyJobScreen() {
             onPress={() => navigation.dispatch(CommonActions.navigate({ name: 'JobsTab' }))}
             activeOpacity={0.8}
           >
-            <Ionicons name="search-outline" size={16} color={COLORS.primary} />
+            <Ionicons name="search-outline" size={16} color={colors.primary} />
             <Text style={styles.backToJobsText}>Continue Browsing Jobs</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -185,7 +189,7 @@ export default function ApplyJobScreen() {
             {jobCompany ? <Text style={styles.jobCompany}>{jobCompany}</Text> : null}
           </View>
           <View style={styles.applyChip}>
-            <Ionicons name="send" size={11} color={COLORS.primary} />
+            <Ionicons name="send" size={11} color={colors.primary} />
             <Text style={styles.applyChipText}>Apply</Text>
           </View>
         </View>
@@ -193,8 +197,8 @@ export default function ApplyJobScreen() {
         {/* Resume section */}
         <View style={styles.section}>
           <View style={styles.sectionHead}>
-            <View style={[styles.sectionIconBox, { backgroundColor: COLORS.primaryLight }]}>
-              <Ionicons name="document-attach-outline" size={14} color={COLORS.primary} />
+            <View style={[styles.sectionIconBox, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="document-attach-outline" size={14} color={colors.primary} />
             </View>
             <Text style={styles.sectionTitle}>Select Resume</Text>
           </View>
@@ -235,7 +239,7 @@ export default function ApplyJobScreen() {
             testID="cover-letter-input"
             style={styles.textArea}
             placeholder="Paste or write your cover letter here…&#10;&#10;Tip: Use our AI Cover Letter generator for a personalised letter."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             multiline
             numberOfLines={8}
             textAlignVertical="top"
@@ -258,7 +262,7 @@ export default function ApplyJobScreen() {
         {/* Error */}
         {error && (
           <View testID="apply-error" style={styles.errorBox}>
-            <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+            <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -286,7 +290,7 @@ export default function ApplyJobScreen() {
 
         {isSubmitting && showWarmup && (
           <View testID="warmup-message" style={styles.submittingNote}>
-            <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
+            <Ionicons name="time-outline" size={14} color={colors.textMuted} />
             <Text style={styles.submittingNoteText}>Server is warming up — this may take up to 30 seconds</Text>
           </View>
         )}
@@ -297,42 +301,43 @@ export default function ApplyJobScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
   content: { padding: 14, gap: 14 },
 
   // Job hero
   jobHero: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: colors.border,
   },
   jobIcon: {
     width: 48, height: 48, borderRadius: 13, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   jobInitial: { fontSize: 20, fontWeight: '900' },
-  jobTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, lineHeight: 20 },
-  jobCompany: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  jobTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, lineHeight: 20 },
+  jobCompany: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   applyChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: COLORS.primaryLight, borderRadius: 8,
+    backgroundColor: colors.primaryLight, borderRadius: 8,
     paddingHorizontal: 8, paddingVertical: 4,
     borderWidth: 1, borderColor: '#BFDBFE',
   },
-  applyChipText: { fontSize: 11, fontWeight: '800', color: COLORS.primary },
+  applyChipText: { fontSize: 11, fontWeight: '800', color: colors.primary },
 
   // Sections
   section: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 10,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 10,
   },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionIconBox: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  sectionHint: { fontSize: 12, color: COLORS.textMuted, lineHeight: 17 },
-  optional: { fontSize: 12, fontWeight: '400', color: COLORS.textMuted },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  sectionHint: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+  optional: { fontSize: 12, fontWeight: '400', color: colors.textMuted },
 
   // AI tip
   aiTip: {
@@ -344,9 +349,9 @@ const styles = StyleSheet.create({
 
   // Text area
   textArea: {
-    backgroundColor: COLORS.background, borderRadius: 12, padding: 14,
-    fontSize: 14, color: COLORS.textPrimary,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, borderRadius: 12, padding: 14,
+    fontSize: 14, color: colors.textPrimary,
+    borderWidth: 1, borderColor: colors.border,
     minHeight: 130, textAlignVertical: 'top',
   },
   generateCoverLetterBtn: {
@@ -362,13 +367,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12,
     borderWidth: 1, borderColor: '#FECACA',
   },
-  errorText: { flex: 1, fontSize: 13, color: COLORS.error },
+  errorText: { flex: 1, fontSize: 13, color: colors.error },
 
   // Submit
   submitBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 15,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 15,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
   },
   submitBtnDisabled: { opacity: 0.5, shadowOpacity: 0 },
@@ -376,7 +381,7 @@ const styles = StyleSheet.create({
   submittingNote: {
     flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center',
   },
-  submittingNoteText: { fontSize: 12, color: COLORS.textMuted, fontStyle: 'italic' },
+  submittingNoteText: { fontSize: 12, color: colors.textMuted, fontStyle: 'italic' },
 
   // Success
   successScroll: { flex: 1, alignItems: 'center', padding: 32, gap: 20 },
@@ -387,31 +392,32 @@ const styles = StyleSheet.create({
     width: 80, height: 80, borderRadius: 40,
     backgroundColor: '#10B981', alignItems: 'center', justifyContent: 'center',
   },
-  successTitle: { fontSize: 26, fontWeight: '900', color: COLORS.textPrimary, marginTop: 70 },
-  successSub: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 23 },
-  successJobName: { fontWeight: '800', color: COLORS.textPrimary },
+  successTitle: { fontSize: 26, fontWeight: '900', color: colors.textPrimary, marginTop: 70 },
+  successSub: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 23 },
+  successJobName: { fontWeight: '800', color: colors.textPrimary },
 
   nextCard: {
-    backgroundColor: COLORS.primaryLight, borderRadius: 16, padding: 16,
+    backgroundColor: colors.primaryLight, borderRadius: 16, padding: 16,
     borderWidth: 1, borderColor: '#BFDBFE', alignSelf: 'stretch', gap: 10,
   },
   nextHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  nextTitle: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
+  nextTitle: { fontSize: 13, fontWeight: '800', color: colors.primary },
   nextRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   nextIconBox: { width: 26, height: 26, borderRadius: 7, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  nextText: { flex: 1, fontSize: 13, color: COLORS.primary, lineHeight: 19 },
+  nextText: { flex: 1, fontSize: 13, color: colors.primary, lineHeight: 19 },
 
   viewAppsBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 14,
+    backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14,
     alignSelf: 'stretch',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
   viewAppsBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
   backToJobsBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     borderRadius: 14, paddingVertical: 12, alignSelf: 'stretch',
-    borderWidth: 1.5, borderColor: COLORS.primary, backgroundColor: COLORS.surface,
+    borderWidth: 1.5, borderColor: colors.primary, backgroundColor: colors.surface,
   },
-  backToJobsText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
-});
+  backToJobsText: { fontSize: 14, fontWeight: '700', color: colors.primary },
+  });
+}

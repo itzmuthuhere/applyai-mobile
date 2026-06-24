@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, SafeAreaView, ActivityIndicator, Alert, Platform,
@@ -8,7 +8,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppDispatch, RootState } from '../../store';
 import { signOut } from '../../store/slices/authSlice';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 
 const PLAN_CONFIG: Record<string, { bg: string; text: string; border: string; icon: string; label: string; accent: string }> = {
   FREE:   { bg: '#F1F5F9', text: '#64748B', border: '#E2E8F0', icon: 'person-outline',  label: 'Free Plan',   accent: '#94A3B8' },
@@ -37,7 +38,7 @@ const chipStyles = StyleSheet.create({
 });
 
 function MenuItem({
-  icon, label, value, tint = COLORS.textPrimary, onPress, isLast = false, danger = false,
+  icon, label, value, tint, onPress, isLast = false, danger = false,
 }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
@@ -47,34 +48,30 @@ function MenuItem({
   isLast?: boolean;
   danger?: boolean;
 }) {
+  const colors = useTheme();
+  const effectiveTint = tint ?? colors.textPrimary;
   return (
     <TouchableOpacity
-      style={[menuStyles.row, !isLast && { borderBottomWidth: 1, borderBottomColor: COLORS.border }]}
+      style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16 },
+              !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
       onPress={onPress}
       activeOpacity={onPress ? 0.7 : 1}
       disabled={!onPress}
     >
-      <View style={[menuStyles.iconBox, { backgroundColor: (danger ? '#FEF2F2' : '#F1F5F9') }]}>
-        <Ionicons name={icon} size={17} color={danger ? COLORS.error : tint} />
+      <View style={{ width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: (danger ? '#FEF2F2' : '#F1F5F9') }}>
+        <Ionicons name={icon} size={17} color={danger ? colors.error : effectiveTint} />
       </View>
-      <Text style={[menuStyles.label, danger && { color: COLORS.error }]}>{label}</Text>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: danger ? colors.error : colors.textPrimary }}>{label}</Text>
       <View style={{ flex: 1 }} />
-      {value ? <Text style={menuStyles.value}>{value}</Text> : null}
-      {onPress && !danger && <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />}
+      {value ? <Text style={{ fontSize: 13, color: colors.textMuted, marginRight: 6 }}>{value}</Text> : null}
+      {onPress && !danger && <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />}
     </TouchableOpacity>
   );
 }
-const menuStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 14, paddingHorizontal: 16,
-  },
-  iconBox: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  label: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  value: { fontSize: 13, color: COLORS.textMuted, marginRight: 6 },
-});
 
 export default function ProfileScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
@@ -106,7 +103,7 @@ export default function ProfileScreen() {
       {/* Nav bar */}
       <View style={styles.navBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.navTitle}>My Profile</Text>
         <TouchableOpacity
@@ -114,7 +111,7 @@ export default function ProfileScreen() {
           onPress={() => navigation.navigate('ProfileSettings')}
           activeOpacity={0.75}
         >
-          <Ionicons name="settings-outline" size={22} color={COLORS.textPrimary} />
+          <Ionicons name="settings-outline" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -128,7 +125,7 @@ export default function ProfileScreen() {
               {user?.profilePicture ? (
                 <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
               ) : (
-                <View style={[styles.avatarFallback, { backgroundColor: COLORS.primary }]}>
+                <View style={[styles.avatarFallback, { backgroundColor: colors.primary }]}>
                   <Text style={styles.avatarInitial}>{firstName.charAt(0).toUpperCase()}</Text>
                 </View>
               )}
@@ -164,7 +161,7 @@ export default function ProfileScreen() {
                 <View style={[styles.scoreFill, { width: `${score}%` as any }]} />
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
           </TouchableOpacity>
         )}
 
@@ -172,11 +169,11 @@ export default function ProfileScreen() {
         {(user?.targetRole || user?.targetLocation || user?.minSalary || user?.remotePreference) && (
           <View style={styles.card}>
             <View style={styles.cardHead}>
-              <Ionicons name="briefcase-outline" size={15} color={COLORS.primary} />
+              <Ionicons name="briefcase-outline" size={15} color={colors.primary} />
               <Text style={styles.cardTitle}>Job Preferences</Text>
             </View>
             <View style={styles.chipRow}>
-              {user?.targetRole ? <PreferenceChip icon="briefcase-outline" value={user.targetRole} color={COLORS.primary} /> : null}
+              {user?.targetRole ? <PreferenceChip icon="briefcase-outline" value={user.targetRole} color={colors.primary} /> : null}
               {user?.targetLocation ? <PreferenceChip icon="location-outline" value={user.targetLocation} color='#059669' /> : null}
               {user?.minSalary ? <PreferenceChip icon="cash-outline" value={fmtSalary(user.minSalary)} color='#F59E0B' /> : null}
               {user?.remotePreference ? <PreferenceChip icon="home-outline" value={REMOTE_LABELS[user.remotePreference] ?? user.remotePreference} color='#7C3AED' /> : null}
@@ -189,7 +186,7 @@ export default function ProfileScreen() {
           <MenuItem
             icon="document-text-outline"
             label="My Resumes"
-            tint={COLORS.primary}
+            tint={colors.primary}
             onPress={() => navigation.navigate('ResumeTab', { screen: 'ResumeList' })}
           />
           <MenuItem
@@ -219,13 +216,13 @@ export default function ProfileScreen() {
             icon="person-circle-outline"
             label="Member Since"
             value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-            tint={COLORS.primary}
+            tint={colors.primary}
           />
           <MenuItem
             icon="id-card-outline"
             label="User ID"
             value={`#${user?.id ?? '—'}`}
-            tint={COLORS.textSecondary}
+            tint={colors.textSecondary}
             isLast
           />
         </View>
@@ -256,10 +253,10 @@ export default function ProfileScreen() {
           activeOpacity={0.8}
         >
           {isSigningOut ? (
-            <ActivityIndicator color={COLORS.error} size="small" />
+            <ActivityIndicator color={colors.error} size="small" />
           ) : (
             <>
-              <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
+              <Ionicons name="log-out-outline" size={20} color={colors.error} />
               <Text style={styles.signOutText}>Sign Out</Text>
             </>
           )}
@@ -271,30 +268,31 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
 
   navBar: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { padding: 4 },
-  navTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  navTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   settingsBtn: { padding: 4 },
 
   content: { gap: 14 },
 
   // Cover + Avatar
-  coverWrap: { backgroundColor: COLORS.surface },
+  coverWrap: { backgroundColor: colors.surface },
   cover: { height: 100 },
   avatarRow: {
     flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingBottom: 14, marginTop: -36,
   },
   avatarWrap: {
-    borderRadius: 50, borderWidth: 4, borderColor: COLORS.surface,
+    borderRadius: 50, borderWidth: 4, borderColor: colors.surface,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4,
   },
   avatar: { width: 88, height: 88, borderRadius: 44 },
@@ -309,54 +307,54 @@ const styles = StyleSheet.create({
 
   // Name
   nameSection: { paddingHorizontal: 20, marginTop: -4, gap: 3 },
-  name: { fontSize: 24, fontWeight: '900', color: COLORS.textPrimary },
-  headline: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
-  email: { fontSize: 13, color: COLORS.textMuted, marginTop: 2 },
+  name: { fontSize: 24, fontWeight: '900', color: colors.textPrimary },
+  headline: { fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
+  email: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
 
   // Score card
   scoreCard: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: COLORS.primaryLight, borderRadius: 16, padding: 16,
+    backgroundColor: colors.primaryLight, borderRadius: 16, padding: 16,
     marginHorizontal: 16, borderWidth: 1, borderColor: '#BFDBFE',
   },
   scoreLeft: {},
   scoreCircle: {
     width: 52, height: 52, borderRadius: 26,
-    backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
   },
   scoreNum: { fontSize: 15, fontWeight: '900', color: '#fff' },
-  scoreTitle: { fontSize: 13, fontWeight: '800', color: COLORS.primary, marginBottom: 3 },
-  scoreSub: { fontSize: 11, color: COLORS.primary, opacity: 0.8, marginBottom: 7, lineHeight: 15 },
+  scoreTitle: { fontSize: 13, fontWeight: '800', color: colors.primary, marginBottom: 3 },
+  scoreSub: { fontSize: 11, color: colors.primary, opacity: 0.8, marginBottom: 7, lineHeight: 15 },
   scoreTrack: { height: 5, backgroundColor: '#BFDBFE', borderRadius: 3, overflow: 'hidden' },
-  scoreFill: { height: 5, backgroundColor: COLORS.primary, borderRadius: 3 },
+  scoreFill: { height: 5, backgroundColor: colors.primary, borderRadius: 3 },
 
   // Preferences
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 12, marginHorizontal: 16,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 12, marginHorizontal: 16,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   // Menu
   menuCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden', marginHorizontal: 16,
+    backgroundColor: colors.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginHorizontal: 16,
   },
 
   // Upgrade CTA
   upgradeCta: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.primary, borderRadius: 16, padding: 16, marginHorizontal: 16,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
+    backgroundColor: colors.primary, borderRadius: 16, padding: 16, marginHorizontal: 16,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
   },
   upgradeLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   upgradeIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   upgradeTitle: { fontSize: 15, fontWeight: '800', color: '#fff' },
   upgradeSub: { fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   upgradePill: { backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
-  upgradePillText: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
+  upgradePillText: { fontSize: 13, fontWeight: '800', color: colors.primary },
 
   // Sign out
   signOutBtn: {
@@ -364,5 +362,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2', borderRadius: 14, paddingVertical: 16, marginHorizontal: 16,
     borderWidth: 1, borderColor: '#FECACA',
   },
-  signOutText: { fontSize: 15, fontWeight: '700', color: COLORS.error },
-});
+  signOutText: { fontSize: 15, fontWeight: '700', color: colors.error },
+  });
+}

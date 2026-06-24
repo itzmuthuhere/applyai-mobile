@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppDispatch, RootState } from '../../store';
 import { signInWithGoogle, clearError } from '../../store/slices/authSlice';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 
 const STATS = [
   { value: '12K+', label: 'Users hired' },
@@ -29,6 +30,8 @@ const FEATURES = [
 ];
 
 export default function GoogleSignInScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
 
@@ -106,7 +109,7 @@ export default function GoogleSignInScreen() {
           activeOpacity={0.85}
         >
           {isLoading ? (
-            <ActivityIndicator color={COLORS.textPrimary} size="small" />
+            <ActivityIndicator color={colors.textPrimary} size="small" />
           ) : (
             <>
               <View style={styles.googleIconBox}>
@@ -119,7 +122,7 @@ export default function GoogleSignInScreen() {
 
         {/* Trust footer */}
         <View style={styles.trustRow}>
-          <Ionicons name="shield-checkmark-outline" size={13} color={COLORS.textMuted} />
+          <Ionicons name="shield-checkmark-outline" size={13} color={colors.textMuted} />
           <Text style={styles.trustText}>Secured by Google · No spam · Cancel anytime</Text>
         </View>
 
@@ -131,7 +134,8 @@ export default function GoogleSignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 24,
@@ -154,19 +158,19 @@ const styles = StyleSheet.create({
   },
   logoCircle: {
     width: 70, height: 70, borderRadius: 21,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
   },
   logoText: { fontSize: 28, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
   appName: {
-    fontSize: 34, fontWeight: '900', color: COLORS.textPrimary,
+    fontSize: 34, fontWeight: '900', color: colors.textPrimary,
     letterSpacing: -0.5,
   },
   tagline: {
-    fontSize: 14, color: COLORS.textSecondary, textAlign: 'center',
+    fontSize: 14, color: colors.textSecondary, textAlign: 'center',
     fontWeight: '500', lineHeight: 20,
   },
 
@@ -177,8 +181,8 @@ const styles = StyleSheet.create({
     borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)',
   },
   statItem: { flex: 1, alignItems: 'center', gap: 2 },
-  statValue: { fontSize: 22, fontWeight: '900', color: COLORS.primary },
-  statLabel: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500', textAlign: 'center' },
+  statValue: { fontSize: 22, fontWeight: '900', color: colors.primary },
+  statLabel: { fontSize: 11, color: colors.textSecondary, fontWeight: '500', textAlign: 'center' },
 
   featuresCard: {
     backgroundColor: 'rgba(255,255,255,0.75)',
@@ -190,7 +194,7 @@ const styles = StyleSheet.create({
     width: 34, height: 34, borderRadius: 10,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  featureText: { flex: 1, fontSize: 13, color: COLORS.textPrimary, fontWeight: '500', lineHeight: 18 },
+  featureText: { flex: 1, fontSize: 13, color: colors.textPrimary, fontWeight: '500', lineHeight: 18 },
 
   googleButton: {
     backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 16,
@@ -204,13 +208,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#4285F4', alignItems: 'center', justifyContent: 'center',
   },
   googleG: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
-  googleButtonText: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  googleButtonText: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
 
   trustRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
   },
-  trustText: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  trustText: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
   disclaimer: {
-    fontSize: 11, color: COLORS.textMuted, textAlign: 'center', lineHeight: 17,
+    fontSize: 11, color: colors.textMuted, textAlign: 'center', lineHeight: 17,
   },
-});
+  });
+}

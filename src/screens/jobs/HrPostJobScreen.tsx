@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator, Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 
 const CATEGORIES = [
@@ -24,7 +26,7 @@ const SALARY_STEPS = [
 ];
 
 const SECTION_ICONS: Record<string, { icon: React.ComponentProps<typeof Ionicons>['name']; color: string; bg: string }> = {
-  basic: { icon: 'briefcase-outline', color: COLORS.primary, bg: COLORS.primaryLight },
+  basic: { icon: 'briefcase-outline', color: '#2563EB', bg: '#DBEAFE' },
   desc: { icon: 'document-text-outline', color: '#7C3AED', bg: '#F3E8FF' },
   category: { icon: 'grid-outline', color: '#059669', bg: '#D1FAE5' },
   salary: { icon: 'cash-outline', color: '#D97706', bg: '#FEF3C7' },
@@ -33,6 +35,8 @@ const SECTION_ICONS: Record<string, { icon: React.ComponentProps<typeof Ionicons
 };
 
 export default function HrPostJobScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
 
   const [title, setTitle] = useState('');
@@ -88,7 +92,7 @@ export default function HrPostJobScreen() {
       {/* Sticky header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={22} color={COLORS.textPrimary} />
+          <Ionicons name="close" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post a Job</Text>
         <TouchableOpacity
@@ -106,7 +110,7 @@ export default function HrPostJobScreen() {
       {/* Hero tip */}
       <View style={styles.heroBanner}>
         <View style={styles.heroBannerIcon}>
-          <Ionicons name="megaphone" size={20} color={COLORS.primary} />
+          <Ionicons name="megaphone" size={20} color={colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.heroBannerTitle}>Reach thousands of job seekers</Text>
@@ -117,7 +121,7 @@ export default function HrPostJobScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Basic Info */}
-        <SectionCard icon="briefcase-outline" color={COLORS.primary} bg={COLORS.primaryLight} title="Basic Information">
+        <SectionCard icon="briefcase-outline" color={colors.primary} bg={colors.primaryLight} title="Basic Information">
           <LabeledInput
             label="Job Title *"
             placeholder="e.g. Senior Java Developer"
@@ -145,7 +149,7 @@ export default function HrPostJobScreen() {
             value={description}
             onChangeText={setDescription}
             placeholder="Describe the role, responsibilities, requirements, and benefits. Be specific to attract the right candidates."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             multiline
             textAlignVertical="top"
           />
@@ -217,7 +221,7 @@ export default function HrPostJobScreen() {
 
           {salaryMin && salaryMax && (
             <View style={styles.salaryPreview}>
-              <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
               <Text style={styles.salaryPreviewText}>
                 {fmt(salaryMin)} – {fmt(salaryMax)} per year
               </Text>
@@ -230,7 +234,7 @@ export default function HrPostJobScreen() {
           <View style={styles.toggleRow}>
             <View style={styles.toggleLeft}>
               <View style={[styles.toggleIcon, isRemote ? styles.toggleIconActive : styles.toggleIconInactive]}>
-                <Ionicons name="wifi-outline" size={18} color={isRemote ? '#059669' : COLORS.textMuted} />
+                <Ionicons name="wifi-outline" size={18} color={isRemote ? '#059669' : colors.textMuted} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.toggleLabel}>Remote Position</Text>
@@ -240,7 +244,7 @@ export default function HrPostJobScreen() {
             <Switch
               value={isRemote}
               onValueChange={setIsRemote}
-              trackColor={{ false: COLORS.border, true: '#059669' }}
+              trackColor={{ false: colors.border, true: '#059669' }}
               thumbColor="#fff"
             />
           </View>
@@ -262,7 +266,7 @@ export default function HrPostJobScreen() {
             onChangeText={setTags}
           />
           <View style={styles.tagsHintRow}>
-            <Ionicons name="information-circle-outline" size={14} color={COLORS.textMuted} />
+            <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />
             <Text style={styles.tagsHint}>Separate with commas. Helps candidates find your job.</Text>
           </View>
         </SectionCard>
@@ -301,6 +305,8 @@ function SectionCard({
   color: string; bg: string; title: string;
   children: React.ReactNode;
 }) {
+  const colors = useTheme();
+  const sectionStyles = makeSectionStyles(colors);
   return (
     <View style={sectionStyles.card}>
       <View style={sectionStyles.head}>
@@ -314,25 +320,29 @@ function SectionCard({
   );
 }
 
-const sectionStyles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
-  },
-  head: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
-    backgroundColor: '#FAFBFC',
-  },
-  iconBox: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  body: { padding: 16, gap: 0 },
-});
+function makeSectionStyles(colors: AppColors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface, borderRadius: 16,
+      borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+    },
+    head: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      paddingHorizontal: 16, paddingVertical: 12,
+      borderBottomWidth: 1, borderBottomColor: colors.border,
+      backgroundColor: '#FAFBFC',
+    },
+    iconBox: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+    title: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+    body: { padding: 16, gap: 0 },
+  });
+}
 
 function LabeledInput({ label, placeholder, value, onChangeText }: {
   label: string; placeholder: string; value: string; onChangeText: (t: string) => void;
 }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.inputLabel}>{label}</Text>
@@ -341,28 +351,29 @@ function LabeledInput({ label, placeholder, value, onChangeText }: {
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={COLORS.textMuted}
+        placeholderTextColor={colors.textMuted}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
 
   // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   closeBtn: {
     width: 36, height: 36, borderRadius: 10,
     backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   headerPostBtn: {
-    backgroundColor: COLORS.success, borderRadius: 10,
+    backgroundColor: colors.success, borderRadius: 10,
     paddingHorizontal: 18, paddingVertical: 8, minWidth: 60, alignItems: 'center',
   },
   headerPostBtnDisabled: { opacity: 0.45 },
@@ -371,56 +382,56 @@ const styles = StyleSheet.create({
   // Hero tip
   heroBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: COLORS.primaryLight, paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: COLORS.primary + '20',
+    backgroundColor: colors.primaryLight, paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: colors.primary + '20',
   },
   heroBannerIcon: {
     width: 36, height: 36, borderRadius: 10,
     backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center',
   },
-  heroBannerTitle: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
-  heroBannerSub: { fontSize: 12, color: COLORS.primary + 'BB', marginTop: 1 },
+  heroBannerTitle: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  heroBannerSub: { fontSize: 12, color: colors.primary + 'BB', marginTop: 1 },
 
   scroll: { padding: 16, gap: 14, paddingBottom: 40 },
 
   // Inputs
   inputGroup: { marginBottom: 12 },
-  inputLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 6 },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
   input: {
-    backgroundColor: COLORS.background, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border,
   },
 
   descInput: {
-    backgroundColor: COLORS.background, borderRadius: 11, padding: 14,
-    fontSize: 15, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, borderRadius: 11, padding: 14,
+    fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border,
     minHeight: 160,
   },
   descFooter: { alignItems: 'flex-end', marginTop: 6 },
   charCount: { fontSize: 11, fontWeight: '500' },
-  charCountOk: { color: COLORS.success },
-  charCountWarn: { color: COLORS.textMuted },
+  charCountOk: { color: colors.success },
+  charCountWarn: { color: colors.textMuted },
 
-  subLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 8 },
+  subLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 },
 
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   catChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background,
+    borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background,
   },
-  catChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  catChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
+  catChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  catChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   catChipTextActive: { color: '#fff', fontWeight: '600' },
 
   salaryScroll: { marginHorizontal: -4 },
   salaryRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 4, paddingBottom: 4 },
   salaryChip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background,
+    borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background,
   },
   salaryChipActive: { backgroundColor: '#D97706', borderColor: '#D97706' },
-  salaryChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
+  salaryChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   salaryChipTextActive: { color: '#fff', fontWeight: '600' },
   salaryPreview: {
     flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10,
@@ -430,27 +441,28 @@ const styles = StyleSheet.create({
 
   toggleRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.background, borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border, marginBottom: 12,
+    backgroundColor: colors.background, borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: colors.border, marginBottom: 12,
   },
   toggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   toggleIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   toggleIconActive: { backgroundColor: '#D1FAE5' },
   toggleIconInactive: { backgroundColor: '#F1F5F9' },
-  toggleLabel: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 1 },
-  toggleSub: { fontSize: 12, color: COLORS.textSecondary },
+  toggleLabel: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, marginBottom: 1 },
+  toggleSub: { fontSize: 12, color: colors.textSecondary },
 
   tagsHintRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  tagsHint: { fontSize: 11, color: COLORS.textMuted, flex: 1 },
+  tagsHint: { fontSize: 11, color: colors.textMuted, flex: 1 },
 
   bigPostBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: COLORS.success, borderRadius: 16, paddingVertical: 17,
-    shadowColor: COLORS.success, shadowOffset: { width: 0, height: 4 },
+    backgroundColor: colors.success, borderRadius: 16, paddingVertical: 17,
+    shadowColor: colors.success, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
   },
   bigPostBtnDisabled: { opacity: 0.5 },
   bigPostBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 
-  postHint: { fontSize: 12, color: COLORS.textMuted, textAlign: 'center', marginTop: -6 },
-});
+  postHint: { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: -6 },
+  });
+}

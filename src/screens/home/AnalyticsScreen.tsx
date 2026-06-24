@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
   SafeAreaView, Animated,
@@ -7,7 +7,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { AppDispatch, RootState } from '../../store';
 import { fetchAnalyticsOverview, fetchResumePerformance } from '../../store/analyticsSlice';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 
 const STAT_CONFIG: Array<{
   key: keyof ReturnType<typeof buildStats>;
@@ -16,7 +17,7 @@ const STAT_CONFIG: Array<{
   color: string;
   bg: string;
 }> = [
-  { key: 'totalApplications', label: 'Applied', icon: 'send-outline', color: COLORS.primary, bg: COLORS.primaryLight },
+  { key: 'totalApplications', label: 'Applied', icon: 'send-outline', color: '#2563EB', bg: '#DBEAFE' },
   { key: 'pendingApplications', label: 'Pending', icon: 'hourglass-outline', color: '#F59E0B', bg: '#FEF3C7' },
   { key: 'interviewsScheduled', label: 'Interviews', icon: 'mic-outline', color: '#10B981', bg: '#D1FAE5' },
   { key: 'offersReceived', label: 'Offers', icon: 'trophy-outline', color: '#7C3AED', bg: '#EDE9FE' },
@@ -32,6 +33,7 @@ function buildStats(o: any) {
 }
 
 function SkeletonBlock({ width, height }: { width: number | string; height: number }) {
+  const colors = useTheme();
   const opacity = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -45,12 +47,14 @@ function SkeletonBlock({ width, height }: { width: number | string; height: numb
   }, []);
   return (
     <Animated.View
-      style={{ width: width as any, height, borderRadius: 8, backgroundColor: COLORS.border, opacity }}
+      style={{ width: width as any, height, borderRadius: 8, backgroundColor: colors.border, opacity }}
     />
   );
 }
 
 function StatCard({ label, value, icon, color, bg }: { label: string; value: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; bg: string }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={[styles.statCard, { borderTopColor: color }]}>
       <View style={[styles.statIconBox, { backgroundColor: bg }]}>
@@ -63,6 +67,8 @@ function StatCard({ label, value, icon, color, bg }: { label: string; value: num
 }
 
 function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
     <View style={styles.progressTrack}>
@@ -72,6 +78,8 @@ function ProgressBar({ value, max, color }: { value: number; max: number; color:
 }
 
 export default function AnalyticsScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const dispatch = useDispatch<AppDispatch>();
   const { overview, resumePerformance, loading, error } = useSelector(
     (s: RootState) => s.analytics
@@ -89,7 +97,7 @@ export default function AnalyticsScreen() {
           <View style={{ height: 8 }} />
           <View style={styles.statsGrid}>
             {[1, 2, 3, 4].map(k => (
-              <Animated.View key={k} style={[styles.statCard, { borderTopColor: COLORS.border }]}>
+              <Animated.View key={k} style={[styles.statCard, { borderTopColor: colors.border }]}>
                 <SkeletonBlock width={36} height={36} />
                 <SkeletonBlock width={40} height={28} />
                 <SkeletonBlock width={56} height={12} />
@@ -109,7 +117,7 @@ export default function AnalyticsScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.centered}>
-          <Ionicons name="cloud-offline-outline" size={52} color={COLORS.textMuted} />
+          <Ionicons name="cloud-offline-outline" size={52} color={colors.textMuted} />
           <Text style={styles.errorText}>{error}</Text>
         </View>
       </SafeAreaView>
@@ -147,7 +155,7 @@ export default function AnalyticsScreen() {
         {overview && (
           <View style={styles.card}>
             <View style={styles.cardHead}>
-              <Ionicons name="funnel-outline" size={15} color={COLORS.primary} />
+              <Ionicons name="funnel-outline" size={15} color={colors.primary} />
               <Text style={styles.cardTitle}>Application Funnel</Text>
             </View>
 
@@ -174,7 +182,7 @@ export default function AnalyticsScreen() {
             {/* Funnel bars */}
             <View style={styles.funnelBars}>
               {[
-                { label: 'Applied', value: stats.totalApplications, color: COLORS.primary },
+                { label: 'Applied', value: stats.totalApplications, color: colors.primary },
                 { label: 'Pending', value: stats.pendingApplications, color: '#F59E0B' },
                 { label: 'Interview', value: stats.interviewsScheduled, color: '#10B981' },
                 { label: 'Offer', value: stats.offersReceived, color: '#7C3AED' },
@@ -222,7 +230,7 @@ export default function AnalyticsScreen() {
             </View>
             {overview.topAppliedRoles.map((r: string, i: number) => (
               <View key={i} style={styles.roleRow}>
-                <View style={[styles.roleDot, { backgroundColor: COLORS.primary }]} />
+                <View style={[styles.roleDot, { backgroundColor: colors.primary }]} />
                 <Text style={styles.roleText}>{r}</Text>
               </View>
             ))}
@@ -239,7 +247,7 @@ export default function AnalyticsScreen() {
             {resumePerformance.map((r: any) => (
               <View key={r.resumeId} style={styles.resumeItem}>
                 <View style={styles.resumeIconBox}>
-                  <Ionicons name="document-outline" size={16} color={COLORS.primary} />
+                  <Ionicons name="document-outline" size={16} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.resumeName} numberOfLines={1}>{r.fileName}</Text>
@@ -249,8 +257,8 @@ export default function AnalyticsScreen() {
                     <Text style={styles.resumeStat}>{r.interviewRate}% interviews</Text>
                   </View>
                 </View>
-                <View style={[styles.rateTag, { backgroundColor: r.interviewRate >= 30 ? '#D1FAE5' : COLORS.primaryLight }]}>
-                  <Text style={[styles.rateTagText, { color: r.interviewRate >= 30 ? '#065F46' : COLORS.primary }]}>
+                <View style={[styles.rateTag, { backgroundColor: r.interviewRate >= 30 ? '#D1FAE5' : colors.primaryLight }]}>
+                  <Text style={[styles.rateTagText, { color: r.interviewRate >= 30 ? '#065F46' : colors.primary }]}>
                     {r.interviewRate}%
                   </Text>
                 </View>
@@ -265,40 +273,41 @@ export default function AnalyticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 14, gap: 12 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32 },
-  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  errorText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statCard: {
-    width: '47%', backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border, borderTopWidth: 3, gap: 6,
+    width: '47%', backgroundColor: colors.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: colors.border, borderTopWidth: 3, gap: 6,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
   statIconBox: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  statValue: { fontSize: 28, fontWeight: '900', color: COLORS.primary },
-  statLabel: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  statValue: { fontSize: 28, fontWeight: '900', color: colors.primary },
+  statLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
 
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 12,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 12,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
 
   scoreRow: { flexDirection: 'row', alignItems: 'center' },
   scoreGauge: { flex: 1, alignItems: 'center', gap: 4 },
-  scoreValue: { fontSize: 22, fontWeight: '900', color: COLORS.primary },
-  scoreLabel: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
-  scoreDivider: { width: 1, height: 36, backgroundColor: COLORS.border },
+  scoreValue: { fontSize: 22, fontWeight: '900', color: colors.primary },
+  scoreLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '500' },
+  scoreDivider: { width: 1, height: 36, backgroundColor: colors.border },
 
   funnelBars: { gap: 10 },
   funnelRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  funnelLabel: { width: 64, fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
+  funnelLabel: { width: 64, fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
   funnelCount: { width: 24, fontSize: 12, fontWeight: '800', textAlign: 'right' },
-  progressTrack: { height: 8, backgroundColor: COLORS.border, borderRadius: 4, overflow: 'hidden' },
+  progressTrack: { height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 4 },
 
   chartArea: {
@@ -306,23 +315,24 @@ const styles = StyleSheet.create({
     gap: 8, height: 110, paddingTop: 24,
   },
   chartCol: { flex: 1, alignItems: 'center', gap: 4 },
-  chartCount: { fontSize: 9, color: COLORS.textMuted, fontWeight: '700' },
-  chartBar: { width: '100%', backgroundColor: COLORS.primary + '90', borderRadius: 4 },
-  chartMonth: { fontSize: 9, color: COLORS.textMuted, fontWeight: '500' },
+  chartCount: { fontSize: 9, color: colors.textMuted, fontWeight: '700' },
+  chartBar: { width: '100%', backgroundColor: colors.primary + '90', borderRadius: 4 },
+  chartMonth: { fontSize: 9, color: colors.textMuted, fontWeight: '500' },
 
   roleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   roleDot: { width: 6, height: 6, borderRadius: 3, flexShrink: 0 },
-  roleText: { fontSize: 13, color: COLORS.textSecondary },
+  roleText: { fontSize: 13, color: colors.textSecondary },
 
   resumeItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
   resumeIconBox: {
     width: 36, height: 36, borderRadius: 10,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
-  resumeName: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 2 },
+  resumeName: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
   resumeStats: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  resumeStat: { fontSize: 11, color: COLORS.textMuted },
-  statDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: COLORS.border },
+  resumeStat: { fontSize: 11, color: colors.textMuted },
+  statDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.border },
   rateTag: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   rateTagText: { fontSize: 12, fontWeight: '800' },
-});
+  });
+}

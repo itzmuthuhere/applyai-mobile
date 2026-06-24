@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+﻿import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { setMatchScore } from '../../store/slices/jobSlice';
@@ -29,10 +31,10 @@ function companyColor(name: string) {
   return COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
 }
 
-function scoreColor(score: number) {
-  if (score >= 75) return COLORS.success;
-  if (score >= 55) return COLORS.warning;
-  return COLORS.error;
+function scoreColor(score: number, colors: AppColors) {
+  if (score >= 75) return colors.success;
+  if (score >= 55) return colors.warning;
+  return colors.error;
 }
 
 function scoreBg(score: number) {
@@ -49,6 +51,8 @@ function scoreLabel(score: number) {
 }
 
 export default function MatchScoreScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
@@ -119,7 +123,7 @@ export default function MatchScoreScreen() {
   if (isLoadingResumes) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={COLORS.primary} size="large" />
+        <ActivityIndicator color={colors.primary} size="large" />
         <Text style={styles.loadingText}>Loading your resumes…</Text>
       </View>
     );
@@ -129,7 +133,7 @@ export default function MatchScoreScreen() {
   if (resumes.length === 0) {
     return (
       <View style={styles.centered}>
-        <Ionicons name="document-outline" size={52} color={COLORS.textMuted} />
+        <Ionicons name="document-outline" size={52} color={colors.textMuted} />
         <Text style={styles.emptyTitle}>No resumes yet</Text>
         <Text style={styles.emptySubtitle}>Upload a resume first to analyze your match.</Text>
         <TouchableOpacity style={styles.goBackBtn} onPress={() => navigation.goBack()}>
@@ -157,7 +161,7 @@ export default function MatchScoreScreen() {
               <Text style={styles.companyName}>{job?.company ?? ''}</Text>
             </View>
             <View style={styles.analyticsBadge}>
-              <Ionicons name="analytics" size={18} color={COLORS.primary} />
+              <Ionicons name="analytics" size={18} color={colors.primary} />
             </View>
           </View>
         );
@@ -184,12 +188,12 @@ export default function MatchScoreScreen() {
         >
           {isAnalyzing ? (
             <>
-              <ActivityIndicator color={COLORS.surface} size="small" />
+              <ActivityIndicator color={colors.surface} size="small" />
               <Text style={styles.analyzeBtnText}>Analyzing with AI…</Text>
             </>
           ) : (
             <>
-              <Ionicons name="flash" size={18} color={COLORS.surface} />
+              <Ionicons name="flash" size={18} color={colors.surface} />
               <Text style={styles.analyzeBtnText}>Analyze Match</Text>
             </>
           )}
@@ -199,7 +203,7 @@ export default function MatchScoreScreen() {
       {/* Error */}
       {error && (
         <View style={styles.errorBanner}>
-          <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+          <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
@@ -209,22 +213,22 @@ export default function MatchScoreScreen() {
         <>
           {/* Score ring */}
           <View style={[styles.scoreCard, { backgroundColor: scoreBg(matchResult.matchScore) }]}>
-            <View style={[styles.scoreRing, { borderColor: scoreColor(matchResult.matchScore) }]}>
-              <Text style={[styles.scoreNumber, { color: scoreColor(matchResult.matchScore) }]}>
+            <View style={[styles.scoreRing, { borderColor: scoreColor(matchResult.matchScore, colors) }]}>
+              <Text style={[styles.scoreNumber, { color: scoreColor(matchResult.matchScore, colors) }]}>
                 {matchResult.matchScore}
               </Text>
-              <Text style={[styles.scoreOutOf, { color: scoreColor(matchResult.matchScore) }]}>
+              <Text style={[styles.scoreOutOf, { color: scoreColor(matchResult.matchScore, colors) }]}>
                 /100
               </Text>
             </View>
             <View style={styles.scoreRight}>
-              <Text style={[styles.scoreLabel, { color: scoreColor(matchResult.matchScore) }]}>
+              <Text style={[styles.scoreLabel, { color: scoreColor(matchResult.matchScore, colors) }]}>
                 {scoreLabel(matchResult.matchScore)}
               </Text>
               <Text style={styles.scoreDesc}>AI Match Score</Text>
               {matchResult.cached && (
                 <View style={styles.cachedBadge}>
-                  <Ionicons name="time-outline" size={11} color={COLORS.textMuted} />
+                  <Ionicons name="time-outline" size={11} color={colors.textMuted} />
                   <Text style={styles.cachedText}>
                     Cached · {dayjs(matchResult.createdAt).format('MMM D')}
                   </Text>
@@ -234,7 +238,7 @@ export default function MatchScoreScreen() {
                 style={styles.reanalyzeBtn}
                 onPress={() => setMatchResult(null)}
               >
-                <Ionicons name="refresh" size={13} color={COLORS.primary} />
+                <Ionicons name="refresh" size={13} color={colors.primary} />
                 <Text style={styles.reanalyzeText}>Re-analyze</Text>
               </TouchableOpacity>
             </View>
@@ -244,12 +248,12 @@ export default function MatchScoreScreen() {
           {matchResult.strengths.length > 0 && (
             <View style={styles.listCard}>
               <View style={styles.listHeader}>
-                <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+                <Ionicons name="checkmark-circle" size={18} color={colors.success} />
                 <Text style={styles.listTitle}>Strengths</Text>
               </View>
               {matchResult.strengths.map((s, i) => (
                 <View key={i} style={styles.listRow}>
-                  <View style={[styles.listDot, { backgroundColor: COLORS.success }]} />
+                  <View style={[styles.listDot, { backgroundColor: colors.success }]} />
                   <Text style={styles.listText}>{s}</Text>
                 </View>
               ))}
@@ -260,12 +264,12 @@ export default function MatchScoreScreen() {
           {matchResult.gaps.length > 0 && (
             <View style={styles.listCard}>
               <View style={styles.listHeader}>
-                <Ionicons name="warning" size={18} color={COLORS.warning} />
+                <Ionicons name="warning" size={18} color={colors.warning} />
                 <Text style={styles.listTitle}>Gaps</Text>
               </View>
               {matchResult.gaps.map((g, i) => (
                 <View key={i} style={styles.listRow}>
-                  <View style={[styles.listDot, { backgroundColor: COLORS.warning }]} />
+                  <View style={[styles.listDot, { backgroundColor: colors.warning }]} />
                   <Text style={styles.listText}>{g}</Text>
                 </View>
               ))}
@@ -275,7 +279,7 @@ export default function MatchScoreScreen() {
           {/* Recommendation */}
           <View style={styles.recommendCard}>
             <View style={styles.listHeader}>
-              <Ionicons name="bulb" size={18} color={COLORS.primary} />
+              <Ionicons name="bulb" size={18} color={colors.primary} />
               <Text style={styles.listTitle}>Recommendation</Text>
             </View>
             <Text style={styles.recommendText}>{matchResult.recommendation}</Text>
@@ -288,7 +292,7 @@ export default function MatchScoreScreen() {
               setMatchResult(null);
             }}
           >
-            <Ionicons name="refresh" size={17} color={COLORS.surface} />
+            <Ionicons name="refresh" size={17} color={colors.surface} />
             <Text style={styles.analyzeBtnText}>Re-analyze with Different Resume</Text>
           </TouchableOpacity>
         </>
@@ -298,8 +302,9 @@ export default function MatchScoreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, gap: 14, paddingBottom: 48 },
   centered: {
     flex: 1,
@@ -307,33 +312,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
     gap: 12,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
-  loadingText: { fontSize: 14, color: COLORS.textSecondary, marginTop: 8 },
+  loadingText: { fontSize: 14, color: colors.textSecondary, marginTop: 8 },
 
   // Empty state
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+  emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
   goBackBtn: {
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     marginTop: 4,
   },
-  goBackText: { fontSize: 14, color: COLORS.textSecondary },
+  goBackText: { fontSize: 14, color: colors.textSecondary },
 
   // Job card
   jobCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   companyIcon: {
     width: 48,
@@ -344,28 +349,28 @@ const styles = StyleSheet.create({
   },
   companyInitial: { fontSize: 20, fontWeight: '800' },
   jobInfo: { flex: 1 },
-  jobTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  companyName: { fontSize: 13, color: COLORS.textSecondary },
+  jobTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  companyName: { fontSize: 13, color: colors.textSecondary },
   analyticsBadge: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   // Picker
   pickerSection: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     gap: 10,
   },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  sectionSubtitle: { fontSize: 12, color: COLORS.textMuted, marginTop: -6 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  sectionSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: -6 },
   chipList: { gap: 8, paddingVertical: 2 },
   chip: {
     flexDirection: 'row',
@@ -375,27 +380,27 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     maxWidth: 200,
   },
   chipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   chipDisabled: {
     opacity: 0.55,
   },
-  chipText: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, flexShrink: 1 },
-  chipTextSelected: { color: COLORS.surface },
-  chipTextDisabled: { color: COLORS.textMuted },
+  chipText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, flexShrink: 1 },
+  chipTextSelected: { color: colors.surface },
+  chipTextDisabled: { color: colors.textMuted },
   notAnalyzedBadge: {
     backgroundColor: '#FEF3C7',
     borderRadius: 4,
     paddingHorizontal: 5,
     paddingVertical: 1,
   },
-  notAnalyzedText: { fontSize: 10, color: COLORS.warning, fontWeight: '600' },
+  notAnalyzedText: { fontSize: 10, color: colors.warning, fontWeight: '600' },
   warningBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -414,12 +419,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 14,
   },
   analyzeBtnDisabled: { opacity: 0.45 },
-  analyzeBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.surface },
+  analyzeBtnText: { fontSize: 15, fontWeight: '700', color: colors.surface },
 
   // Error
   errorBanner: {
@@ -432,7 +437,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FECACA',
   },
-  errorText: { flex: 1, fontSize: 13, color: COLORS.error },
+  errorText: { flex: 1, fontSize: 13, color: colors.error },
 
   // Score ring
   scoreCard: {
@@ -454,14 +459,14 @@ const styles = StyleSheet.create({
   scoreOutOf: { fontSize: 12, fontWeight: '600', marginTop: -2 },
   scoreRight: { flex: 1, gap: 4 },
   scoreLabel: { fontSize: 18, fontWeight: '800' },
-  scoreDesc: { fontSize: 12, color: COLORS.textSecondary },
+  scoreDesc: { fontSize: 12, color: colors.textSecondary },
   cachedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginTop: 2,
   },
-  cachedText: { fontSize: 11, color: COLORS.textMuted },
+  cachedText: { fontSize: 11, color: colors.textMuted },
   reanalyzeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -469,26 +474,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     alignSelf: 'flex-start',
   },
-  reanalyzeText: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
+  reanalyzeText: { fontSize: 12, color: colors.primary, fontWeight: '600' },
 
   // Lists (strengths / gaps)
   listCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     gap: 10,
   },
   listHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  listTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  listTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   listRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   listDot: { width: 7, height: 7, borderRadius: 4, marginTop: 6 },
-  listText: { flex: 1, fontSize: 14, color: COLORS.textSecondary, lineHeight: 21 },
+  listText: { flex: 1, fontSize: 14, color: colors.textSecondary, lineHeight: 21 },
 
   // Recommendation
   recommendCard: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     borderRadius: 14,
     padding: 14,
     gap: 10,
@@ -496,4 +501,5 @@ const styles = StyleSheet.create({
     borderColor: '#BFDBFE',
   },
   recommendText: { fontSize: 14, color: '#1E40AF', lineHeight: 22 },
-});
+  });
+}

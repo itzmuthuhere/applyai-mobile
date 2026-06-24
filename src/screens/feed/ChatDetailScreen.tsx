@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
   SafeAreaView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -9,13 +9,17 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { RootState, AppDispatch } from '../../store';
 import { setMessages, appendMessage, ChatMsg } from '../../store/slices/chatSlice';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { FeedStackParamList } from '../../navigation/types';
 
 type RouteT = RouteProp<FeedStackParamList, 'ChatDetail'>;
 
 export default function ChatDetailScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const route = useRoute<RouteT>();
   const dispatch = useDispatch<AppDispatch>();
@@ -101,7 +105,7 @@ export default function ChatDetailScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerCenter}
@@ -122,7 +126,7 @@ export default function ChatDetailScreen() {
 
         {loading ? (
           <View style={styles.loadingCenter}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
           <FlatList
@@ -134,7 +138,7 @@ export default function ChatDetailScreen() {
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.emptyState}>
-                <Ionicons name="chatbubble-outline" size={40} color={COLORS.border} />
+                <Ionicons name="chatbubble-outline" size={40} color={colors.border} />
                 <Text style={styles.emptyText}>Start the conversation!</Text>
               </View>
             }
@@ -147,7 +151,7 @@ export default function ChatDetailScreen() {
             testID="chat-input"
             style={styles.chatInput}
             placeholder={`Message ${partnerName}...`}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={inputText}
             onChangeText={setInputText}
             multiline
@@ -171,49 +175,51 @@ export default function ChatDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   loadingCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 12, paddingVertical: 10,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { padding: 4 },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, justifyContent: 'center' },
   headerAvatar: { width: 36, height: 36, borderRadius: 18 },
-  headerAvatarFallback: { backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+  headerAvatarFallback: { backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   headerAvatarText: { color: '#fff', fontWeight: '800', fontSize: 16 },
-  headerName: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
+  headerName: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
 
   msgList: { paddingHorizontal: 12, paddingVertical: 12, flexGrow: 1 },
-  timeLabel: { textAlign: 'center', fontSize: 11, color: COLORS.textMuted, marginVertical: 8 },
+  timeLabel: { textAlign: 'center', fontSize: 11, color: colors.textMuted, marginVertical: 8 },
   msgRow: { flexDirection: 'row', marginVertical: 3 },
   msgRowMine: { justifyContent: 'flex-end' },
   bubble: {
     maxWidth: '78%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 9,
   },
-  bubbleTheirs: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-  bubbleMine: { backgroundColor: COLORS.primary },
-  bubbleText: { fontSize: 15, color: COLORS.textPrimary, lineHeight: 21 },
+  bubbleTheirs: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  bubbleMine: { backgroundColor: colors.primary },
+  bubbleText: { fontSize: 15, color: colors.textPrimary, lineHeight: 21 },
   bubbleTextMine: { color: '#fff' },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10 },
-  emptyText: { fontSize: 14, color: COLORS.textMuted },
+  emptyText: { fontSize: 14, color: colors.textMuted },
 
   inputRow: {
     flexDirection: 'row', alignItems: 'flex-end', gap: 10,
     paddingHorizontal: 12, paddingVertical: 10,
-    backgroundColor: COLORS.surface, borderTopWidth: 1, borderTopColor: COLORS.border,
+    backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border,
   },
   chatInput: {
-    flex: 1, backgroundColor: COLORS.background, borderRadius: 22, borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: 14, paddingVertical: 8, fontSize: 15, color: COLORS.textPrimary, maxHeight: 120,
+    flex: 1, backgroundColor: colors.background, borderRadius: 22, borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 14, paddingVertical: 8, fontSize: 15, color: colors.textPrimary, maxHeight: 120,
   },
   sendBtn: {
-    width: 38, height: 38, borderRadius: 19, backgroundColor: COLORS.primary,
+    width: 38, height: 38, borderRadius: 19, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  sendBtnDisabled: { backgroundColor: COLORS.border },
-});
+  sendBtnDisabled: { backgroundColor: colors.border },
+  });
+}

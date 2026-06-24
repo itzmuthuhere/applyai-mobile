@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, RefreshControl, Animated, Platform,
@@ -10,7 +10,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { ApplicationsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { setApplications } from '../../store/slices/applicationSlice';
@@ -67,6 +69,8 @@ function filterByTab(apps: Application[], tab: FilterTab): Application[] {
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function SkeletonCard() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const opacity = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -81,12 +85,12 @@ function SkeletonCard() {
   return (
     <Animated.View style={[styles.card, { opacity, marginBottom: 10 }]}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-        <View style={{ width: 46, height: 46, borderRadius: 12, backgroundColor: COLORS.border }} />
+        <View style={{ width: 46, height: 46, borderRadius: 12, backgroundColor: colors.border }} />
         <View style={{ flex: 1, gap: 8 }}>
-          <View style={{ height: 14, width: '65%', backgroundColor: COLORS.border, borderRadius: 6 }} />
-          <View style={{ height: 12, width: '45%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+          <View style={{ height: 14, width: '65%', backgroundColor: colors.border, borderRadius: 6 }} />
+          <View style={{ height: 12, width: '45%', backgroundColor: colors.border, borderRadius: 6 }} />
         </View>
-        <View style={{ height: 24, width: 70, backgroundColor: COLORS.border, borderRadius: 12 }} />
+        <View style={{ height: 24, width: 70, backgroundColor: colors.border, borderRadius: 12 }} />
       </View>
     </Animated.View>
   );
@@ -95,6 +99,8 @@ function SkeletonCard() {
 // ─── Stats bar ───────────────────────────────────────────────────────────────
 
 function StatsBar({ apps }: { apps: Application[] }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const counts: Record<string, number> = {
     Applied: apps.filter(a => ACTIVE_STATUSES.includes(a.status)).length,
     Interview: apps.filter(a => a.status === 'INTERVIEW').length,
@@ -102,10 +108,10 @@ function StatsBar({ apps }: { apps: Application[] }) {
     Rejected: apps.filter(a => CLOSED_STATUSES.includes(a.status)).length,
   };
   const icons: Record<string, { icon: React.ComponentProps<typeof Ionicons>['name']; color: string }> = {
-    Applied:   { icon: 'send-outline', color: COLORS.primary },
+    Applied:   { icon: 'send-outline', color: colors.primary },
     Interview: { icon: 'mic-outline', color: '#10B981' },
     Offer:     { icon: 'trophy-outline', color: '#F59E0B' },
-    Rejected:  { icon: 'close-circle-outline', color: COLORS.error },
+    Rejected:  { icon: 'close-circle-outline', color: colors.error },
   };
   return (
     <View style={styles.statsBar}>
@@ -123,6 +129,8 @@ function StatsBar({ apps }: { apps: Application[] }) {
 // ─── Application card ────────────────────────────────────────────────────────
 
 function AppCard({ item, onPress }: { item: Application; onPress: () => void }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const cfg = STATUS_CONFIG[item.status];
   const bgColor = companyColor(item.job.company ?? '');
   const initial = item.job.company ? item.job.company[0].toUpperCase() : '?';
@@ -143,7 +151,7 @@ function AppCard({ item, onPress }: { item: Application; onPress: () => void }) 
           <View style={styles.cardMeta}>
             {item.job.location && (
               <View style={styles.metaItem}>
-                <Ionicons name="location-outline" size={11} color={COLORS.textMuted} />
+                <Ionicons name="location-outline" size={11} color={colors.textMuted} />
                 <Text style={styles.metaText} numberOfLines={1}>{item.job.location}</Text>
               </View>
             )}
@@ -184,12 +192,14 @@ function AppCard({ item, onPress }: { item: Application; onPress: () => void }) 
 // ─── Tab pill ────────────────────────────────────────────────────────────────
 
 function TabPill({ label, active, count, onPress, testID }: { label: string; active: boolean; count: number; onPress: () => void; testID?: string }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity testID={testID} style={[styles.tabPill, active && styles.tabPillActive]} onPress={onPress} activeOpacity={0.75}>
       <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
       {count > 0 && (
         <View style={[styles.tabCount, active && styles.tabCountActive]}>
-          <Text style={[styles.tabCountText, active && { color: COLORS.primary }]}>{count}</Text>
+          <Text style={[styles.tabCountText, active && { color: colors.primary }]}>{count}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -199,6 +209,8 @@ function TabPill({ label, active, count, onPress, testID }: { label: string; act
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export default function ApplicationsListScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
   const applications = useSelector((s: RootState) => s.application.list);
@@ -274,7 +286,7 @@ export default function ApplicationsListScreen() {
 
       {error ? (
         <View testID="apps-error" style={styles.centerState}>
-          <Ionicons name="cloud-offline-outline" size={52} color={COLORS.textMuted} />
+          <Ionicons name="cloud-offline-outline" size={52} color={colors.textMuted} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => loadApplications()}>
             <Text style={styles.retryBtnText}>Try Again</Text>
@@ -287,7 +299,7 @@ export default function ApplicationsListScreen() {
           renderItem={renderItem}
           contentContainerStyle={[styles.listContent, filtered.length === 0 && { flex: 1 }]}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => loadApplications(true)} tintColor={COLORS.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => loadApplications(true)} tintColor={colors.primary} />
           }
           removeClippedSubviews={Platform.OS === 'android'}
           initialNumToRender={10}
@@ -296,7 +308,7 @@ export default function ApplicationsListScreen() {
             <View testID="apps-empty-state" style={styles.centerState}>
               {applications.length === 0 ? (
                 <>
-                  <Ionicons name="briefcase-outline" size={60} color={COLORS.border} />
+                  <Ionicons name="briefcase-outline" size={60} color={colors.border} />
                   <Text style={styles.emptyTitle}>No applications yet</Text>
                   <Text style={styles.emptySubtitle}>
                     Apply to jobs from the Jobs tab and track your progress here.
@@ -304,7 +316,7 @@ export default function ApplicationsListScreen() {
                 </>
               ) : (
                 <>
-                  <Ionicons name="filter-outline" size={48} color={COLORS.border} />
+                  <Ionicons name="filter-outline" size={48} color={colors.border} />
                   <Text style={styles.emptyTitle}>No {TAB_LABELS[activeTab].toLowerCase()} applications</Text>
                   <TouchableOpacity style={styles.retryBtn} onPress={() => setActiveTab('all')}>
                     <Text style={styles.retryBtnText}>View All</Text>
@@ -319,24 +331,25 @@ export default function ApplicationsListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
 
   // Stats
   statsBar: {
-    flexDirection: 'row', backgroundColor: COLORS.surface,
+    flexDirection: 'row', backgroundColor: colors.surface,
     paddingVertical: 14, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
   statCount: { fontSize: 18, fontWeight: '900' },
-  statLabel: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
+  statLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '500' },
 
   // Tabs
   tabBar: {
-    flexDirection: 'row', backgroundColor: COLORS.surface,
+    flexDirection: 'row', backgroundColor: colors.surface,
     paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 6,
+    borderBottomWidth: 1, borderBottomColor: colors.border, gap: 6,
   },
   tabPill: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -344,20 +357,20 @@ const styles = StyleSheet.create({
     borderRadius: 20, borderWidth: 1.5, borderColor: 'transparent',
     backgroundColor: '#F1F5F9',
   },
-  tabPillActive: { backgroundColor: COLORS.primaryLight, borderColor: COLORS.primary },
-  tabText: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
-  tabTextActive: { color: COLORS.primary },
+  tabPillActive: { backgroundColor: colors.primaryLight, borderColor: colors.primary },
+  tabText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
+  tabTextActive: { color: colors.primary },
   tabCount: { backgroundColor: '#E2E8F0', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
   tabCountActive: { backgroundColor: '#BFDBFE' },
-  tabCountText: { fontSize: 10, fontWeight: '800', color: COLORS.textMuted },
+  tabCountText: { fontSize: 10, fontWeight: '800', color: colors.textMuted },
 
   // List
   listContent: { padding: 14, gap: 10, paddingBottom: 40 },
 
   // Card
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16,
-    padding: 14, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 16,
+    padding: 14, borderWidth: 1, borderColor: colors.border,
     gap: 10,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
@@ -366,12 +379,12 @@ const styles = StyleSheet.create({
   logoCircle: { width: 46, height: 46, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   logoInitial: { fontSize: 19, fontWeight: '800' },
   cardBody: { flex: 1 },
-  jobTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  company: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 4 },
+  jobTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  company: { fontSize: 13, color: colors.textSecondary, marginBottom: 4 },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3, flex: 1 },
-  metaText: { fontSize: 11, color: COLORS.textMuted },
-  appliedAgo: { fontSize: 11, color: COLORS.textMuted },
+  metaText: { fontSize: 11, color: colors.textMuted },
+  appliedAgo: { fontSize: 11, color: colors.textMuted },
   statusBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, flexShrink: 0,
@@ -395,9 +408,10 @@ const styles = StyleSheet.create({
 
   // States
   centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 14 },
-  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
-  retryBtn: { backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
+  errorText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
+  emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21 },
+  retryBtn: { backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
   retryBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-});
+  });
+}

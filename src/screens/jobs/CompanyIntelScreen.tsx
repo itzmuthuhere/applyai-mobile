@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, SafeAreaView,
@@ -8,7 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
 import { fetchCompanyIntel, clearCompanyIntel } from '../../store/intelligenceSlice';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 
 type RouteProps = RouteProp<JobsStackParamList, 'CompanyIntel'>;
@@ -18,12 +19,14 @@ const companyColor = (name: string) =>
   COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
 
 const DIFFICULTY_COLOR: Record<string, string> = {
-  EASY: COLORS.success,
-  MEDIUM: COLORS.warning,
-  HARD: COLORS.error,
+  EASY: '#10B981',
+  MEDIUM: '#F59E0B',
+  HARD: '#EF4444',
 };
 
 export default function CompanyIntelScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const dispatch = useDispatch<AppDispatch>();
   const { companyIntelResult: data, loading, error } = useSelector((s: RootState) => s.intelligence);
@@ -36,7 +39,7 @@ export default function CompanyIntelScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={COLORS.primary} size="large" />
+        <ActivityIndicator color={colors.primary} size="large" />
         <Text style={styles.loadingText}>Researching {params.companyName}...</Text>
       </View>
     );
@@ -45,7 +48,7 @@ export default function CompanyIntelScreen() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <Ionicons name="cloud-offline-outline" size={48} color={COLORS.error} />
+        <Ionicons name="cloud-offline-outline" size={48} color={colors.error} />
         <Text style={styles.errorText}>{error}</Text>
       </View>
     );
@@ -53,7 +56,7 @@ export default function CompanyIntelScreen() {
 
   if (!data) return null;
 
-  const diffColor = DIFFICULTY_COLOR[data.interviewDifficulty] ?? COLORS.textSecondary;
+  const diffColor = DIFFICULTY_COLOR[data.interviewDifficulty] ?? colors.textSecondary;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -135,17 +138,17 @@ export default function CompanyIntelScreen() {
         {/* Red Flags */}
         {data.redFlags?.length > 0 && (
           <View style={[styles.card, styles.redCard]}>
-            <SectionTitle icon="warning-outline" title="Red Flags" color={COLORS.error} />
+            <SectionTitle icon="warning-outline" title="Red Flags" color={colors.error} />
             {data.redFlags.map((flag: string, i: number) => (
-              <Text key={i} style={[styles.bulletItem, { color: COLORS.error }]}>• {flag}</Text>
+              <Text key={i} style={[styles.bulletItem, { color: colors.error }]}>• {flag}</Text>
             ))}
           </View>
         )}
 
         {/* Verdict */}
         <View style={[styles.card, styles.verdictCard]}>
-          <SectionTitle icon="checkmark-circle-outline" title="Verdict" color={COLORS.success} />
-          <Text style={[styles.bodyText, { color: COLORS.success, fontWeight: '600' }]}>{data.verdict}</Text>
+          <SectionTitle icon="checkmark-circle-outline" title="Verdict" color={colors.success} />
+          <Text style={[styles.bodyText, { color: colors.success, fontWeight: '600' }]}>{data.verdict}</Text>
         </View>
 
       </ScrollView>
@@ -153,7 +156,9 @@ export default function CompanyIntelScreen() {
   );
 }
 
-function SectionTitle({ icon, title, color = COLORS.textPrimary }: { icon: keyof typeof Ionicons.glyphMap; title: string; color?: string }) {
+function SectionTitle({ icon, title, color = '#0F172A' }: { icon: keyof typeof Ionicons.glyphMap; title: string; color?: string }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.sectionTitleRow}>
       <Ionicons name={icon} size={16} color={color} />
@@ -163,6 +168,8 @@ function SectionTitle({ icon, title, color = COLORS.textPrimary }: { icon: keyof
 }
 
 function StarRating({ rating }: { rating: number }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
   return (
@@ -172,7 +179,7 @@ function StarRating({ rating }: { rating: number }) {
           key={i}
           name={i <= full ? 'star' : i === full + 1 && half ? 'star-half' : 'star-outline'}
           size={16}
-          color={COLORS.warning}
+          color={colors.warning}
         />
       ))}
       <Text style={styles.ratingNumber}>{rating?.toFixed(1)}</Text>
@@ -180,52 +187,53 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 16, gap: 12, paddingBottom: 40 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 },
-  loadingText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
-  errorText: { fontSize: 14, color: COLORS.error, textAlign: 'center' },
+  loadingText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { fontSize: 14, color: colors.error, textAlign: 'center' },
 
   headerCard: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: colors.border,
     flexDirection: 'row', alignItems: 'flex-start', gap: 14,
   },
   companyIcon: {
     width: 52, height: 52, borderRadius: 13,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
-  companyInitial: { fontSize: 22, fontWeight: '800', color: COLORS.primary },
-  companyName: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  overview: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
+  companyInitial: { fontSize: 22, fontWeight: '800', color: colors.primary },
+  companyName: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  overview: { fontSize: 13, color: colors.textSecondary, lineHeight: 19 },
 
   statsRow: { flexDirection: 'row', gap: 12 },
   statCard: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', gap: 4,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: colors.border, alignItems: 'center', gap: 4,
   },
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  ratingNumber: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, marginLeft: 4 },
-  salaryRange: { fontSize: 14, fontWeight: '700', color: COLORS.primary, textAlign: 'center' },
-  statLabel: { fontSize: 11, color: COLORS.textMuted },
+  ratingNumber: { fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginLeft: 4 },
+  salaryRange: { fontSize: 14, fontWeight: '700', color: colors.primary, textAlign: 'center' },
+  statLabel: { fontSize: 11, color: colors.textMuted },
 
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 10,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 10,
   },
-  redCard: { borderColor: COLORS.error + '40' },
-  verdictCard: { borderColor: COLORS.success + '40' },
+  redCard: { borderColor: colors.error + '40' },
+  verdictCard: { borderColor: colors.success + '40' },
 
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sectionTitle: { fontSize: 14, fontWeight: '700' },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    backgroundColor: COLORS.primaryLight, borderRadius: 20,
+    backgroundColor: colors.primaryLight, borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 5,
   },
-  chipText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
+  chipText: { fontSize: 12, fontWeight: '600', color: colors.primary },
 
   difficultyRow: { flexDirection: 'row' },
   difficultyBadge: {
@@ -234,6 +242,7 @@ const styles = StyleSheet.create({
   },
   difficultyText: { fontSize: 12, fontWeight: '700' },
 
-  bodyText: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 21 },
-  bulletItem: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
-});
+  bodyText: { fontSize: 14, color: colors.textSecondary, lineHeight: 21 },
+  bulletItem: { fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
+  });
+}

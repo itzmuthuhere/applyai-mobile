@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform,
@@ -7,7 +7,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { AppDispatch, RootState } from '../../store';
 import { fetchNegotiationCoach, clearNegotiation } from '../../store/intelligenceSlice';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 
 const EXP_PRESETS = [
   { label: '0–2 yrs', value: '1' },
@@ -24,19 +25,25 @@ function fmtINR(n: number) {
 }
 
 function FieldLabel({ label }: { label: string }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return <Text style={styles.fieldLabel}>{label}</Text>;
 }
 
 function InputBox({ icon, children }: { icon: keyof typeof Ionicons.glyphMap; children: React.ReactNode }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.inputBox}>
-      <Ionicons name={icon} size={16} color={COLORS.textMuted} />
+      <Ionicons name={icon} size={16} color={colors.textMuted} />
       {children}
     </View>
   );
 }
 
 export default function NegotiationCoachScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const dispatch = useDispatch<AppDispatch>();
   const { negotiationResult: r, loading, error } = useSelector((s: RootState) => s.intelligence);
 
@@ -87,7 +94,7 @@ export default function NegotiationCoachScreen() {
                 value={offer}
                 onChangeText={setOffer}
                 keyboardType="numeric"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 returnKeyType="next"
               />
               {offerNum > 0 && (
@@ -102,7 +109,7 @@ export default function NegotiationCoachScreen() {
                 placeholder="e.g. Senior Java Engineer"
                 value={role}
                 onChangeText={setRole}
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 returnKeyType="next"
               />
             </InputBox>
@@ -114,7 +121,7 @@ export default function NegotiationCoachScreen() {
                 placeholder="e.g. Bangalore"
                 value={location}
                 onChangeText={setLocation}
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 returnKeyType="next"
               />
             </InputBox>
@@ -139,7 +146,7 @@ export default function NegotiationCoachScreen() {
                 placeholder="e.g. Java, Spring Boot, Kafka"
                 value={skills}
                 onChangeText={setSkills}
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 returnKeyType="done"
               />
             </InputBox>
@@ -162,7 +169,7 @@ export default function NegotiationCoachScreen() {
 
           {error && (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+              <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -207,7 +214,7 @@ export default function NegotiationCoachScreen() {
               {/* Negotiation Script */}
               <View style={styles.card}>
                 <View style={styles.sectionHead}>
-                  <Ionicons name="chatbubble-outline" size={15} color={COLORS.primary} />
+                  <Ionicons name="chatbubble-outline" size={15} color={colors.primary} />
                   <Text style={styles.sectionTitle}>Negotiation Script</Text>
                 </View>
                 <View style={styles.scriptBox}>
@@ -219,7 +226,7 @@ export default function NegotiationCoachScreen() {
               {r.talkingPoints?.length > 0 && (
                 <View style={styles.card}>
                   <View style={styles.sectionHead}>
-                    <Ionicons name="list-outline" size={15} color={COLORS.primary} />
+                    <Ionicons name="list-outline" size={15} color={colors.primary} />
                     <Text style={styles.sectionTitle}>Talking Points</Text>
                   </View>
                   {r.talkingPoints.map((p: string, i: number) => (
@@ -235,13 +242,13 @@ export default function NegotiationCoachScreen() {
               {r.redFlags?.length > 0 && (
                 <View style={[styles.card, styles.redCard]}>
                   <View style={styles.sectionHead}>
-                    <Ionicons name="warning-outline" size={15} color={COLORS.error} />
-                    <Text style={[styles.sectionTitle, { color: COLORS.error }]}>Watch Out</Text>
+                    <Ionicons name="warning-outline" size={15} color={colors.error} />
+                    <Text style={[styles.sectionTitle, { color: colors.error }]}>Watch Out</Text>
                   </View>
                   {r.redFlags.map((f: string, i: number) => (
                     <View key={i} style={styles.bulletRow}>
-                      <View style={[styles.bullet, { backgroundColor: COLORS.error }]} />
-                      <Text style={[styles.bulletText, { color: COLORS.error }]}>{f}</Text>
+                      <View style={[styles.bullet, { backgroundColor: colors.error }]} />
+                      <Text style={[styles.bulletText, { color: colors.error }]}>{f}</Text>
                     </View>
                   ))}
                 </View>
@@ -256,8 +263,9 @@ export default function NegotiationCoachScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 14, gap: 12 },
 
   hero: {
@@ -273,26 +281,26 @@ const styles = StyleSheet.create({
   heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.9)' },
 
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 8,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 8,
   },
-  fieldLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  fieldLabel: { fontSize: 11, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   inputBox: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: COLORS.background, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, borderRadius: 10, borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: 12, paddingVertical: 11,
   },
-  input: { flex: 1, fontSize: 15, color: COLORS.textPrimary },
-  offerFmt: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  input: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  offerFmt: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
   expRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   expChip: {
     flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10,
-    borderWidth: 1, borderColor: COLORS.border, backgroundColor: '#F8FAFC',
+    borderWidth: 1, borderColor: colors.border, backgroundColor: '#F8FAFC',
   },
-  expChipActive: { backgroundColor: COLORS.primaryLight, borderColor: COLORS.primary },
-  expText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
-  expTextActive: { color: COLORS.primary, fontWeight: '700' },
+  expChipActive: { backgroundColor: colors.primaryLight, borderColor: colors.primary },
+  expText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
+  expTextActive: { color: colors.primary, fontWeight: '700' },
 
   submitBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -308,7 +316,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12,
     borderWidth: 1, borderColor: '#FECACA',
   },
-  errorText: { flex: 1, fontSize: 13, color: COLORS.error },
+  errorText: { flex: 1, fontSize: 13, color: colors.error },
 
   verdictCard: {
     backgroundColor: '#10B981', borderRadius: 20, padding: 20, gap: 16,
@@ -333,17 +341,18 @@ const styles = StyleSheet.create({
   marketPosition: { fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 18 },
 
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
 
   scriptBox: {
-    backgroundColor: COLORS.background, borderRadius: 10, padding: 14,
-    borderLeftWidth: 3, borderLeftColor: COLORS.primary,
+    backgroundColor: colors.background, borderRadius: 10, padding: 14,
+    borderLeftWidth: 3, borderLeftColor: colors.primary,
   },
-  scriptText: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22, fontStyle: 'italic' },
+  scriptText: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, fontStyle: 'italic' },
 
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  bullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary, marginTop: 7, flexShrink: 0 },
-  bulletText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+  bullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary, marginTop: 7, flexShrink: 0 },
+  bulletText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
 
   redCard: { backgroundColor: '#FEF2F2', borderColor: '#FECACA' },
-});
+  });
+}

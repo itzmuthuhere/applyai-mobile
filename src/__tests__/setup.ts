@@ -80,6 +80,25 @@ jest.mock('expo-linear-gradient', () => ({
   LinearGradient: ({ children }: any) => children,
 }));
 
+jest.mock('../theme/ThemeContext', () => ({
+  useTheme: () => ({
+    primary: '#2563EB', primaryLight: '#DBEAFE', secondary: '#10B981',
+    background: '#F8FAFC', surface: '#FFFFFF', surfaceAlt: '#F1F5F9',
+    textPrimary: '#0F172A', textSecondary: '#64748B', textMuted: '#94A3B8',
+    border: '#E2E8F0', error: '#EF4444', warning: '#F59E0B', success: '#10B981',
+  }),
+  useThemeSettings: () => ({
+    colors: {
+      primary: '#2563EB', primaryLight: '#DBEAFE', secondary: '#10B981',
+      background: '#F8FAFC', surface: '#FFFFFF', surfaceAlt: '#F1F5F9',
+      textPrimary: '#0F172A', textSecondary: '#64748B', textMuted: '#94A3B8',
+      border: '#E2E8F0', error: '#EF4444', warning: '#F59E0B', success: '#10B981',
+    },
+    isDark: false, mode: 'light', accent: 'blue',
+  }),
+  ThemeProvider: ({ children }: any) => children,
+}));
+
 jest.mock('dayjs/plugin/relativeTime', () => (_opt: any, DayjsClass: any) => {
   if (DayjsClass && DayjsClass.prototype) {
     DayjsClass.prototype.fromNow = function() { return '1 day ago'; };

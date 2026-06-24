@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Share, SafeAreaView,
@@ -8,7 +8,9 @@ import { useRoute, useNavigation, RouteProp, CommonActions } from '@react-naviga
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { ResumeStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { addResume, setResumes } from '../../store/slices/resumeSlice';
@@ -23,6 +25,8 @@ const companyColor = (name: string) =>
   COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
 
 export default function TailorResumeScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
@@ -86,7 +90,7 @@ export default function TailorResumeScreen() {
 
   const jobTitle = selectedJob?.title ?? `Job #${params.jobId}`;
   const jobCompany = selectedJob?.company ?? '';
-  const jColor = jobCompany ? companyColor(jobCompany) : COLORS.primary;
+  const jColor = jobCompany ? companyColor(jobCompany) : colors.primary;
   const noJob = !params.jobId;
 
   return (
@@ -124,7 +128,7 @@ export default function TailorResumeScreen() {
               {jobCompany ? <Text style={styles.jobCompany}>{jobCompany}</Text> : null}
             </View>
             <View style={styles.aiChip}>
-              <Ionicons name="color-wand" size={12} color={COLORS.primary} />
+              <Ionicons name="color-wand" size={12} color={colors.primary} />
               <Text style={styles.aiChipText}>AI Tailor</Text>
             </View>
           </View>
@@ -134,7 +138,7 @@ export default function TailorResumeScreen() {
           <>
             <View style={styles.card}>
               <View style={styles.cardHead}>
-                <Ionicons name="document-text-outline" size={14} color={COLORS.primary} />
+                <Ionicons name="document-text-outline" size={14} color={colors.primary} />
                 <Text style={styles.cardTitle}>Select Resume to Tailor</Text>
               </View>
               <Text style={styles.cardHint}>Only analyzed resumes can be tailored for a role</Text>
@@ -148,7 +152,7 @@ export default function TailorResumeScreen() {
 
             {error && (
               <View style={styles.errorBox}>
-                <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+                <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
@@ -173,7 +177,7 @@ export default function TailorResumeScreen() {
 
             {isLoading && (
               <View style={styles.loadingCard}>
-                <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
+                <Ionicons name="time-outline" size={14} color={colors.textMuted} />
                 <Text style={styles.loadingHint}>Rewriting your resume for this role… ~15 seconds</Text>
               </View>
             )}
@@ -182,7 +186,7 @@ export default function TailorResumeScreen() {
             {!isLoading && (
               <View style={styles.howCard}>
                 <View style={styles.howHead}>
-                  <Ionicons name="information-circle-outline" size={14} color={COLORS.primary} />
+                  <Ionicons name="information-circle-outline" size={14} color={colors.primary} />
                   <Text style={styles.howTitle}>How it works</Text>
                 </View>
                 {[
@@ -207,7 +211,7 @@ export default function TailorResumeScreen() {
             {/* Success banner */}
             <View style={styles.successBanner}>
               <View style={styles.successLeft}>
-                <Ionicons name="checkmark-circle" size={22} color={COLORS.success} />
+                <Ionicons name="checkmark-circle" size={22} color={colors.success} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.successTitle}>Resume tailored successfully!</Text>
@@ -218,14 +222,14 @@ export default function TailorResumeScreen() {
             {/* New version card */}
             <View style={styles.versionCard}>
               <View style={styles.versionIconBox}>
-                <Ionicons name="document-text" size={22} color={COLORS.primary} />
+                <Ionicons name="document-text" size={22} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.versionLabel}>New Version Created</Text>
                 <Text style={styles.versionName}>{result.versionName}</Text>
               </View>
               <View style={styles.savedBadge}>
-                <Ionicons name="checkmark" size={12} color={COLORS.success} />
+                <Ionicons name="checkmark" size={12} color={colors.success} />
                 <Text style={styles.savedBadgeText}>Saved</Text>
               </View>
             </View>
@@ -249,13 +253,13 @@ export default function TailorResumeScreen() {
             {/* Tailored content */}
             <View style={styles.card}>
               <View style={styles.cardHead}>
-                <Ionicons name="document-outline" size={14} color={COLORS.primary} />
+                <Ionicons name="document-outline" size={14} color={colors.primary} />
                 <Text style={styles.cardTitle}>Tailored Content</Text>
                 <TouchableOpacity
                   style={styles.copyInlineBtn}
                   onPress={() => Share.share({ message: result.tailoredText })}
                 >
-                  <Ionicons name="copy-outline" size={13} color={COLORS.primary} />
+                  <Ionicons name="copy-outline" size={13} color={colors.primary} />
                   <Text style={styles.copyInlineBtnText}>Copy</Text>
                 </TouchableOpacity>
               </View>
@@ -267,7 +271,7 @@ export default function TailorResumeScreen() {
               style={styles.shareBtn}
               onPress={() => Share.share({ message: result.tailoredText })}
             >
-              <Ionicons name="share-outline" size={18} color={COLORS.primary} />
+              <Ionicons name="share-outline" size={18} color={colors.primary} />
               <Text style={styles.shareBtnText}>Share / Copy</Text>
             </TouchableOpacity>
 
@@ -287,13 +291,14 @@ export default function TailorResumeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 14, gap: 12 },
 
   hero: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: COLORS.primary, borderRadius: 18, padding: 18,
+    backgroundColor: colors.primary, borderRadius: 18, padding: 18,
   },
   heroIcon: {
     width: 52, height: 52, borderRadius: 16,
@@ -311,8 +316,8 @@ const styles = StyleSheet.create({
   noJobText: { flex: 1, fontSize: 13, color: '#92400E', fontWeight: '500' },
 
   jobCard: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: colors.border,
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   jobIcon: {
@@ -320,39 +325,39 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   jobInitial: { fontSize: 18, fontWeight: '900' },
-  jobTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  jobCompany: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  jobTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  jobCompany: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   aiChip: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: COLORS.primaryLight, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+    backgroundColor: colors.primaryLight, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
   },
-  aiChipText: { fontSize: 11, fontWeight: '800', color: COLORS.primary },
+  aiChipText: { fontSize: 11, fontWeight: '800', color: colors.primary },
 
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 10,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 10,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cardTitle: { flex: 1, fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
-  cardHint: { fontSize: 12, color: COLORS.textMuted },
+  cardTitle: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  cardHint: { fontSize: 12, color: colors.textMuted },
   copyInlineBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderWidth: 1, borderColor: COLORS.border, borderRadius: 8,
-    paddingHorizontal: 8, paddingVertical: 4, backgroundColor: COLORS.background,
+    borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 4, backgroundColor: colors.background,
   },
-  copyInlineBtnText: { fontSize: 11, fontWeight: '700', color: COLORS.primary },
+  copyInlineBtnText: { fontSize: 11, fontWeight: '700', color: colors.primary },
 
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12,
     borderWidth: 1, borderColor: '#FECACA',
   },
-  errorText: { flex: 1, fontSize: 13, color: COLORS.error },
+  errorText: { flex: 1, fontSize: 13, color: colors.error },
 
   tailorBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 15,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 },
+    backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 15,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3, shadowRadius: 6, elevation: 4,
   },
   tailorBtnDisabled: { opacity: 0.5, shadowOpacity: 0 },
@@ -360,24 +365,24 @@ const styles = StyleSheet.create({
 
   loadingCard: {
     flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center',
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: colors.border,
   },
-  loadingHint: { fontSize: 13, color: COLORS.textMuted, fontStyle: 'italic' },
+  loadingHint: { fontSize: 13, color: colors.textMuted, fontStyle: 'italic' },
 
   howCard: {
-    backgroundColor: COLORS.primaryLight, borderRadius: 14, padding: 14,
+    backgroundColor: colors.primaryLight, borderRadius: 14, padding: 14,
     borderWidth: 1, borderColor: '#BFDBFE', gap: 10,
   },
   howHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  howTitle: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  howTitle: { fontSize: 13, fontWeight: '700', color: colors.primary },
   howRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   howStepDot: {
     width: 22, height: 22, borderRadius: 11,
-    backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   howStepNum: { fontSize: 11, fontWeight: '900', color: '#fff' },
-  howText: { flex: 1, fontSize: 13, color: COLORS.primary, lineHeight: 19 },
+  howText: { flex: 1, fontSize: 13, color: colors.primary, lineHeight: 19 },
 
   successBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -392,16 +397,16 @@ const styles = StyleSheet.create({
   successSub: { fontSize: 12, color: '#047857', marginTop: 2 },
 
   versionCard: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: colors.border,
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   versionIconBox: {
     width: 44, height: 44, borderRadius: 12,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
-  versionLabel: { fontSize: 11, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
-  versionName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginTop: 2 },
+  versionLabel: { fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
+  versionName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginTop: 2 },
   savedBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
     backgroundColor: '#D1FAE5', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
@@ -410,21 +415,22 @@ const styles = StyleSheet.create({
 
   changeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   changeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#059669', marginTop: 7, flexShrink: 0 },
-  changeText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
-  tailoredText: { fontSize: 13, color: COLORS.textPrimary, lineHeight: 21 },
+  changeText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
+  tailoredText: { fontSize: 13, color: colors.textPrimary, lineHeight: 21 },
 
   shareBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: 14,
-    paddingVertical: 12, backgroundColor: COLORS.surface,
+    borderWidth: 1.5, borderColor: colors.primary, borderRadius: 14,
+    paddingVertical: 12, backgroundColor: colors.surface,
   },
-  shareBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  shareBtnText: { fontSize: 14, fontWeight: '700', color: colors.primary },
 
   doneBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 14,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 },
+    backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
   doneBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});
+  });
+}

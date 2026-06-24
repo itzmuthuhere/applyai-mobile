@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,9 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { InterviewStackParamList } from '../../navigation/types';
 import { InterviewSession, InterviewQuestion } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
@@ -39,11 +41,11 @@ const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   HR: { bg: '#EDE9FE', text: '#5B21B6' },
 };
 
-function scoreColor(s: number | null) {
-  if (s == null) return COLORS.textMuted;
-  if (s >= 8) return COLORS.success;
-  if (s >= 5) return COLORS.warning;
-  return COLORS.error;
+function scoreColor(s: number | null, colors: AppColors) {
+  if (s == null) return colors.textMuted;
+  if (s >= 8) return colors.success;
+  if (s >= 5) return colors.warning;
+  return colors.error;
 }
 
 function scoreLabel(s: number) {
@@ -55,10 +57,12 @@ function scoreLabel(s: number) {
 }
 
 function QuestionCard({ q, index }: { q: InterviewQuestion; index: number }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const [expanded, setExpanded] = useState(false);
-  const type = TYPE_COLORS[q.questionType] ?? { bg: COLORS.border, text: COLORS.textSecondary };
+  const type = TYPE_COLORS[q.questionType] ?? { bg: colors.border, text: colors.textSecondary };
   const answered = q.transcript != null;
-  const sc = scoreColor(q.aiScore ?? null);
+  const sc = scoreColor(q.aiScore ?? null, colors);
 
   return (
     <View style={styles.qCard}>
@@ -90,7 +94,7 @@ function QuestionCard({ q, index }: { q: InterviewQuestion; index: number }) {
           <Ionicons
             name={expanded ? 'chevron-up' : 'chevron-down'}
             size={16}
-            color={COLORS.textMuted}
+            color={colors.textMuted}
           />
         </View>
       </TouchableOpacity>
@@ -110,7 +114,7 @@ function QuestionCard({ q, index }: { q: InterviewQuestion; index: number }) {
                   <Text style={styles.expandLabel}>AI Feedback</Text>
                   <View style={styles.feedbackBox}>
                     <View style={styles.feedbackIconBox}>
-                      <Ionicons name="bulb" size={14} color={COLORS.warning} />
+                      <Ionicons name="bulb" size={14} color={colors.warning} />
                     </View>
                     <Text style={styles.feedbackText}>{q.aiFeedback}</Text>
                   </View>
@@ -127,6 +131,8 @@ function QuestionCard({ q, index }: { q: InterviewQuestion; index: number }) {
 }
 
 export default function InterviewReportScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
 
@@ -155,7 +161,7 @@ export default function InterviewReportScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading report…</Text>
         </View>
       </SafeAreaView>
@@ -167,7 +173,7 @@ export default function InterviewReportScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
           <View style={styles.errorIconBox}>
-            <Ionicons name="alert-circle-outline" size={36} color={COLORS.error} />
+            <Ionicons name="alert-circle-outline" size={36} color={colors.error} />
           </View>
           <Text style={styles.errorTitle}>Could not load report</Text>
           <Text style={styles.errorSub}>{error ?? 'Session not found.'}</Text>
@@ -211,7 +217,7 @@ export default function InterviewReportScreen() {
           </View>
           {!isComplete && (
             <View style={styles.inProgressBadge}>
-              <Ionicons name="time-outline" size={12} color={COLORS.warning} />
+              <Ionicons name="time-outline" size={12} color={colors.warning} />
               <Text style={styles.inProgressText}>In Progress</Text>
             </View>
           )}
@@ -221,16 +227,16 @@ export default function InterviewReportScreen() {
         <View style={styles.scoreCard}>
           {/* Score ring */}
           <View style={styles.ringWrap}>
-            <View style={[styles.ringOuter, { borderColor: (sc != null ? scoreColor(sc) : COLORS.border) + '40' }]}>
-              <View style={[styles.ringInner, { borderColor: sc != null ? scoreColor(sc) : COLORS.border }]}>
-                <Text style={[styles.ringScore, { color: sc != null ? scoreColor(sc) : COLORS.textMuted }]}>
+            <View style={[styles.ringOuter, { borderColor: (sc != null ? scoreColor(sc, colors) : colors.border) + '40' }]}>
+              <View style={[styles.ringInner, { borderColor: sc != null ? scoreColor(sc, colors) : colors.border }]}>
+                <Text style={[styles.ringScore, { color: sc != null ? scoreColor(sc, colors) : colors.textMuted }]}>
                   {sc != null ? sc.toFixed(1) : '—'}
                 </Text>
-                {sc != null && <Text style={[styles.ringMax, { color: scoreColor(sc) }]}>/10</Text>}
+                {sc != null && <Text style={[styles.ringMax, { color: scoreColor(sc, colors) }]}>/10</Text>}
               </View>
             </View>
             {sc != null && (
-              <Text style={[styles.ringLabel, { color: scoreColor(sc) }]}>{scoreLabel(sc)}</Text>
+              <Text style={[styles.ringLabel, { color: scoreColor(sc, colors) }]}>{scoreLabel(sc)}</Text>
             )}
           </View>
 
@@ -238,7 +244,7 @@ export default function InterviewReportScreen() {
           <View style={styles.statsRight}>
             <View style={styles.statItem}>
               <View style={[styles.statIcon, { backgroundColor: '#D1FAE5' }]}>
-                <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.success} />
+                <Ionicons name="checkmark-circle-outline" size={16} color={colors.success} />
               </View>
               <View>
                 <Text style={styles.statNum}>{answered}</Text>
@@ -246,8 +252,8 @@ export default function InterviewReportScreen() {
               </View>
             </View>
             <View style={styles.statItem}>
-              <View style={[styles.statIcon, { backgroundColor: COLORS.primaryLight }]}>
-                <Ionicons name="list-outline" size={16} color={COLORS.primary} />
+              <View style={[styles.statIcon, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="list-outline" size={16} color={colors.primary} />
               </View>
               <View>
                 <Text style={styles.statNum}>{total}</Text>
@@ -261,11 +267,11 @@ export default function InterviewReportScreen() {
                 <Ionicons
                   name={sc != null && sc >= 7 ? 'trophy-outline' : 'trending-up-outline'}
                   size={16}
-                  color={sc != null ? scoreColor(sc) : COLORS.textMuted}
+                  color={sc != null ? scoreColor(sc, colors) : colors.textMuted}
                 />
               </View>
               <View>
-                <Text style={[styles.statNum, sc != null && { color: scoreColor(sc) }]}>
+                <Text style={[styles.statNum, sc != null && { color: scoreColor(sc, colors) }]}>
                   {sc == null ? '—' : sc >= 7 ? 'Great' : sc >= 5 ? 'Good' : 'Practice'}
                 </Text>
                 <Text style={styles.statLabel}>Verdict</Text>
@@ -277,7 +283,7 @@ export default function InterviewReportScreen() {
         {/* Question Breakdown */}
         <View style={styles.sectionHead}>
           <View style={styles.sectionIconBox}>
-            <Ionicons name="help-circle-outline" size={16} color={COLORS.primary} />
+            <Ionicons name="help-circle-outline" size={16} color={colors.primary} />
           </View>
           <Text style={styles.sectionTitle}>Question Breakdown</Text>
           <Text style={styles.sectionCount}>{answered}/{total}</Text>
@@ -305,22 +311,23 @@ export default function InterviewReportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   content: { gap: 14, paddingBottom: 40 },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 },
-  loadingText: { fontSize: 14, color: COLORS.textSecondary },
+  loadingText: { fontSize: 14, color: colors.textSecondary },
   errorIconBox: {
     width: 72, height: 72, borderRadius: 20,
     backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center',
   },
-  errorTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary },
-  errorSub: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center' },
+  errorTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  errorSub: { fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
   retryBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
   },
   retryBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
@@ -343,14 +350,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFBEB', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
     alignSelf: 'flex-start',
   },
-  inProgressText: { fontSize: 11, fontWeight: '600', color: COLORS.warning },
+  inProgressText: { fontSize: 11, fontWeight: '600', color: colors.warning },
 
   // Score card
   scoreCard: {
     flexDirection: 'row', alignItems: 'center', gap: 20,
-    backgroundColor: COLORS.surface, marginHorizontal: 16,
+    backgroundColor: colors.surface, marginHorizontal: 16,
     borderRadius: 18, padding: 20,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: colors.border,
   },
   ringWrap: { alignItems: 'center', gap: 6 },
   ringOuter: {
@@ -369,8 +376,8 @@ const styles = StyleSheet.create({
   statsRight: { flex: 1, gap: 10 },
   statItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   statIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  statNum: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  statLabel: { fontSize: 11, color: COLORS.textMuted },
+  statNum: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  statLabel: { fontSize: 11, color: colors.textMuted },
 
   // Section head
   sectionHead: {
@@ -379,18 +386,18 @@ const styles = StyleSheet.create({
   },
   sectionIconBox: {
     width: 30, height: 30, borderRadius: 9,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
-  sectionTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  sectionTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   sectionCount: {
-    fontSize: 12, fontWeight: '700', color: COLORS.primary,
-    backgroundColor: COLORS.primaryLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
+    fontSize: 12, fontWeight: '700', color: colors.primary,
+    backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
   },
 
   // Question card
   qCard: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginHorizontal: 16,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginHorizontal: 16,
+    borderWidth: 1, borderColor: colors.border,
   },
   qHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10,
@@ -400,25 +407,25 @@ const styles = StyleSheet.create({
     width: 26, height: 26, borderRadius: 7,
     backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
   },
-  qIndex: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted },
+  qIndex: { fontSize: 11, fontWeight: '800', color: colors.textMuted },
   qTypeBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   qTypeText: { fontSize: 11, fontWeight: '700' },
   qRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   qScore: { fontSize: 14, fontWeight: '800' },
   skippedBadge: { backgroundColor: '#F1F5F9', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 },
-  skippedText: { fontSize: 11, color: COLORS.textMuted, fontStyle: 'italic' },
-  qText: { fontSize: 14, color: COLORS.textPrimary, lineHeight: 21 },
+  skippedText: { fontSize: 11, color: colors.textMuted, fontStyle: 'italic' },
+  qText: { fontSize: 14, color: colors.textPrimary, lineHeight: 21 },
 
   qExpanded: { marginTop: 12, gap: 8 },
   expandLabel: {
-    fontSize: 11, fontWeight: '700', color: COLORS.textMuted,
+    fontSize: 11, fontWeight: '700', color: colors.textMuted,
     textTransform: 'uppercase', letterSpacing: 0.5,
   },
   transcriptBox: {
-    backgroundColor: COLORS.background, borderRadius: 10, padding: 12,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: colors.border,
   },
-  transcriptText: { fontSize: 13, color: COLORS.textPrimary, lineHeight: 20 },
+  transcriptText: { fontSize: 13, color: colors.textPrimary, lineHeight: 20 },
   feedbackBox: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
     backgroundColor: '#FFFBEB', borderRadius: 10, padding: 12,
@@ -429,14 +436,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   feedbackText: { flex: 1, fontSize: 13, color: '#78350F', lineHeight: 20 },
-  skippedNote: { fontSize: 13, color: COLORS.textMuted, fontStyle: 'italic' },
+  skippedNote: { fontSize: 13, color: colors.textMuted, fontStyle: 'italic' },
 
   // New interview CTA
   newBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: COLORS.primary, borderRadius: 16, paddingVertical: 16, marginHorizontal: 16,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, marginHorizontal: 16,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
   },
   newBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-});
+  });
+}

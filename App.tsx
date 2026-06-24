@@ -8,6 +8,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { configureGoogleSignIn } from './src/store/slices/authSlice';
 import UpdatePrompt from './src/components/common/UpdatePrompt';
 import { useOtaUpdate } from './src/hooks/useOtaUpdate';
+import { ThemeProvider } from './src/theme/ThemeContext';
 
 // Configure Google Sign-In once at app start
 configureGoogleSignIn();
@@ -32,7 +33,9 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <Provider store={store}>
-          <AppWithUpdates />
+          <ThemeProvider>
+            <AppWithUpdates />
+          </ThemeProvider>
         </Provider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

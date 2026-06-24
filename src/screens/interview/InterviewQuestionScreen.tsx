@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 import { Audio } from 'expo-av';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { InterviewStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { InterviewAnswerResponse, InterviewQuestion } from '../../types/api.types';
@@ -36,6 +38,8 @@ type AnswerMode = 'text' | 'voice';
 type ScreenState = 'answering' | 'submitting' | 'result';
 
 export default function InterviewQuestionScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
   const session = useSelector((s: RootState) => s.interview.currentSession);
@@ -192,7 +196,7 @@ export default function InterviewQuestionScreen() {
   if (!question) {
     return (
       <View style={styles.center}>
-        <Ionicons name="alert-circle-outline" size={40} color={COLORS.error} />
+        <Ionicons name="alert-circle-outline" size={40} color={colors.error} />
         <Text style={styles.errorText}>Question not found. Please restart the session.</Text>
         <TouchableOpacity
           style={styles.retryBtn}
@@ -204,15 +208,15 @@ export default function InterviewQuestionScreen() {
     );
   }
 
-  const typeStyle = TYPE_COLORS[question.questionType] ?? { bg: COLORS.border, text: COLORS.textSecondary };
+  const typeStyle = TYPE_COLORS[question.questionType] ?? { bg: colors.border, text: colors.textSecondary };
   const scoreColor =
     result == null
-      ? COLORS.textMuted
+      ? colors.textMuted
       : result.aiScore >= 8
-      ? COLORS.success
+      ? colors.success
       : result.aiScore >= 5
-      ? COLORS.warning
-      : COLORS.error;
+      ? colors.warning
+      : colors.error;
 
   return (
     <ScrollView
@@ -288,13 +292,13 @@ export default function InterviewQuestionScreen() {
 
           <Text style={styles.sectionLabel}>AI Feedback</Text>
           <View style={styles.feedbackBox}>
-            <Ionicons name="bulb-outline" size={16} color={COLORS.warning} style={{ marginTop: 1 }} />
+            <Ionicons name="bulb-outline" size={16} color={colors.warning} style={{ marginTop: 1 }} />
             <Text style={styles.feedbackText}>{result.aiFeedback}</Text>
           </View>
 
           {result.sessionComplete && result.overallScore != null && (
             <View style={styles.sessionCompleteBanner}>
-              <Ionicons name="trophy-outline" size={18} color={COLORS.success} />
+              <Ionicons name="trophy-outline" size={18} color={colors.success} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.sessionCompleteTitle}>Session complete!</Text>
                 <Text style={styles.sessionCompleteSubtext}>
@@ -329,7 +333,7 @@ export default function InterviewQuestionScreen() {
               <Ionicons
                 name="create-outline"
                 size={16}
-                color={mode === 'text' ? COLORS.primary : COLORS.textMuted}
+                color={mode === 'text' ? colors.primary : colors.textMuted}
               />
               <Text style={[styles.modeTabText, mode === 'text' && styles.modeTabTextActive]}>
                 Type
@@ -342,7 +346,7 @@ export default function InterviewQuestionScreen() {
               <Ionicons
                 name="mic-outline"
                 size={16}
-                color={mode === 'voice' ? COLORS.primary : COLORS.textMuted}
+                color={mode === 'voice' ? colors.primary : colors.textMuted}
               />
               <Text style={[styles.modeTabText, mode === 'voice' && styles.modeTabTextActive]}>
                 Voice
@@ -355,7 +359,7 @@ export default function InterviewQuestionScreen() {
             <TextInput
               style={styles.textInput}
               placeholder="Type your answer here…"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               multiline
               numberOfLines={8}
               value={answerText}
@@ -390,12 +394,12 @@ export default function InterviewQuestionScreen() {
 
               {!isRecording && recordingUri && (
                 <View style={styles.recordingReadyRow}>
-                  <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                   <Text style={styles.recordingReadyText}>
                     Recording ready ({formatTime(recordSeconds)})
                   </Text>
                   <TouchableOpacity onPress={() => { setRecordingUri(null); setRecordSeconds(0); }}>
-                    <Ionicons name="trash-outline" size={18} color={COLORS.error} />
+                    <Ionicons name="trash-outline" size={18} color={colors.error} />
                   </TouchableOpacity>
                 </View>
               )}
@@ -408,7 +412,7 @@ export default function InterviewQuestionScreen() {
 
           {error && (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+              <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
               <Text style={styles.errorBoxText}>{error}</Text>
             </View>
           )}
@@ -455,15 +459,16 @@ export default function InterviewQuestionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, paddingBottom: 48 },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  errorText: { fontSize: 14, color: COLORS.error, textAlign: 'center', marginTop: 12 },
+  errorText: { fontSize: 14, color: colors.error, textAlign: 'center', marginTop: 12 },
   retryBtn: {
     marginTop: 16,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 24,
     paddingVertical: 10,
@@ -474,19 +479,19 @@ const styles = StyleSheet.create({
   progressTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
     borderRadius: 3,
     overflow: 'hidden',
   },
-  progressFill: { height: '100%', backgroundColor: COLORS.primary, borderRadius: 3 },
-  progressLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, minWidth: 36 },
+  progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 3 },
+  progressLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, minWidth: 36 },
 
   questionCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     marginBottom: 20,
   },
   questionCardTop: {
@@ -497,12 +502,12 @@ const styles = StyleSheet.create({
   },
   typeBadge: { borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3 },
   typeText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
-  qNum: { fontSize: 12, fontWeight: '600', color: COLORS.textMuted },
-  questionText: { fontSize: 16, fontWeight: '600', color: COLORS.textPrimary, lineHeight: 24 },
+  qNum: { fontSize: 12, fontWeight: '600', color: colors.textMuted },
+  questionText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, lineHeight: 24 },
 
   modeTabs: {
     flexDirection: 'row',
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
     borderRadius: 10,
     padding: 3,
     marginBottom: 14,
@@ -516,18 +521,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
-  modeTabActive: { backgroundColor: COLORS.surface },
-  modeTabText: { fontSize: 14, fontWeight: '600', color: COLORS.textMuted },
-  modeTabTextActive: { color: COLORS.primary },
+  modeTabActive: { backgroundColor: colors.surface },
+  modeTabText: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
+  modeTabTextActive: { color: colors.primary },
 
   textInput: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     fontSize: 15,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     minHeight: 160,
     lineHeight: 22,
     marginBottom: 16,
@@ -542,12 +547,12 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
   },
-  micBtnRecording: { backgroundColor: COLORS.error },
+  micBtnRecording: { backgroundColor: colors.error },
   recordingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -558,10 +563,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.error,
+    backgroundColor: colors.error,
   },
-  recordingTime: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary },
-  recordingHint: { fontSize: 13, color: COLORS.textSecondary },
+  recordingTime: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  recordingHint: { fontSize: 13, color: colors.textSecondary },
   recordingReadyRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -571,8 +576,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  recordingReadyText: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.success },
-  voiceHint: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center' },
+  recordingReadyText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.success },
+  voiceHint: { fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
 
   errorBox: {
     flexDirection: 'row',
@@ -583,22 +588,22 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
-  errorBoxText: { flex: 1, fontSize: 13, color: COLORS.error },
+  errorBoxText: { flex: 1, fontSize: 13, color: colors.error },
 
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 14,
   },
-  submitBtnDisabled: { backgroundColor: COLORS.textMuted },
+  submitBtnDisabled: { backgroundColor: colors.textMuted },
   submitBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
   submittingHint: {
     fontSize: 13,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 10,
     fontStyle: 'italic',
@@ -609,7 +614,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     borderWidth: 2,
     padding: 16,
@@ -619,26 +624,26 @@ const styles = StyleSheet.create({
   scoreBig: { fontSize: 40, fontWeight: '800', lineHeight: 46 },
   scoreMax: { fontSize: 16, fontWeight: '600' },
   scoreRight: { flex: 1 },
-  scoreLabel: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  scoreLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
   scoreVerdict: { fontSize: 15, fontWeight: '700', marginTop: 2 },
 
   sectionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
   },
   answerBox: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 12,
     marginBottom: 16,
   },
-  answerBoxText: { fontSize: 14, color: COLORS.textPrimary, lineHeight: 21 },
+  answerBoxText: { fontSize: 14, color: colors.textPrimary, lineHeight: 21 },
 
   feedbackBox: {
     flexDirection: 'row',
@@ -649,7 +654,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
   },
-  feedbackText: { flex: 1, fontSize: 14, color: COLORS.textPrimary, lineHeight: 21 },
+  feedbackText: { flex: 1, fontSize: 14, color: colors.textPrimary, lineHeight: 21 },
 
   sessionCompleteBanner: {
     flexDirection: 'row',
@@ -660,18 +665,19 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 16,
   },
-  sessionCompleteTitle: { fontSize: 15, fontWeight: '700', color: COLORS.success },
-  sessionCompleteSubtext: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  sessionCompleteTitle: { fontSize: 15, fontWeight: '700', color: colors.success },
+  sessionCompleteSubtext: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
 
   nextBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 14,
     marginBottom: 8,
   },
   nextBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-});
+  });
+}

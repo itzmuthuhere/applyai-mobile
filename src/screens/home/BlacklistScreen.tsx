@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   SafeAreaView, ActivityIndicator, Alert, TextInput, Modal, Animated,
@@ -7,7 +7,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { AppDispatch, RootState } from '../../store';
 import { fetchBlacklist, addToBlacklist, removeFromBlacklist } from '../../store/blacklistSlice';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 
 const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
 const companyColor = (name: string) =>
@@ -40,6 +41,8 @@ const REASON_COLORS: Record<string, string> = {
 };
 
 function SkeletonItem() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const opacity = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -53,16 +56,18 @@ function SkeletonItem() {
   }, []);
   return (
     <Animated.View style={[styles.item, { opacity }]}>
-      <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: COLORS.border }} />
+      <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: colors.border }} />
       <View style={{ flex: 1, gap: 8 }}>
-        <View style={{ height: 14, width: '55%', backgroundColor: COLORS.border, borderRadius: 6 }} />
-        <View style={{ height: 11, width: '35%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+        <View style={{ height: 14, width: '55%', backgroundColor: colors.border, borderRadius: 6 }} />
+        <View style={{ height: 11, width: '35%', backgroundColor: colors.border, borderRadius: 6 }} />
       </View>
     </Animated.View>
   );
 }
 
 export default function BlacklistScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const dispatch = useDispatch<AppDispatch>();
   const { items, loading, error } = useSelector((s: RootState) => s.blacklist);
   const [modalVisible, setModalVisible] = useState(false);
@@ -103,7 +108,7 @@ export default function BlacklistScreen() {
       <View style={styles.topBar}>
         <View style={styles.topBarLeft}>
           <View style={styles.topBarIcon}>
-            <Ionicons name="shield-half-outline" size={20} color={COLORS.error} />
+            <Ionicons name="shield-half-outline" size={20} color={colors.error} />
           </View>
           <View>
             <Text style={styles.topTitle}>Blacklist</Text>
@@ -121,7 +126,7 @@ export default function BlacklistScreen() {
       {/* Info banner */}
       {items.length === 0 && !loading ? null : (
         <View style={styles.infoBanner}>
-          <Ionicons name="eye-off-outline" size={13} color={COLORS.textMuted} />
+          <Ionicons name="eye-off-outline" size={13} color={colors.textMuted} />
           <Text style={styles.infoText}>These companies are hidden from your job feed</Text>
         </View>
       )}
@@ -132,7 +137,7 @@ export default function BlacklistScreen() {
         </View>
       ) : error ? (
         <View style={styles.centered}>
-          <Ionicons name="alert-circle-outline" size={40} color={COLORS.error} />
+          <Ionicons name="alert-circle-outline" size={40} color={colors.error} />
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : items.length === 0 ? (
@@ -153,7 +158,7 @@ export default function BlacklistScreen() {
         <ScrollView contentContainerStyle={styles.list}>
           {items.map((item) => {
             const color = companyColor(item.companyName);
-            const rColor = REASON_COLORS[item.reason] ?? COLORS.textMuted;
+            const rColor = REASON_COLORS[item.reason] ?? colors.textMuted;
             const rIcon = REASON_ICONS[item.reason] ?? 'ellipsis-horizontal-circle-outline';
             return (
               <View key={item.id} style={styles.item}>
@@ -182,7 +187,7 @@ export default function BlacklistScreen() {
                   onPress={() => handleRemove(item.id, item.companyName)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+                  <Ionicons name="trash-outline" size={16} color={colors.error} />
                 </TouchableOpacity>
               </View>
             );
@@ -196,7 +201,7 @@ export default function BlacklistScreen() {
           {/* Modal header */}
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseBtn}>
-              <Ionicons name="close" size={20} color={COLORS.textPrimary} />
+              <Ionicons name="close" size={20} color={colors.textPrimary} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Block a Company</Text>
             <View style={{ width: 36 }} />
@@ -206,13 +211,13 @@ export default function BlacklistScreen() {
             {/* Company name */}
             <Text style={styles.fieldLabel}>Company Name *</Text>
             <View style={styles.inputBox}>
-              <Ionicons name="business-outline" size={16} color={COLORS.textMuted} />
+              <Ionicons name="business-outline" size={16} color={colors.textMuted} />
               <TextInput
                 style={styles.modalInput}
                 placeholder="e.g. Acme Corp"
                 value={company}
                 onChangeText={setCompany}
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 autoFocus
                 returnKeyType="next"
               />
@@ -231,7 +236,7 @@ export default function BlacklistScreen() {
                     onPress={() => setReason(r)}
                     activeOpacity={0.75}
                   >
-                    <Ionicons name={REASON_ICONS[r]} size={14} color={active ? rc : COLORS.textMuted} />
+                    <Ionicons name={REASON_ICONS[r]} size={14} color={active ? rc : colors.textMuted} />
                     <Text style={[styles.reasonChipText, active && { color: rc, fontWeight: '700' }]}>
                       {REASON_LABELS[r]}
                     </Text>
@@ -243,7 +248,7 @@ export default function BlacklistScreen() {
             {/* Notes */}
             <Text style={styles.fieldLabel}>Notes (optional)</Text>
             <View style={[styles.inputBox, { alignItems: 'flex-start', paddingTop: 12 }]}>
-              <Ionicons name="create-outline" size={16} color={COLORS.textMuted} style={{ marginTop: 2 }} />
+              <Ionicons name="create-outline" size={16} color={colors.textMuted} style={{ marginTop: 2 }} />
               <TextInput
                 style={[styles.modalInput, { height: 72 }]}
                 placeholder="Any details you want to remember..."
@@ -251,7 +256,7 @@ export default function BlacklistScreen() {
                 onChangeText={setNotes}
                 multiline
                 textAlignVertical="top"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
               />
             </View>
 
@@ -278,39 +283,40 @@ export default function BlacklistScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
 
   topBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 14, paddingVertical: 12,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   topBarIcon: {
     width: 40, height: 40, borderRadius: 12,
     backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center',
   },
-  topTitle: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
-  topSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 1 },
+  topTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
+  topSub: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
   addBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: COLORS.error, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
+    backgroundColor: colors.error, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
   },
   addBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
 
   infoBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#F8FAFC', paddingHorizontal: 14, paddingVertical: 8,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  infoText: { fontSize: 12, color: COLORS.textMuted },
+  infoText: { fontSize: 12, color: colors.textMuted },
 
   list: { padding: 14, gap: 10, paddingBottom: 40 },
   item: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: colors.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
   companyIcon: {
@@ -318,67 +324,68 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   companyInitial: { fontSize: 19, fontWeight: '800' },
-  companyName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 3 },
+  companyName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 3 },
   reasonRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   reasonText: { fontSize: 12, fontWeight: '600' },
-  notesText: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
+  notesText: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   removeBtn: {
     width: 34, height: 34, borderRadius: 10,
     backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center',
   },
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32 },
-  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  errorText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 40 },
   emptyIconBox: {
     width: 80, height: 80, borderRadius: 40,
     backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center',
   },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21 },
   addBtnLarge: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.error, borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: colors.error, borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12,
   },
   addBtnLargeText: { fontSize: 14, fontWeight: '800', color: '#fff' },
 
   // Modal
-  modal: { flex: 1, backgroundColor: COLORS.background },
+  modal: { flex: 1, backgroundColor: colors.background },
   modalHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   modalCloseBtn: {
     width: 36, height: 36, borderRadius: 10,
-    backgroundColor: COLORS.background, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: colors.border,
   },
-  modalTitle: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+  modalTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
   modalBody: { padding: 16 },
-  fieldLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 16, marginBottom: 8 },
+  fieldLabel: { fontSize: 11, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 16, marginBottom: 8 },
   inputBox: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: 12, paddingVertical: 12,
   },
-  modalInput: { flex: 1, fontSize: 15, color: COLORS.textPrimary },
+  modalInput: { flex: 1, fontSize: 15, color: colors.textPrimary },
 
   reasonGrid: { gap: 8 },
   reasonChip: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderWidth: 1.5, borderColor: COLORS.border, borderRadius: 12,
-    padding: 12, backgroundColor: COLORS.surface,
+    borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
+    padding: 12, backgroundColor: colors.surface,
   },
-  reasonChipText: { fontSize: 14, color: COLORS.textSecondary },
+  reasonChipText: { fontSize: 14, color: colors.textSecondary },
 
   submitBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.error, borderRadius: 14, paddingVertical: 14, marginTop: 24,
-    shadowColor: COLORS.error, shadowOffset: { width: 0, height: 3 },
+    backgroundColor: colors.error, borderRadius: 14, paddingVertical: 14, marginTop: 24,
+    shadowColor: colors.error, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
   submitBtnDisabled: { opacity: 0.5, shadowOpacity: 0 },
   submitBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});
+  });
+}

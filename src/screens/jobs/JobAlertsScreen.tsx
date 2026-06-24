@@ -1,14 +1,18 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator,
   TextInput, Modal, Alert, Switch, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { JobAlert } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 
 export default function JobAlertsScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const [alerts, setAlerts] = useState<JobAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -70,7 +74,7 @@ export default function JobAlertsScreen() {
   }
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator color={COLORS.primary} size="large" /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View>;
   }
 
   return (
@@ -82,7 +86,7 @@ export default function JobAlertsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="notifications-outline" size={38} color={COLORS.primary} />
+              <Ionicons name="notifications-outline" size={38} color={colors.primary} />
             </View>
             <Text style={styles.emptyTitle}>No alerts yet</Text>
             <Text style={styles.emptyText}>Create an alert to get notified when matching jobs are posted.</Text>
@@ -97,7 +101,7 @@ export default function JobAlertsScreen() {
             </TouchableOpacity>
             {alerts.length > 0 && (
               <View style={styles.countBadge}>
-                <Ionicons name="checkmark-circle" size={14} color={COLORS.primary} />
+                <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
                 <Text style={styles.countText}>{alerts.length} active alert{alerts.length !== 1 ? 's' : ''}</Text>
               </View>
             )}
@@ -106,7 +110,7 @@ export default function JobAlertsScreen() {
         renderItem={({ item: alert }) => (
           <View style={styles.card}>
             <View style={styles.iconBox}>
-              <Ionicons name="notifications" size={18} color={COLORS.primary} />
+              <Ionicons name="notifications" size={18} color={colors.primary} />
             </View>
             <View style={styles.cardInfo}>
               {alert.keywords ? (
@@ -139,8 +143,8 @@ export default function JobAlertsScreen() {
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               {deleting === alert.id
-                ? <ActivityIndicator size="small" color={COLORS.error} />
-                : <Ionicons name="trash-outline" size={17} color={COLORS.error} />
+                ? <ActivityIndicator size="small" color={colors.error} />
+                : <Ionicons name="trash-outline" size={17} color={colors.error} />
               }
             </TouchableOpacity>
           </View>
@@ -153,7 +157,7 @@ export default function JobAlertsScreen() {
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle}>New Job Alert</Text>
               <TouchableOpacity onPress={() => { setShowForm(false); resetForm(); }}>
-                <Ionicons name="close" size={22} color={COLORS.textSecondary} />
+                <Ionicons name="close" size={22} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.formScroll} contentContainerStyle={styles.formContent}>
@@ -163,7 +167,7 @@ export default function JobAlertsScreen() {
                 placeholder="React Developer, Java, etc."
                 value={keywords}
                 onChangeText={setKeywords}
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
               />
               <Text style={styles.label}>Category</Text>
               <TextInput
@@ -171,7 +175,7 @@ export default function JobAlertsScreen() {
                 placeholder="Engineering, Finance, etc."
                 value={category}
                 onChangeText={setCategory}
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
               />
               <Text style={styles.label}>Minimum Salary (₹/yr)</Text>
               <TextInput
@@ -180,14 +184,14 @@ export default function JobAlertsScreen() {
                 value={minSalary}
                 onChangeText={setMinSalary}
                 keyboardType="numeric"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
               />
               <View style={styles.switchRow}>
                 <Text style={styles.switchLabel}>Remote only</Text>
                 <Switch
                   value={remote}
                   onValueChange={setRemote}
-                  trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                  trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor="#fff"
                 />
               </View>
@@ -209,77 +213,79 @@ export default function JobAlertsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background },
-  list: { padding: 14, gap: 10, backgroundColor: COLORS.background, flexGrow: 1 },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  list: { padding: 14, gap: 10, backgroundColor: colors.background, flexGrow: 1 },
   addBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 14, marginBottom: 10,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 },
+    backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, marginBottom: 10,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25, shadowRadius: 6, elevation: 5,
   },
   addBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
   countBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: COLORS.primaryLight, borderRadius: 10,
+    backgroundColor: colors.primaryLight, borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8,
     borderWidth: 1, borderColor: '#BFDBFE', marginBottom: 10,
     alignSelf: 'flex-start',
   },
-  countText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
+  countText: { fontSize: 13, fontWeight: '600', color: colors.primary },
   empty: { alignItems: 'center', paddingTop: 50, gap: 12, paddingHorizontal: 32 },
   emptyIcon: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
-  emptyText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
+  emptyText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21 },
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   iconBox: {
     width: 42, height: 42, borderRadius: 12,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   cardInfo: { flex: 1, gap: 6 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chipGreen: { backgroundColor: '#D1FAE5', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   chipGreenText: { fontSize: 11, fontWeight: '700', color: '#065F46' },
   chipBlue: { backgroundColor: '#DBEAFE', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   chipBlueText: { fontSize: 11, fontWeight: '700', color: '#1D4ED8' },
   chipGray: { backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  chipGrayText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
+  chipGrayText: { fontSize: 11, color: colors.textSecondary, fontWeight: '500' },
   deleteBtn: {
     width: 34, height: 34, borderRadius: 10,
     backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center',
   },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: COLORS.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
     padding: 20, paddingBottom: 36, maxHeight: '80%',
   },
   sheetHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16,
   },
-  sheetTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  sheetTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   formScroll: { maxHeight: 320 },
   formContent: { gap: 8, paddingBottom: 8 },
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginTop: 4 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginTop: 4 },
   input: {
-    backgroundColor: COLORS.background, borderRadius: 10, padding: 12,
-    fontSize: 14, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, borderRadius: 10, padding: 12,
+    fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border,
   },
   switchRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 8,
   },
-  switchLabel: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '500' },
+  switchLabel: { fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
   createBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 14,
+    backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 14,
     alignItems: 'center', marginTop: 12,
   },
   createBtnDisabled: { opacity: 0.6 },
   createBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-});
+  });
+}

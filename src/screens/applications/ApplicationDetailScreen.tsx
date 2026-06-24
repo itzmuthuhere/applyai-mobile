@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { ApplicationsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import {
@@ -68,6 +70,8 @@ const companyColor = (name: string) =>
 const PROGRESS_STATUSES: ApplicationStatus[] = ['APPLIED', 'VIEWED', 'SHORTLISTED', 'INTERVIEW', 'OFFER'];
 
 function StatusTimeline({ current }: { current: ApplicationStatus }) {
+  const colors = useTheme();
+  const tlStyles = makeTlStyles(colors);
   const isTerminal = TERMINAL_STATUSES.includes(current);
   const currentIdx = PROGRESS_STATUSES.indexOf(current);
   return (
@@ -100,21 +104,25 @@ function StatusTimeline({ current }: { current: ApplicationStatus }) {
   );
 }
 
-const tlStyles = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingVertical: 4 },
-  step: { alignItems: 'center', gap: 5, flex: 0 },
-  dot: {
-    width: 22, height: 22, borderRadius: 11,
-    borderWidth: 1.5, borderColor: COLORS.border,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  inner: { width: 10, height: 10, borderRadius: 5 },
-  label: { fontSize: 9, fontWeight: '500', color: COLORS.textMuted, textAlign: 'center', maxWidth: 52 },
-  line: { flex: 1, height: 1.5, backgroundColor: COLORS.border, marginTop: 11, marginHorizontal: 2 },
-});
+function makeTlStyles(colors: AppColors) {
+  return StyleSheet.create({
+    wrap: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingVertical: 4 },
+    step: { alignItems: 'center', gap: 5, flex: 0 },
+    dot: {
+      width: 22, height: 22, borderRadius: 11,
+      borderWidth: 1.5, borderColor: colors.border,
+      backgroundColor: '#F1F5F9',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    inner: { width: 10, height: 10, borderRadius: 5 },
+    label: { fontSize: 9, fontWeight: '500', color: colors.textMuted, textAlign: 'center', maxWidth: 52 },
+    line: { flex: 1, height: 1.5, backgroundColor: colors.border, marginTop: 11, marginHorizontal: 2 },
+  });
+}
 
 export default function ApplicationDetailScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
   const anyNav = useNavigation<AnyNav>();
@@ -228,7 +236,7 @@ export default function ApplicationDetailScreen() {
   if (isLoading) {
     return (
       <View style={styles.centerState}>
-        <ActivityIndicator color={COLORS.primary} size="large" />
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
@@ -236,7 +244,7 @@ export default function ApplicationDetailScreen() {
   if (error || !application) {
     return (
       <View style={styles.centerState}>
-        <Ionicons name="alert-circle-outline" size={48} color={COLORS.textMuted} />
+        <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
         <Text style={styles.errorText}>{error ?? 'Application not found.'}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={loadApplication}>
           <Text style={styles.retryText}>Retry</Text>
@@ -341,7 +349,7 @@ export default function ApplicationDetailScreen() {
             <Ionicons
               name={showCoverLetter ? 'chevron-up' : 'chevron-down'}
               size={18}
-              color={COLORS.textSecondary}
+              color={colors.textSecondary}
             />
           </TouchableOpacity>
           {showCoverLetter && (
@@ -357,7 +365,7 @@ export default function ApplicationDetailScreen() {
         <Text style={styles.sectionTitle}>Update Status</Text>
         {isTerminal ? (
           <View style={styles.terminalNote}>
-            <Ionicons name="lock-closed-outline" size={14} color={COLORS.textMuted} />
+            <Ionicons name="lock-closed-outline" size={14} color={colors.textMuted} />
             <Text style={styles.terminalNoteText}>
               Status is {STATUS_LABELS[application.status]} — cannot be changed.
             </Text>
@@ -405,7 +413,7 @@ export default function ApplicationDetailScreen() {
           </>
         )}
         {isUpdating && (
-          <ActivityIndicator color={COLORS.primary} size="small" style={{ marginTop: 8 }} />
+          <ActivityIndicator color={colors.primary} size="small" style={{ marginTop: 8 }} />
         )}
       </View>
 
@@ -453,7 +461,7 @@ export default function ApplicationDetailScreen() {
             placeholder="YYYY-MM-DDTHH:mm  (e.g. 2026-07-15T10:00)"
             value={interviewDate}
             onChangeText={setInterviewDate}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
           />
           <Text style={[styles.inputLabel, { marginTop: 10 }]}>Notes</Text>
           <TextInput
@@ -463,7 +471,7 @@ export default function ApplicationDetailScreen() {
             onChangeText={setInterviewNotes}
             multiline
             numberOfLines={3}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
           />
           <TouchableOpacity
             style={[styles.saveBtn, savingInterview && styles.saveBtnDisabled]}
@@ -489,7 +497,7 @@ export default function ApplicationDetailScreen() {
             value={offerSalary}
             onChangeText={setOfferSalary}
             keyboardType="numeric"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
           />
           <Text style={[styles.inputLabel, { marginTop: 10 }]}>Deadline to Accept</Text>
           <TextInput
@@ -497,7 +505,7 @@ export default function ApplicationDetailScreen() {
             placeholder="YYYY-MM-DD  (e.g. 2026-07-30)"
             value={offerDeadline}
             onChangeText={setOfferDeadline}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
           />
           <Text style={[styles.inputLabel, { marginTop: 10 }]}>Other Details</Text>
           <TextInput
@@ -507,7 +515,7 @@ export default function ApplicationDetailScreen() {
             onChangeText={setOfferDetails}
             multiline
             numberOfLines={3}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
           />
           <TouchableOpacity
             style={[styles.saveBtn, savingOffer && styles.saveBtnDisabled]}
@@ -525,7 +533,7 @@ export default function ApplicationDetailScreen() {
       {/* Follow-up sent badge */}
       {(application as any).followUpSent && (
         <View style={styles.followUpBadge}>
-          <Ionicons name="mail-open-outline" size={14} color={COLORS.secondary} />
+          <Ionicons name="mail-open-outline" size={14} color={colors.secondary} />
           <Text style={styles.followUpText}>Follow-up email sent automatically</Text>
         </View>
       )}
@@ -541,17 +549,18 @@ export default function ApplicationDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, paddingBottom: 40 },
 
   centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', marginTop: 12 },
+  errorText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 12 },
   retryBtn: {
     marginTop: 16,
     paddingHorizontal: 24,
     paddingVertical: 10,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 8,
   },
   retryText: { fontSize: 14, fontWeight: '700', color: '#fff' },
@@ -577,8 +586,8 @@ const styles = StyleSheet.create({
   heroDate: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
 
   timelineCard: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, marginBottom: 10,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: colors.border, marginBottom: 10,
   },
   terminalBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -587,30 +596,30 @@ const styles = StyleSheet.create({
   terminalBannerText: { fontSize: 13, fontWeight: '700' },
 
   metaCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     marginBottom: 12,
     gap: 10,
   },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  metaLabel: { fontSize: 13, color: COLORS.textSecondary },
-  metaValue: { fontSize: 13, color: COLORS.textPrimary, fontWeight: '500', flexShrink: 1, textAlign: 'right', maxWidth: '60%' },
+  metaLabel: { fontSize: 13, color: colors.textSecondary },
+  metaValue: { fontSize: 13, color: colors.textPrimary, fontWeight: '500', flexShrink: 1, textAlign: 'right', maxWidth: '60%' },
 
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   badgeText: { fontSize: 12, fontWeight: '700' },
 
   section: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
   sectionToggle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -619,7 +628,7 @@ const styles = StyleSheet.create({
   },
   coverLetterText: {
     fontSize: 13,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     lineHeight: 21,
     marginTop: 8,
   },
@@ -632,7 +641,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
   },
-  terminalNoteText: { fontSize: 13, color: COLORS.textSecondary },
+  terminalNoteText: { fontSize: 13, color: colors.textSecondary },
 
   statusGrid: {
     flexDirection: 'row',
@@ -645,10 +654,10 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
-  statusChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
+  statusChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
 
   withdrawBtn: {
     alignSelf: 'flex-start',
@@ -657,15 +666,15 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: COLORS.error,
+    borderColor: colors.error,
   },
-  withdrawBtnText: { fontSize: 13, color: COLORS.error, fontWeight: '600' },
+  withdrawBtnText: { fontSize: 13, color: colors.error, fontWeight: '600' },
 
   interviewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: COLORS.secondary,
+    backgroundColor: colors.secondary,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -674,27 +683,28 @@ const styles = StyleSheet.create({
   interviewBtnTitle: { fontSize: 15, fontWeight: '700', color: '#fff' },
   interviewBtnSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
 
-  notesText: { fontSize: 13, color: COLORS.textPrimary, lineHeight: 20 },
+  notesText: { fontSize: 13, color: colors.textPrimary, lineHeight: 20 },
   prepBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: COLORS.primary, borderRadius: 14, padding: 16, marginBottom: 10,
+    backgroundColor: colors.primary, borderRadius: 14, padding: 16, marginBottom: 10,
   },
   followUpBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: '#D1FAE5', borderRadius: 8, padding: 10, marginBottom: 12,
   },
-  followUpText: { fontSize: 13, color: COLORS.secondary },
+  followUpText: { fontSize: 13, color: colors.secondary },
 
-  inputLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 6 },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
   textInput: {
-    backgroundColor: COLORS.background, borderRadius: 10, padding: 12,
-    fontSize: 14, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, borderRadius: 10, padding: 12,
+    fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border,
   },
   textArea: { minHeight: 72, textAlignVertical: 'top' },
   saveBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 10, paddingVertical: 12,
+    backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 12,
     alignItems: 'center', marginTop: 14,
   },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-});
+  });
+}

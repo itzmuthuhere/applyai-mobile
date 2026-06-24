@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
@@ -8,10 +8,14 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { RootState, AppDispatch } from '../../store';
 import { prependPost } from '../../store/slices/feedSlice';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 
 export default function CreatePostScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
@@ -76,7 +80,7 @@ export default function CreatePostScreen() {
             testID="post-content-input"
             style={styles.input}
             placeholder="What's on your mind? Share a career update, tip, or win..."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             multiline
             autoFocus
             value={content}
@@ -87,7 +91,7 @@ export default function CreatePostScreen() {
 
         {/* Character count */}
         <View style={styles.footer}>
-          <Text style={[styles.charCount, content.length > 2000 && { color: COLORS.error }]}>
+          <Text style={[styles.charCount, content.length > 2000 && { color: colors.error }]}>
             {content.length} / 2000
           </Text>
         </View>
@@ -96,42 +100,44 @@ export default function CreatePostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.surface },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.surface },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   cancelBtn: { padding: 4 },
-  cancelText: { fontSize: 15, color: COLORS.textSecondary, fontWeight: '600' },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
+  cancelText: { fontSize: 15, color: colors.textSecondary, fontWeight: '600' },
+  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
   postBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 10,
+    backgroundColor: colors.primary, borderRadius: 10,
     paddingHorizontal: 18, paddingVertical: 8,
   },
-  postBtnDisabled: { backgroundColor: COLORS.border },
+  postBtnDisabled: { backgroundColor: colors.border },
   postBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
 
   compose: { flex: 1, padding: 16 },
   authorRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
   avatarCircle: {
-    width: 46, height: 46, borderRadius: 23, backgroundColor: COLORS.primary,
+    width: 46, height: 46, borderRadius: 23, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
   avatarText: { color: '#fff', fontWeight: '800', fontSize: 20 },
-  authorName: { fontSize: 14, fontWeight: '800', color: COLORS.textPrimary },
-  authorHeadline: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
+  authorName: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  authorHeadline: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
 
   input: {
-    flex: 1, fontSize: 16, color: COLORS.textPrimary, lineHeight: 24,
+    flex: 1, fontSize: 16, color: colors.textPrimary, lineHeight: 24,
   },
 
   footer: {
     flexDirection: 'row', justifyContent: 'flex-end',
     paddingHorizontal: 16, paddingVertical: 10,
-    borderTopWidth: 1, borderTopColor: COLORS.border,
+    borderTopWidth: 1, borderTopColor: colors.border,
   },
-  charCount: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600' },
-});
+  charCount: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
   SafeAreaView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -10,7 +10,9 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { RootState, AppDispatch } from '../../store';
 import { incrementComments } from '../../store/slices/feedSlice';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { FeedStackParamList } from '../../navigation/types';
 
@@ -26,6 +28,8 @@ interface Comment {
 }
 
 export default function PostDetailScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const route = useRoute<RouteT>();
   const dispatch = useDispatch<AppDispatch>();
@@ -92,7 +96,7 @@ export default function PostDetailScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Post</Text>
           <View style={{ width: 34 }} />
@@ -137,7 +141,7 @@ export default function PostDetailScreen() {
           }
           ListEmptyComponent={
             loading ? (
-              <ActivityIndicator color={COLORS.primary} style={{ marginTop: 32 }} />
+              <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
             ) : (
               <Text style={styles.noComments}>No comments yet. Be the first!</Text>
             )
@@ -155,7 +159,7 @@ export default function PostDetailScreen() {
             testID="comment-input"
             style={styles.commentInput}
             placeholder="Add a comment..."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={inputText}
             onChangeText={setInputText}
             multiline
@@ -178,61 +182,63 @@ export default function PostDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+  headerTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
 
-  postCard: { backgroundColor: COLORS.surface, marginBottom: 8 },
+  postCard: { backgroundColor: colors.surface, marginBottom: 8 },
   postAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   postAvatar: { width: 46, height: 46, borderRadius: 23 },
-  postAvatarFallback: { backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+  postAvatarFallback: { backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   postAvatarText: { color: '#fff', fontWeight: '800', fontSize: 20 },
-  postAuthorName: { fontSize: 14, fontWeight: '800', color: COLORS.textPrimary },
-  postAuthorHeadline: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
-  postTime: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
-  postContent: { fontSize: 16, color: COLORS.textPrimary, lineHeight: 24, paddingHorizontal: 14, paddingBottom: 14 },
+  postAuthorName: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  postAuthorHeadline: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
+  postTime: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  postContent: { fontSize: 16, color: colors.textPrimary, lineHeight: 24, paddingHorizontal: 14, paddingBottom: 14 },
   postStats: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingBottom: 10 },
-  postStatText: { fontSize: 12, color: COLORS.textSecondary },
-  commentsDivider: { borderTopWidth: 1, borderTopColor: COLORS.border, paddingHorizontal: 14, paddingVertical: 10 },
-  commentsLabel: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
+  postStatText: { fontSize: 12, color: colors.textSecondary },
+  commentsDivider: { borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: 14, paddingVertical: 10 },
+  commentsLabel: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
 
   comment: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, gap: 10 },
   commentAvatar: { width: 36, height: 36, borderRadius: 18 },
-  commentAvatarFallback: { backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+  commentAvatarFallback: { backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   commentAvatarText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   commentBubble: {
-    flex: 1, backgroundColor: COLORS.background, borderRadius: 14,
+    flex: 1, backgroundColor: colors.background, borderRadius: 14,
     paddingHorizontal: 12, paddingVertical: 10,
   },
-  commentAuthor: { fontSize: 13, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 2 },
-  commentContent: { fontSize: 14, color: COLORS.textPrimary, lineHeight: 20 },
-  commentTime: { fontSize: 11, color: COLORS.textMuted, marginTop: 4 },
+  commentAuthor: { fontSize: 13, fontWeight: '800', color: colors.textPrimary, marginBottom: 2 },
+  commentContent: { fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
+  commentTime: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
 
-  noComments: { textAlign: 'center', color: COLORS.textMuted, fontSize: 14, marginTop: 24, fontStyle: 'italic' },
+  noComments: { textAlign: 'center', color: colors.textMuted, fontSize: 14, marginTop: 24, fontStyle: 'italic' },
 
   inputRow: {
     flexDirection: 'row', alignItems: 'flex-end', gap: 10,
     paddingHorizontal: 14, paddingVertical: 12,
-    backgroundColor: COLORS.surface, borderTopWidth: 1, borderTopColor: COLORS.border,
+    backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border,
   },
   inputAvatarCircle: {
-    width: 34, height: 34, borderRadius: 17, backgroundColor: COLORS.primary,
+    width: 34, height: 34, borderRadius: 17, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   inputAvatarText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   commentInput: {
-    flex: 1, backgroundColor: COLORS.background, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: 14, paddingVertical: 8, fontSize: 14, color: COLORS.textPrimary, maxHeight: 100,
+    flex: 1, backgroundColor: colors.background, borderRadius: 20, borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 14, paddingVertical: 8, fontSize: 14, color: colors.textPrimary, maxHeight: 100,
   },
   sendBtn: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.primary,
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  sendBtnDisabled: { backgroundColor: COLORS.border },
-});
+  sendBtnDisabled: { backgroundColor: colors.border },
+  });
+}

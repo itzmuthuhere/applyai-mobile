@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
   SafeAreaView, RefreshControl, TextInput, ActivityIndicator, Animated,
@@ -10,7 +10,9 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { RootState, AppDispatch } from '../../store';
 import { setPosts, appendPosts, removePost, setReaction, FeedPost } from '../../store/slices/feedSlice';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 
 dayjs.extend(relativeTime);
@@ -25,6 +27,8 @@ const REACTION_COLORS: Record<string, string> = {
 };
 
 function Avatar({ uri, name, size = 40 }: { uri?: string; name?: string; size?: number }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   if (uri) {
     return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
   }
@@ -38,6 +42,8 @@ function Avatar({ uri, name, size = 40 }: { uri?: string; name?: string; size?: 
 }
 
 function ReactionPicker({ onPick }: { onPick: (r: string) => void }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.reactionPicker}>
       {Object.entries(REACTION_EMOJIS).map(([key, emoji]) => (
@@ -50,6 +56,8 @@ function ReactionPicker({ onPick }: { onPick: (r: string) => void }) {
 }
 
 function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: number }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<any>();
   const [showPicker, setShowPicker] = useState(false);
@@ -115,7 +123,7 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
         </TouchableOpacity>
         {post.author.id === currentUserId && (
           <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn} activeOpacity={0.7}>
-            <Ionicons name="trash-outline" size={16} color={COLORS.textMuted} />
+            <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -166,7 +174,7 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
           onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
           activeOpacity={0.7}
         >
-          <Ionicons name="chatbubble-outline" size={18} color={COLORS.textSecondary} />
+          <Ionicons name="chatbubble-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.actionLabel}>Comment</Text>
         </TouchableOpacity>
 
@@ -179,7 +187,7 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
           })}
           activeOpacity={0.7}
         >
-          <Ionicons name="send-outline" size={18} color={COLORS.textSecondary} />
+          <Ionicons name="send-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.actionLabel}>Message</Text>
         </TouchableOpacity>
       </View>
@@ -188,6 +196,8 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
 }
 
 export default function FeedScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
@@ -238,7 +248,7 @@ export default function FeedScreen() {
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={() => navigation.navigate('ChatList')} style={styles.headerBtn}>
-            <Ionicons name="chatbubbles-outline" size={24} color={COLORS.textPrimary} />
+            <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('CreatePost')} style={styles.createBtn}>
             <Ionicons name="add" size={20} color="#fff" />
@@ -248,7 +258,7 @@ export default function FeedScreen() {
 
       {initialLoading ? (
         <View style={styles.loadingCenter}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -258,14 +268,14 @@ export default function FeedScreen() {
             <PostCard post={item} currentUserId={user?.id ?? -1} />
           )}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => loadFeed(true)} tintColor={COLORS.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => loadFeed(true)} tintColor={colors.primary} />
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.3}
-          ListFooterComponent={loadingMore ? <ActivityIndicator color={COLORS.primary} style={{ padding: 16 }} /> : null}
+          ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ padding: 16 }} /> : null}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="newspaper-outline" size={52} color={COLORS.border} />
+              <Ionicons name="newspaper-outline" size={52} color={colors.border} />
               <Text style={styles.emptyTitle}>Nothing here yet</Text>
               <Text style={styles.emptySub}>Be the first to post a career update!</Text>
               <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('CreatePost')}>
@@ -281,33 +291,34 @@ export default function FeedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerLogo: {
-    width: 34, height: 34, borderRadius: 8, backgroundColor: COLORS.primary,
+    width: 34, height: 34, borderRadius: 8, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
   headerLogoText: { color: '#fff', fontWeight: '900', fontSize: 18 },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerBtn: { padding: 6 },
   createBtn: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.primary,
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
 
   loadingCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   card: {
-    backgroundColor: COLORS.surface, marginHorizontal: 12, marginTop: 10,
-    borderRadius: 16, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, marginHorizontal: 12, marginTop: 10,
+    borderRadius: 16, borderWidth: 1, borderColor: colors.border,
     overflow: 'visible',
   },
   cardHeader: {
@@ -315,15 +326,15 @@ const styles = StyleSheet.create({
     padding: 14, paddingBottom: 10,
   },
   authorRow: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 },
-  avatarFallback: { backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+  avatarFallback: { backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   authorInfo: { flex: 1 },
-  authorName: { fontSize: 14, fontWeight: '800', color: COLORS.textPrimary },
-  authorHeadline: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
-  postTime: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
+  authorName: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  authorHeadline: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
+  postTime: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   deleteBtn: { padding: 6 },
 
   postContent: {
-    fontSize: 15, color: COLORS.textPrimary, lineHeight: 22,
+    fontSize: 15, color: colors.textPrimary, lineHeight: 22,
     paddingHorizontal: 14, paddingBottom: 12,
   },
 
@@ -331,9 +342,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 14, paddingBottom: 8,
   },
-  countText: { fontSize: 12, color: COLORS.textSecondary },
+  countText: { fontSize: 12, color: colors.textSecondary },
 
-  divider: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 14 },
+  divider: { height: 1, backgroundColor: colors.border, marginHorizontal: 14 },
 
   actions: {
     flexDirection: 'row', paddingHorizontal: 6, paddingVertical: 4, gap: 0,
@@ -343,13 +354,13 @@ const styles = StyleSheet.create({
     gap: 5, paddingVertical: 8, borderRadius: 10,
   },
   actionEmoji: { fontSize: 18 },
-  actionLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  actionLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
 
   reactionPicker: {
     position: 'absolute', bottom: 44, left: 0,
-    flexDirection: 'row', backgroundColor: COLORS.surface,
+    flexDirection: 'row', backgroundColor: colors.surface,
     borderRadius: 30, paddingHorizontal: 8, paddingVertical: 6, gap: 4,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: colors.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 6,
     zIndex: 99,
   },
@@ -357,8 +368,9 @@ const styles = StyleSheet.create({
   reactionPickerEmoji: { fontSize: 26 },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
-  emptySub: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
-  emptyBtn: { backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
+  emptySub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  emptyBtn: { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
   emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-});
+  });
+}

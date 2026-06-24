@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, ActivityIndicator, Alert, Platform,
@@ -6,7 +6,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { PurchasesPackage } from 'react-native-purchases';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { getOfferings, purchasePackage, restorePurchases } from '../../services/revenueCat';
 
 type BillingCycle = 'monthly' | 'annual';
@@ -79,6 +80,8 @@ const SOCIAL_PROOF = [
 ];
 
 export default function PaywallScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const [billing, setBilling] = useState<BillingCycle>('annual');
   const [packages, setPackages] = useState<Record<string, PurchasesPackage>>({});
@@ -133,7 +136,7 @@ export default function PaywallScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn} activeOpacity={0.7}>
-          <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+          <Ionicons name="close" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Choose Your Plan</Text>
         <View style={{ width: 32 }} />
@@ -158,7 +161,7 @@ export default function PaywallScreen() {
         <View style={styles.proofRow}>
           {SOCIAL_PROOF.map((p, i) => (
             <View key={i} style={styles.proofItem}>
-              <Ionicons name={p.icon} size={16} color={COLORS.primary} />
+              <Ionicons name={p.icon} size={16} color={colors.primary} />
               <Text style={styles.proofText}>{p.text}</Text>
             </View>
           ))}
@@ -184,7 +187,7 @@ export default function PaywallScreen() {
         </View>
 
         {loading ? (
-          <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 40 }} />
+          <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 40 }} />
         ) : (
           PLANS.map(plan => {
             const price = billing === 'monthly' ? plan.monthlyPrice : plan.annualMonthly;
@@ -192,7 +195,7 @@ export default function PaywallScreen() {
             return (
               <View
                 key={plan.name}
-                style={[styles.planCard, plan.highlighted && styles.planCardHighlighted, { borderColor: plan.highlighted ? plan.color : COLORS.border }]}
+                style={[styles.planCard, plan.highlighted && styles.planCardHighlighted, { borderColor: plan.highlighted ? plan.color : colors.border }]}
               >
                 {plan.highlighted && (
                   <View style={[styles.popularBanner, { backgroundColor: plan.color }]}>
@@ -211,7 +214,7 @@ export default function PaywallScreen() {
                     <Text style={styles.planTagline}>{plan.tagline}</Text>
                   </View>
                   <View style={styles.priceWrap}>
-                    <Text style={[styles.price, { color: plan.highlighted ? plan.color : COLORS.textPrimary }]}>{price}</Text>
+                    <Text style={[styles.price, { color: plan.highlighted ? plan.color : colors.textPrimary }]}>{price}</Text>
                     <Text style={styles.pricePer}>/mo</Text>
                   </View>
                 </View>
@@ -265,7 +268,7 @@ export default function PaywallScreen() {
             { icon: 'lock-closed-outline' as const, text: 'No hidden fees' },
           ].map((t, i) => (
             <View key={i} style={styles.trustItem}>
-              <Ionicons name={t.icon} size={15} color={COLORS.textMuted} />
+              <Ionicons name={t.icon} size={15} color={colors.textMuted} />
               <Text style={styles.trustText}>{t.text}</Text>
             </View>
           ))}
@@ -287,16 +290,17 @@ export default function PaywallScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   closeBtn: { padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
 
   scroll: { padding: 16, gap: 16 },
 
@@ -304,33 +308,33 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', paddingVertical: 10, gap: 12 },
   heroIconRow: { flexDirection: 'row', gap: 10 },
   heroIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  heroTitle: { fontSize: 26, fontWeight: '900', color: COLORS.textPrimary, textAlign: 'center', lineHeight: 32 },
-  heroSub: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+  heroTitle: { fontSize: 26, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', lineHeight: 32 },
+  heroSub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
 
   // Social proof
   proofRow: {
     flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap',
-    backgroundColor: COLORS.primaryLight, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 8,
+    backgroundColor: colors.primaryLight, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 8,
     borderWidth: 1, borderColor: '#BFDBFE', gap: 6,
   },
   proofItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  proofText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  proofText: { fontSize: 12, fontWeight: '700', color: colors.primary },
 
   // Toggle
   toggleWrap: {
     flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: 14,
-    padding: 4, borderWidth: 1, borderColor: COLORS.border,
+    padding: 4, borderWidth: 1, borderColor: colors.border,
   },
   toggleBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 11 },
-  toggleBtnActive: { backgroundColor: COLORS.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 2 },
-  toggleText: { fontSize: 14, fontWeight: '700', color: COLORS.textMuted },
-  toggleTextActive: { color: COLORS.textPrimary },
+  toggleBtnActive: { backgroundColor: colors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 2 },
+  toggleText: { fontSize: 14, fontWeight: '700', color: colors.textMuted },
+  toggleTextActive: { color: colors.textPrimary },
   saveBadge: { backgroundColor: '#10B981', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
   saveBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
 
   // Plan card
   planCard: {
-    backgroundColor: COLORS.surface, borderRadius: 20, overflow: 'hidden',
+    backgroundColor: colors.surface, borderRadius: 20, overflow: 'hidden',
     borderWidth: 1.5, gap: 0,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
   },
@@ -345,11 +349,11 @@ const styles = StyleSheet.create({
 
   planHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 18, paddingBottom: 14 },
   planIconBox: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  planName: { fontSize: 18, fontWeight: '900', color: COLORS.textPrimary, marginBottom: 2 },
-  planTagline: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  planName: { fontSize: 18, fontWeight: '900', color: colors.textPrimary, marginBottom: 2 },
+  planTagline: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
   priceWrap: { alignItems: 'flex-end' },
   price: { fontSize: 28, fontWeight: '900' },
-  pricePer: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  pricePer: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
 
   totalRow: { marginHorizontal: 18, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12, marginBottom: 4 },
   totalText: { fontSize: 12, fontWeight: '700', textAlign: 'center' },
@@ -357,7 +361,7 @@ const styles = StyleSheet.create({
   featureList: { paddingHorizontal: 18, paddingTop: 10, paddingBottom: 6, gap: 10 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   featureIconBox: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  featureText: { fontSize: 13, color: COLORS.textPrimary, fontWeight: '500' },
+  featureText: { fontSize: 13, color: colors.textPrimary, fontWeight: '500' },
 
   cta: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -368,10 +372,11 @@ const styles = StyleSheet.create({
   // Trust
   trustRow: { flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap', gap: 8 },
   trustItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  trustText: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  trustText: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
 
   restoreBtn: { alignItems: 'center', paddingVertical: 8 },
-  restoreText: { fontSize: 13, color: COLORS.primary, fontWeight: '600', textDecorationLine: 'underline' },
+  restoreText: { fontSize: 13, color: colors.primary, fontWeight: '600', textDecorationLine: 'underline' },
 
-  footer: { textAlign: 'center', fontSize: 11, color: COLORS.textMuted, lineHeight: 16 },
-});
+  footer: { textAlign: 'center', fontSize: 11, color: colors.textMuted, lineHeight: 16 },
+  });
+}

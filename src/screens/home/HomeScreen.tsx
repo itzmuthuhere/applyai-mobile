@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, SafeAreaView, RefreshControl, Animated,
@@ -12,7 +12,9 @@ import { RootState, AppDispatch } from '../../store';
 import { setResumes } from '../../store/slices/resumeSlice';
 import { setApplications } from '../../store/slices/applicationSlice';
 import { setHistory } from '../../store/slices/interviewSlice';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { DashboardSummary } from '../../types/api.types';
 
@@ -46,6 +48,8 @@ function getGreeting() {
 }
 
 function SkeletonPulse({ w, h, r = 8 }: { w: number | string; h: number; r?: number }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const opacity = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const a = Animated.loop(Animated.sequence([
@@ -55,10 +59,12 @@ function SkeletonPulse({ w, h, r = 8 }: { w: number | string; h: number; r?: num
     a.start();
     return () => a.stop();
   }, []);
-  return <Animated.View style={{ width: w as any, height: h, borderRadius: r, backgroundColor: COLORS.border, opacity }} />;
+  return <Animated.View style={{ width: w as any, height: h, borderRadius: r, backgroundColor: colors.border, opacity }} />;
 }
 
 export default function HomeScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
@@ -116,7 +122,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => loadDashboard(true)} tintColor={COLORS.primary} />}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.primary} />}
       >
 
         {/* ── Hero Header ── */}
@@ -140,14 +146,14 @@ export default function HomeScreen() {
                 onPress={() => navigation.navigate('Notifications')}
                 activeOpacity={0.75}
               >
-                <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
+                <Ionicons name="notifications-outline" size={22} color={colors.textPrimary} />
                 <View style={styles.bellBadge} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
                 {user?.profilePicture ? (
                   <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
                 ) : (
-                  <View style={[styles.avatarFallback, { backgroundColor: COLORS.primary }]}>
+                  <View style={[styles.avatarFallback, { backgroundColor: colors.primary }]}>
                     <Text style={styles.avatarInitial}>{firstName.charAt(0).toUpperCase()}</Text>
                   </View>
                 )}
@@ -159,7 +165,7 @@ export default function HomeScreen() {
         {/* ── Profile Completeness ── */}
         {score < 80 && (
           <TouchableOpacity style={styles.completenessBanner} onPress={() => navigation.navigate('Profile')} activeOpacity={0.85}>
-            <View style={[styles.completenessIcon, { backgroundColor: COLORS.primary }]}>
+            <View style={[styles.completenessIcon, { backgroundColor: colors.primary }]}>
               <Ionicons name="person" size={14} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
@@ -168,7 +174,7 @@ export default function HomeScreen() {
                 <View style={[styles.progressFill, { width: `${score}%` as any }]} />
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
           </TouchableOpacity>
         )}
 
@@ -204,7 +210,7 @@ export default function HomeScreen() {
             </View>
           ) : dashError ? (
             <View testID="dashboard-error" style={styles.errorBanner}>
-              <Ionicons name="cloud-offline-outline" size={20} color={COLORS.error} />
+              <Ionicons name="cloud-offline-outline" size={20} color={colors.error} />
               <Text style={styles.errorBannerText}>Could not load dashboard. Pull to refresh.</Text>
             </View>
           ) : (
@@ -260,7 +266,7 @@ export default function HomeScreen() {
                 return (
                   <TouchableOpacity
                     key={app.id}
-                    style={[styles.appCard, idx > 0 && { borderTopWidth: 1, borderTopColor: COLORS.border }]}
+                    style={[styles.appCard, idx > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}
                     onPress={() => navigation.navigate('ApplicationsTab', { screen: 'ApplicationDetail', params: { applicationId: app.id } })}
                     activeOpacity={0.75}
                   >
@@ -332,7 +338,7 @@ export default function HomeScreen() {
         {resumeCount === 0 && appCount === 0 && (
           <View style={styles.onboardCard}>
             <View style={styles.onboardHead}>
-              <Ionicons name="rocket-outline" size={18} color={COLORS.primary} />
+              <Ionicons name="rocket-outline" size={18} color={colors.primary} />
               <Text style={styles.onboardTitle}>Get started in 3 steps</Text>
             </View>
             {[
@@ -341,13 +347,13 @@ export default function HomeScreen() {
               { step: '3', text: 'Practice with AI mock interviews', done: false },
             ].map(s => (
               <View key={s.step} style={styles.onboardStep}>
-                <View style={[styles.onboardBullet, s.done && { backgroundColor: COLORS.success }]}>
+                <View style={[styles.onboardBullet, s.done && { backgroundColor: colors.success }]}>
                   {s.done
                     ? <Ionicons name="checkmark" size={12} color="#fff" />
                     : <Text style={styles.onboardNum}>{s.step}</Text>
                   }
                 </View>
-                <Text style={[styles.onboardText, s.done && { color: COLORS.textMuted, textDecorationLine: 'line-through' }]}>
+                <Text style={[styles.onboardText, s.done && { color: colors.textMuted, textDecorationLine: 'line-through' }]}>
                   {s.text}
                 </Text>
               </View>
@@ -361,14 +367,15 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
 
   // Hero
-  hero: { backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border, overflow: 'hidden' },
+  hero: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, overflow: 'hidden' },
   heroAccent: {
     position: 'absolute', top: 0, left: 0, right: 0, height: 4,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
   },
   heroContent: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
@@ -376,9 +383,9 @@ const styles = StyleSheet.create({
   },
   heroLeft: { flex: 1, marginRight: 12 },
   heroRight: { alignItems: 'center', gap: 8 },
-  greeting: { fontSize: 13, color: COLORS.textMuted, fontWeight: '500', marginBottom: 2 },
-  name: { fontSize: 24, fontWeight: '900', color: COLORS.textPrimary, marginBottom: 4 },
-  headline: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 10 },
+  greeting: { fontSize: 13, color: colors.textMuted, fontWeight: '500', marginBottom: 2 },
+  name: { fontSize: 24, fontWeight: '900', color: colors.textPrimary, marginBottom: 4 },
+  headline: { fontSize: 13, color: colors.textSecondary, marginBottom: 10 },
   planBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4,
@@ -392,23 +399,23 @@ const styles = StyleSheet.create({
   bellBadge: {
     position: 'absolute', top: 8, right: 8,
     width: 8, height: 8, borderRadius: 4,
-    backgroundColor: '#EF4444', borderWidth: 1.5, borderColor: COLORS.surface,
+    backgroundColor: '#EF4444', borderWidth: 1.5, borderColor: colors.surface,
   },
-  avatar: { width: 52, height: 52, borderRadius: 26, borderWidth: 2.5, borderColor: COLORS.primary },
+  avatar: { width: 52, height: 52, borderRadius: 26, borderWidth: 2.5, borderColor: colors.primary },
   avatarFallback: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
   avatarInitial: { color: '#fff', fontSize: 22, fontWeight: '800' },
 
   // Profile Completeness
   completenessBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: COLORS.primaryLight, borderRadius: 14, padding: 14,
+    backgroundColor: colors.primaryLight, borderRadius: 14, padding: 14,
     marginHorizontal: 16, marginTop: 14,
     borderWidth: 1, borderColor: '#BFDBFE',
   },
   completenessIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  completenessTitle: { fontSize: 13, fontWeight: '700', color: COLORS.primary, marginBottom: 6 },
+  completenessTitle: { fontSize: 13, fontWeight: '700', color: colors.primary, marginBottom: 6 },
   progressTrack: { height: 5, backgroundColor: '#BFDBFE', borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: 5, backgroundColor: COLORS.primary, borderRadius: 3 },
+  progressFill: { height: 5, backgroundColor: colors.primary, borderRadius: 3 },
 
   // HR Banner
   hrBanner: {
@@ -430,86 +437,87 @@ const styles = StyleSheet.create({
   },
   errorBannerText: { flex: 1, fontSize: 13, color: '#991B1B', fontWeight: '600' },
   statCard: {
-    flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 8,
-    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 5,
+    flex: 1, backgroundColor: colors.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 8,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 5,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
   },
   statIconBox: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   statValue: { fontSize: 22, fontWeight: '900' },
-  statLabel: { fontSize: 10, color: COLORS.textMuted, fontWeight: '600', textAlign: 'center' },
+  statLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '600', textAlign: 'center' },
 
   // Sections
   section: { paddingHorizontal: 16, paddingTop: 22 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 12 },
-  seeAll: { fontSize: 13, fontWeight: '700', color: COLORS.primary, marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, marginBottom: 12 },
+  seeAll: { fontSize: 13, fontWeight: '700', color: colors.primary, marginBottom: 12 },
 
   // Quick Actions
   actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   actionCard: {
-    width: '47.5%', backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 6,
+    width: '47.5%', backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
   },
   actionIconBox: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  actionLabel: { fontSize: 13, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center' },
-  actionSub: { fontSize: 11, color: COLORS.textSecondary, textAlign: 'center' },
+  actionLabel: { fontSize: 13, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
+  actionSub: { fontSize: 11, color: colors.textSecondary, textAlign: 'center' },
 
   // Recent Applications
   recentList: {
-    backgroundColor: COLORS.surface, borderRadius: 16, overflow: 'hidden',
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 16, overflow: 'hidden',
+    borderWidth: 1, borderColor: colors.border,
   },
   appCard: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
   appIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   appIconText: { fontSize: 18, fontWeight: '900' },
   appBody: { flex: 1 },
-  appTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  appCompany: { fontSize: 12, color: COLORS.textSecondary },
+  appTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  appCompany: { fontSize: 12, color: colors.textSecondary },
   appRight: { alignItems: 'flex-end', gap: 4 },
   statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 },
   statusDot: { width: 5, height: 5, borderRadius: 2.5 },
   statusText: { fontSize: 11, fontWeight: '700' },
-  appDate: { fontSize: 10, color: COLORS.textMuted },
+  appDate: { fontSize: 10, color: colors.textMuted },
 
   // AI Tools
   aiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   aiCard: {
-    width: '47.5%', backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 6,
+    width: '47.5%', backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 6,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
   },
   aiIconBox: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  aiLabel: { fontSize: 13, fontWeight: '800', color: COLORS.textPrimary },
-  aiSub: { fontSize: 11, color: COLORS.textSecondary },
+  aiLabel: { fontSize: 13, fontWeight: '800', color: colors.textPrimary },
+  aiSub: { fontSize: 11, color: colors.textSecondary },
 
   // Upgrade Banner
   upgradeBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.primary, borderRadius: 16, padding: 16,
+    backgroundColor: colors.primary, borderRadius: 16, padding: 16,
     marginHorizontal: 16, marginTop: 22,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5,
   },
   upgradeBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   upgradeIconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   upgradeBannerTitle: { fontSize: 15, fontWeight: '800', color: '#fff' },
   upgradeBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   upgradeChip: { backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7 },
-  upgradeChipText: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
+  upgradeChipText: { fontSize: 13, fontWeight: '800', color: colors.primary },
 
   // Onboarding
   onboardCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 18,
-    borderWidth: 1, borderColor: COLORS.border, gap: 14,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 18,
+    borderWidth: 1, borderColor: colors.border, gap: 14,
     marginHorizontal: 16, marginTop: 22,
   },
   onboardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  onboardTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
+  onboardTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
   onboardStep: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   onboardBullet: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  onboardNum: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
-  onboardText: { flex: 1, fontSize: 14, color: COLORS.textPrimary, lineHeight: 20 },
-});
+  onboardNum: { fontSize: 13, fontWeight: '800', color: colors.primary },
+  onboardText: { flex: 1, fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
+  });
+}

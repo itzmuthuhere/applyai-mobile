@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   SafeAreaView, Alert, Animated, RefreshControl,
@@ -8,7 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { HrJob } from '../../types/api.types';
 
@@ -23,6 +25,8 @@ function fmt(n: number) {
 }
 
 function SkeletonCard() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const opacity = useRef(new Animated.Value(0.4)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -37,15 +41,15 @@ function SkeletonCard() {
   return (
     <Animated.View style={[styles.card, { opacity }]}>
       <View style={styles.cardTop}>
-        <View style={{ width: 48, height: 48, borderRadius: 13, backgroundColor: COLORS.border }} />
+        <View style={{ width: 48, height: 48, borderRadius: 13, backgroundColor: colors.border }} />
         <View style={{ flex: 1, gap: 8 }}>
-          <View style={{ height: 14, width: '65%', backgroundColor: COLORS.border, borderRadius: 6 }} />
-          <View style={{ height: 11, width: '45%', backgroundColor: COLORS.border, borderRadius: 6 }} />
+          <View style={{ height: 14, width: '65%', backgroundColor: colors.border, borderRadius: 6 }} />
+          <View style={{ height: 11, width: '45%', backgroundColor: colors.border, borderRadius: 6 }} />
         </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         {[60, 50, 70].map((w, i) => (
-          <View key={i} style={{ height: 22, width: w, backgroundColor: COLORS.border, borderRadius: 6 }} />
+          <View key={i} style={{ height: 22, width: w, backgroundColor: colors.border, borderRadius: 6 }} />
         ))}
       </View>
     </Animated.View>
@@ -53,6 +57,8 @@ function SkeletonCard() {
 }
 
 export default function HrMyJobsScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const [jobs, setJobs] = useState<HrJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -153,7 +159,7 @@ export default function HrMyJobsScreen() {
         keyExtractor={item => String(item.id)}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => loadJobs(true)} tintColor={COLORS.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => loadJobs(true)} tintColor={colors.primary} />
         }
         removeClippedSubviews
         initialNumToRender={10}
@@ -162,7 +168,7 @@ export default function HrMyJobsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyIconBox}>
-              <Ionicons name="briefcase-outline" size={40} color={COLORS.primary} />
+              <Ionicons name="briefcase-outline" size={40} color={colors.primary} />
             </View>
             <Text style={styles.emptyTitle}>No job postings yet</Text>
             <Text style={styles.emptySub}>
@@ -205,7 +211,7 @@ export default function HrMyJobsScreen() {
                   onPress={() => handleDelete(item)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons name="trash-outline" size={17} color={COLORS.error} />
+                  <Ionicons name="trash-outline" size={17} color={colors.error} />
                 </TouchableOpacity>
               </View>
 
@@ -213,13 +219,13 @@ export default function HrMyJobsScreen() {
               <View style={styles.tagsRow}>
                 {item.location && (
                   <View style={styles.tag}>
-                    <Ionicons name="location-outline" size={11} color={COLORS.textSecondary} />
+                    <Ionicons name="location-outline" size={11} color={colors.textSecondary} />
                     <Text style={styles.tagText}>{item.location}</Text>
                   </View>
                 )}
                 {item.isRemote && (
                   <View style={[styles.tag, styles.tagGreen]}>
-                    <Ionicons name="wifi-outline" size={11} color={COLORS.success} />
+                    <Ionicons name="wifi-outline" size={11} color={colors.success} />
                     <Text style={[styles.tagText, styles.tagTextGreen]}>Remote</Text>
                   </View>
                 )}
@@ -239,7 +245,7 @@ export default function HrMyJobsScreen() {
               {/* Footer */}
               <View style={styles.cardFooter}>
                 <View style={styles.postedRow}>
-                  <Ionicons name="time-outline" size={12} color={COLORS.textMuted} />
+                  <Ionicons name="time-outline" size={12} color={colors.textMuted} />
                   <Text style={styles.postedDate}>
                     Posted {dayjs(item.scrapedAt).fromNow()}
                   </Text>
@@ -252,11 +258,11 @@ export default function HrMyJobsScreen() {
                     <Ionicons
                       name={isExpired ? 'close-circle-outline' : 'calendar-outline'}
                       size={11}
-                      color={isExpired ? COLORS.error : deadlineSoon ? COLORS.warning : COLORS.textMuted}
+                      color={isExpired ? colors.error : deadlineSoon ? colors.warning : colors.textMuted}
                     />
                     <Text style={[
                       styles.deadlineText,
-                      isExpired ? { color: COLORS.error } : deadlineSoon ? { color: COLORS.warning } : {},
+                      isExpired ? { color: colors.error } : deadlineSoon ? { color: colors.warning } : {},
                     ]}>
                       {isExpired ? 'Expired' : `Closes ${dayjs(item.deadline).format('MMM D')}`}
                     </Text>
@@ -271,39 +277,40 @@ export default function HrMyJobsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   list: { padding: 16, gap: 12, paddingBottom: 40 },
 
   // Stats strip
   statsStrip: {
-    flexDirection: 'row', backgroundColor: COLORS.surface,
-    borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border,
+    flexDirection: 'row', backgroundColor: colors.surface,
+    borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border,
     marginBottom: 4,
   },
   statItem: { flex: 1, alignItems: 'center', gap: 2 },
-  statNum: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary },
-  statLabel: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
-  statDivider: { width: 1, backgroundColor: COLORS.border, marginHorizontal: 4 },
+  statNum: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
+  statLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '500' },
+  statDivider: { width: 1, backgroundColor: colors.border, marginHorizontal: 4 },
 
   // Action bar
   actionBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginBottom: 2, paddingHorizontal: 2,
   },
-  actionBarTitle: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },
+  actionBarTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
   postNewBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: COLORS.success, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
-    shadowColor: COLORS.success, shadowOffset: { width: 0, height: 3 },
+    backgroundColor: colors.success, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
+    shadowColor: colors.success, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
   },
   postNewBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
 
   // Card
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border, gap: 10,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: colors.border, gap: 10,
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   companyIcon: {
@@ -313,8 +320,8 @@ const styles = StyleSheet.create({
   },
   companyInitial: { fontSize: 20, fontWeight: '800' },
   cardMeta: { flex: 1 },
-  jobTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  company: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
+  jobTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  company: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
   deleteBtn: {
     width: 34, height: 34, borderRadius: 9,
     backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center',
@@ -327,13 +334,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
   },
   tagGreen: { backgroundColor: '#D1FAE5' },
-  tagText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
-  tagTextGreen: { color: COLORS.success, fontWeight: '600' },
+  tagText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
+  tagTextGreen: { color: colors.success, fontWeight: '600' },
 
   // Footer
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   postedRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  postedDate: { fontSize: 12, color: COLORS.textMuted },
+  postedDate: { fontSize: 12, color: colors.textMuted },
   deadlinePill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
@@ -341,21 +348,22 @@ const styles = StyleSheet.create({
   deadlineOk: { backgroundColor: '#F1F5F9' },
   deadlineSoon: { backgroundColor: '#FEF3C7' },
   deadlineExpired: { backgroundColor: '#FEE2E2' },
-  deadlineText: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  deadlineText: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
 
   // Empty
   empty: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 32, gap: 12 },
   emptyIconBox: {
     width: 90, height: 90, borderRadius: 28,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
     marginBottom: 4,
   },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center' },
-  emptySub: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
+  emptySub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21 },
   emptyBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.success, borderRadius: 14,
+    backgroundColor: colors.success, borderRadius: 14,
     paddingHorizontal: 24, paddingVertical: 13, marginTop: 8,
   },
   emptyBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-});
+  });
+}

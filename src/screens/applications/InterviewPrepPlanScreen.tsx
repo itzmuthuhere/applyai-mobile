@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, SafeAreaView,
@@ -8,7 +8,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { AppDispatch, RootState } from '../../store';
 import { fetchInterviewPrepPlan } from '../../store/intelligenceSlice';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 
 const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
 const companyColor = (name: string) =>
@@ -19,7 +20,9 @@ const hourColor = (i: number) => HOUR_COLORS[i % HOUR_COLORS.length];
 const hourTextColor = ['#065F46', '#1D4ED8', '#5B21B6', '#92400E', '#991B1B'];
 const hourText = (i: number) => hourTextColor[i % hourTextColor.length];
 
-function SectionHead({ icon, title, color = COLORS.primary }: { icon: React.ComponentProps<typeof Ionicons>['name']; title: string; color?: string }) {
+function SectionHead({ icon, title, color = '#2563EB' }: { icon: React.ComponentProps<typeof Ionicons>['name']; title: string; color?: string }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.sectionHead}>
       <View style={[styles.sectionIconBox, { backgroundColor: color + '20' }]}>
@@ -31,6 +34,8 @@ function SectionHead({ icon, title, color = COLORS.primary }: { icon: React.Comp
 }
 
 export default function InterviewPrepPlanScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const route = useRoute<any>();
   const dispatch = useDispatch<AppDispatch>();
   const { applicationId } = route.params as { applicationId: number };
@@ -43,7 +48,7 @@ export default function InterviewPrepPlanScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Crafting your personalised prep plan…</Text>
       </View>
     );
@@ -52,7 +57,7 @@ export default function InterviewPrepPlanScreen() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <Ionicons name="alert-circle-outline" size={52} color={COLORS.error} />
+        <Ionicons name="alert-circle-outline" size={52} color={colors.error} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity
           style={styles.retryBtn}
@@ -98,7 +103,7 @@ export default function InterviewPrepPlanScreen() {
         {plan.companyInsights ? (
           <View style={styles.insightCard}>
             <View style={styles.insightLeft}>
-              <Ionicons name="information-circle" size={18} color={COLORS.primary} />
+              <Ionicons name="information-circle" size={18} color={colors.primary} />
             </View>
             <Text style={styles.insightText}>{plan.companyInsights}</Text>
           </View>
@@ -107,7 +112,7 @@ export default function InterviewPrepPlanScreen() {
         {/* Skills to focus */}
         {plan.keySkillsToRevise?.length > 0 && (
           <View style={styles.card}>
-            <SectionHead icon="code-slash-outline" title="Skills to Focus On" color={COLORS.primary} />
+            <SectionHead icon="code-slash-outline" title="Skills to Focus On" color={colors.primary} />
             <View style={styles.chipsWrap}>
               {plan.keySkillsToRevise.map((s: string, i: number) => (
                 <View key={i} style={styles.skillChip}>
@@ -205,24 +210,25 @@ export default function InterviewPrepPlanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 14, gap: 12 },
   centered: {
     flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 32,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
   },
-  loadingText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
-  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  loadingText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  errorText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
   retryBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12,
   },
   retryBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 
   heroCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border,
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   companyBadge: {
@@ -230,15 +236,15 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   companyInitial: { fontSize: 22, fontWeight: '900' },
-  heroRole: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
-  heroCompany: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  heroRole: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+  heroCompany: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   heroStats: { alignItems: 'center', gap: 2 },
-  heroStatsDivider: { width: 1, height: 28, backgroundColor: COLORS.border },
-  heroStatNum: { fontSize: 20, fontWeight: '900', color: COLORS.primary },
-  heroStatLabel: { fontSize: 10, color: COLORS.textMuted, fontWeight: '500' },
+  heroStatsDivider: { width: 1, height: 28, backgroundColor: colors.border },
+  heroStatNum: { fontSize: 20, fontWeight: '900', color: colors.primary },
+  heroStatLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '500' },
 
   insightCard: {
-    backgroundColor: COLORS.primaryLight, borderRadius: 14, padding: 14,
+    backgroundColor: colors.primaryLight, borderRadius: 14, padding: 14,
     borderWidth: 1, borderColor: '#BFDBFE',
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
   },
@@ -246,22 +252,22 @@ const styles = StyleSheet.create({
     width: 32, height: 32, borderRadius: 10,
     backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  insightText: { flex: 1, fontSize: 13, color: COLORS.primary, lineHeight: 20 },
+  insightText: { flex: 1, fontSize: 13, color: colors.primary, lineHeight: 20 },
 
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 12,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 12,
   },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionIconBox: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
 
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   skillChip: {
-    backgroundColor: COLORS.primaryLight, borderRadius: 20,
+    backgroundColor: colors.primaryLight, borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1, borderColor: '#BFDBFE',
   },
-  skillChipText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  skillChipText: { fontSize: 12, fontWeight: '700', color: colors.primary },
 
   timelineWrap: { gap: 0 },
   timelineRow: { flexDirection: 'row', gap: 12 },
@@ -271,35 +277,36 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   dayCircleText: { fontSize: 13, fontWeight: '900', color: '#fff' },
-  timelineLine: { flex: 1, width: 2, backgroundColor: COLORS.border, marginVertical: 4 },
+  timelineLine: { flex: 1, width: 2, backgroundColor: colors.border, marginVertical: 4 },
   timelineContent: { flex: 1, paddingBottom: 16, gap: 8 },
 
   dayHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  dayFocus: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  dayFocus: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   hourBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   hourBadgeText: { fontSize: 11, fontWeight: '700' },
 
   topicsList: { gap: 5 },
   topicRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   topicDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 7, flexShrink: 0 },
-  topicText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+  topicText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
 
   practiceBox: {
-    backgroundColor: COLORS.background, borderRadius: 10, padding: 12,
+    backgroundColor: colors.background, borderRadius: 10, padding: 12,
     borderWidth: 1, borderColor: '#EDE9FE', gap: 6,
   },
   practiceHeader: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   practiceLabel: { fontSize: 11, fontWeight: '700', color: '#7C3AED', textTransform: 'uppercase', letterSpacing: 0.4 },
-  practiceQ: { fontSize: 13, color: COLORS.textPrimary, lineHeight: 19 },
+  practiceQ: { fontSize: 13, color: colors.textPrimary, lineHeight: 19 },
 
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   bullet: { width: 6, height: 6, borderRadius: 3, marginTop: 7, flexShrink: 0 },
-  bulletText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+  bulletText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
 
-  bqRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  bqRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
   bqNum: {
     width: 24, height: 24, borderRadius: 6, backgroundColor: '#FEF3C7',
     textAlign: 'center', lineHeight: 24, fontSize: 11, fontWeight: '800', color: '#92400E', flexShrink: 0,
   },
-  bqText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, paddingTop: 2 },
-});
+  bqText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 20, paddingTop: 2 },
+  });
+}

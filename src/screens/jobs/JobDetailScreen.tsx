@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Linking, Alert, Animated, Platform,
@@ -10,7 +10,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
-import { COLORS, API_ENDPOINTS, ROUTES } from '../../constants';
+import { API_ENDPOINTS, ROUTES } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { setSelectedJob } from '../../store/slices/jobSlice';
@@ -63,62 +65,46 @@ function Highlight({ icon, label, value, color }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string; value: string; color?: string;
 }) {
+  const colors = useTheme();
   return (
-    <View style={hStyles.box}>
-      <Ionicons name={icon} size={18} color={color ?? COLORS.primary} />
-      <Text style={hStyles.val} numberOfLines={1}>{value}</Text>
-      <Text style={hStyles.lbl}>{label}</Text>
+    <View style={{ flex: 1, alignItems: 'center', gap: 4, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 6, borderWidth: 1, borderColor: colors.border }}>
+      <Ionicons name={icon} size={18} color={color ?? colors.primary} />
+      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' }} numberOfLines={1}>{value}</Text>
+      <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center' }}>{label}</Text>
     </View>
   );
 }
-const hStyles = StyleSheet.create({
-  box: {
-    flex: 1, alignItems: 'center', gap: 4,
-    backgroundColor: COLORS.surface, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 6,
-    borderWidth: 1, borderColor: COLORS.border,
-  },
-  val: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
-  lbl: { fontSize: 11, color: COLORS.textMuted, textAlign: 'center' },
-});
 
 function AiTool({ icon, label, badge, onPress, loading }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string; badge?: string; onPress: () => void; loading?: boolean;
 }) {
+  const colors = useTheme();
   return (
-    <TouchableOpacity style={aiStyles.tool} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity style={{ flex: 1, alignItems: 'center', gap: 6, backgroundColor: colors.primaryLight, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 4, borderWidth: 1, borderColor: '#BFDBFE', minWidth: 72 }} onPress={onPress} activeOpacity={0.75}>
       {loading
-        ? <ActivityIndicator size="small" color={COLORS.primary} />
-        : <Ionicons name={icon} size={20} color={COLORS.primary} />
+        ? <ActivityIndicator size="small" color={colors.primary} />
+        : <Ionicons name={icon} size={20} color={colors.primary} />
       }
-      <Text style={aiStyles.toolLabel}>{label}</Text>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textAlign: 'center' }}>{label}</Text>
       {badge && (
-        <View style={aiStyles.badge}>
-          <Text style={aiStyles.badgeText}>{badge}</Text>
+        <View style={{ backgroundColor: colors.primary, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
+          <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>{badge}</Text>
         </View>
       )}
     </TouchableOpacity>
   );
 }
-const aiStyles = StyleSheet.create({
-  tool: {
-    flex: 1, alignItems: 'center', gap: 6,
-    backgroundColor: COLORS.primaryLight, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 4,
-    borderWidth: 1, borderColor: '#BFDBFE', minWidth: 72,
-  },
-  toolLabel: { fontSize: 11, fontWeight: '700', color: COLORS.primary, textAlign: 'center' },
-  badge: { backgroundColor: COLORS.primary, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
-  badgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
-});
 
 function PillList({ title, items, bg, tc }: { title: string; items: string[]; bg: string; tc: string }) {
+  const colors = useTheme();
   return (
     <View style={{ gap: 8 }}>
-      <Text style={panelStyles.sub}>{title}</Text>
+      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 }}>{title}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {items.map((item, i) => (
-          <View key={i} style={[panelStyles.pill, { backgroundColor: bg }]}>
-            <Text style={[panelStyles.pillText, { color: tc }]}>{item}</Text>
+          <View key={i} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, backgroundColor: bg }}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: tc }}>{item}</Text>
           </View>
         ))}
       </View>
@@ -126,29 +112,25 @@ function PillList({ title, items, bg, tc }: { title: string; items: string[]; bg
   );
 }
 function BulletList({ title, items }: { title: string; items: string[] }) {
+  const colors = useTheme();
   return (
     <View style={{ gap: 8 }}>
-      <Text style={panelStyles.sub}>{title}</Text>
+      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 }}>{title}</Text>
       {items.map((item, i) => (
         <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-          <View style={panelStyles.bullet} />
-          <Text style={panelStyles.bulletText}>{item}</Text>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary, marginTop: 6, flexShrink: 0 }} />
+          <Text style={{ flex: 1, fontSize: 13, color: colors.textPrimary, lineHeight: 20 }}>{item}</Text>
         </View>
       ))}
     </View>
   );
 }
-const panelStyles = StyleSheet.create({
-  sub: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 },
-  pill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  pillText: { fontSize: 12, fontWeight: '600' },
-  bullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary, marginTop: 6, flexShrink: 0 },
-  bulletText: { flex: 1, fontSize: 13, color: COLORS.textPrimary, lineHeight: 20 },
-});
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function JobDetailScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
@@ -201,8 +183,8 @@ export default function JobDetailScreen() {
       headerRight: () => (
         <TouchableOpacity onPress={handleToggleSave} disabled={saving} style={{ padding: 8 }}>
           {saving
-            ? <ActivityIndicator size="small" color={COLORS.primary} />
-            : <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={24} color={COLORS.primary} />
+            ? <ActivityIndicator size="small" color={colors.primary} />
+            : <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={24} color={colors.primary} />
           }
         </TouchableOpacity>
       ),
@@ -282,8 +264,8 @@ export default function JobDetailScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={COLORS.primary} size="large" />
-        <Text style={{ color: COLORS.textSecondary, marginTop: 12, fontSize: 13 }}>Loading job details…</Text>
+        <ActivityIndicator color={colors.primary} size="large" />
+        <Text style={{ color: colors.textSecondary, marginTop: 12, fontSize: 13 }}>Loading job details…</Text>
       </View>
     );
   }
@@ -291,7 +273,7 @@ export default function JobDetailScreen() {
   if (error || !job) {
     return (
       <View style={styles.centered}>
-        <Ionicons name="cloud-offline-outline" size={52} color={COLORS.textMuted} />
+        <Ionicons name="cloud-offline-outline" size={52} color={colors.textMuted} />
         <Text style={styles.errorText}>{error ?? 'Job not found.'}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.retryText}>Go Back</Text>
@@ -327,13 +309,13 @@ export default function JobDetailScreen() {
             <View style={styles.heroMeta}>
               {job.location && (
                 <View style={styles.heroMetaItem}>
-                  <Ionicons name="location-outline" size={13} color={COLORS.textMuted} />
+                  <Ionicons name="location-outline" size={13} color={colors.textMuted} />
                   <Text style={styles.heroMetaText}>{job.location}</Text>
                 </View>
               )}
               {postedAgo && (
                 <View style={styles.heroMetaItem}>
-                  <Ionicons name="time-outline" size={13} color={COLORS.textMuted} />
+                  <Ionicons name="time-outline" size={13} color={colors.textMuted} />
                   <Text style={styles.heroMetaText}>{postedAgo}</Text>
                 </View>
               )}
@@ -354,7 +336,7 @@ export default function JobDetailScreen() {
           {job.source && <View style={styles.tagNeutral}><Text style={styles.tagNeutralText}>{job.source}</Text></View>}
           {job.deadline && (
             <View style={styles.tagRed}>
-              <Ionicons name="alert-circle-outline" size={11} color={COLORS.error} />
+              <Ionicons name="alert-circle-outline" size={11} color={colors.error} />
               <Text style={styles.tagRedText}>Closes {dayjs(job.deadline).format('MMM D, YYYY')}</Text>
             </View>
           )}
@@ -369,7 +351,7 @@ export default function JobDetailScreen() {
               icon={job.isRemote ? 'wifi-outline' : 'business-outline'}
               label="Work Mode"
               value={job.isRemote ? 'Remote' : 'On-site'}
-              color={job.isRemote ? '#059669' : COLORS.primary}
+              color={job.isRemote ? '#059669' : colors.primary}
             />
             {job.category && <Highlight icon="pricetag-outline" label="Domain" value={job.category} />}
           </View>
@@ -414,10 +396,10 @@ export default function JobDetailScreen() {
             <View style={styles.aiPanelHead}>
               <Text style={styles.aiPanelTitle}>ATS Score Analysis</Text>
               <TouchableOpacity onPress={() => setAtsPanel(p => ({ ...p, open: false }))} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={18} color={COLORS.textSecondary} />
+                <Ionicons name="close" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            {atsPanel.loading && <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 16 }} />}
+            {atsPanel.loading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />}
             {atsPanel.error && <Text style={styles.panelErr}>{atsPanel.error}</Text>}
             {atsPanel.data && (
               <View style={{ gap: 16 }}>
@@ -448,10 +430,10 @@ export default function JobDetailScreen() {
             <View style={styles.aiPanelHead}>
               <Text style={styles.aiPanelTitle}>Skills Gap Analysis</Text>
               <TouchableOpacity onPress={() => setGapPanel(p => ({ ...p, open: false }))} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={18} color={COLORS.textSecondary} />
+                <Ionicons name="close" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            {gapPanel.loading && <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 16 }} />}
+            {gapPanel.loading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />}
             {gapPanel.error && <Text style={styles.panelErr}>{gapPanel.error}</Text>}
             {gapPanel.data && (
               <View style={{ gap: 16 }}>
@@ -467,7 +449,7 @@ export default function JobDetailScreen() {
                 )}
                 {gapPanel.data.missingSkills?.length > 0 && (
                   <View style={{ gap: 8 }}>
-                    <Text style={panelStyles.sub}>Skills to Add</Text>
+                    <Text style={styles.panelSub}>Skills to Add</Text>
                     {gapPanel.data.missingSkills.map((ms: any, i: number) => (
                       <View key={i} style={styles.gapRow}>
                         <View style={{ flex: 1 }}>
@@ -494,10 +476,10 @@ export default function JobDetailScreen() {
             <View style={styles.aiPanelHead}>
               <Text style={styles.aiPanelTitle}>Job Analysis</Text>
               <TouchableOpacity onPress={() => setAnalyserPanel(p => ({ ...p, open: false }))} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={18} color={COLORS.textSecondary} />
+                <Ionicons name="close" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            {analyserPanel.loading && <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 16 }} />}
+            {analyserPanel.loading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />}
             {analyserPanel.error && <Text style={styles.panelErr}>{analyserPanel.error}</Text>}
             {analyserPanel.data && (
               <View style={{ gap: 16 }}>
@@ -512,8 +494,8 @@ export default function JobDetailScreen() {
                 {analyserPanel.data.redFlags?.length > 0 && <BulletList title="Red Flags ⚠️" items={analyserPanel.data.redFlags} />}
                 {analyserPanel.data.cultureSignals && (
                   <View style={{ gap: 4 }}>
-                    <Text style={panelStyles.sub}>Culture Signals</Text>
-                    <Text style={{ fontSize: 13, color: COLORS.textPrimary, lineHeight: 20 }}>{analyserPanel.data.cultureSignals}</Text>
+                    <Text style={styles.panelSub}>Culture Signals</Text>
+                    <Text style={{ fontSize: 13, color: colors.textPrimary, lineHeight: 20 }}>{analyserPanel.data.cultureSignals}</Text>
                   </View>
                 )}
               </View>
@@ -532,7 +514,7 @@ export default function JobDetailScreen() {
               { icon: 'send-outline' as const, label: 'Full Apply', onPress: () => navigation.navigate('ApplyJob', { jobId: job.id }) },
             ].map(({ icon, label, onPress }) => (
               <TouchableOpacity key={label} style={styles.actionTile} onPress={onPress} activeOpacity={0.75}>
-                <Ionicons name={icon} size={20} color={COLORS.primary} />
+                <Ionicons name={icon} size={20} color={colors.primary} />
                 <Text style={styles.actionTileText}>{label}</Text>
               </TouchableOpacity>
             ))}
@@ -551,7 +533,7 @@ export default function JobDetailScreen() {
               <Ionicons
                 name={descExpanded ? 'chevron-up' : 'chevron-down'}
                 size={14}
-                color={COLORS.primary}
+                color={colors.primary}
               />
             </TouchableOpacity>
           )}
@@ -560,7 +542,7 @@ export default function JobDetailScreen() {
         {/* View original */}
         {job.sourceUrl && (
           <TouchableOpacity style={styles.srcBtn} onPress={() => Linking.openURL(job.sourceUrl!)}>
-            <Ionicons name="open-outline" size={15} color={COLORS.primary} />
+            <Ionicons name="open-outline" size={15} color={colors.primary} />
             <Text style={styles.srcBtnText}>View Original Posting</Text>
           </TouchableOpacity>
         )}
@@ -591,7 +573,7 @@ export default function JobDetailScreen() {
                         <Text style={[{ fontSize: 12, fontWeight: '700' }, { color: scoreTextColor(sj.matchScore) }]}>{sj.matchScore}%</Text>
                       </View>
                     )}
-                    <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                   </TouchableOpacity>
                 );
               })}
@@ -622,27 +604,28 @@ export default function JobDetailScreen() {
           activeOpacity={0.85}
         >
           <Text style={styles.stickyFullText}>Full Apply</Text>
-          <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
+          <Ionicons name="arrow-forward" size={16} color={colors.primary} />
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
   content: { padding: 16, gap: 14 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32 },
-  errorText: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
-  retryBtn: { backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 },
+  errorText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  retryBtn: { backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 },
   retryText: { color: '#fff', fontWeight: '700' },
 
   // Hero
   heroCard: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 14,
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6, elevation: 3,
   },
   heroLogo: {
@@ -651,11 +634,11 @@ const styles = StyleSheet.create({
   },
   heroInitial: { fontSize: 26, fontWeight: '900' },
   heroInfo: { flex: 1 },
-  heroTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, lineHeight: 24, marginBottom: 4 },
-  heroCompany: { fontSize: 15, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 8 },
+  heroTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, lineHeight: 24, marginBottom: 4 },
+  heroCompany: { fontSize: 15, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 },
   heroMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   heroMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  heroMetaText: { fontSize: 12, color: COLORS.textMuted },
+  heroMetaText: { fontSize: 12, color: colors.textMuted },
   matchBubble: {
     alignItems: 'center', justifyContent: 'center',
     borderRadius: 14, paddingHorizontal: 10, paddingVertical: 8, flexShrink: 0,
@@ -668,42 +651,43 @@ const styles = StyleSheet.create({
   tagGreen: { backgroundColor: '#D1FAE5', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
   tagGreenText: { fontSize: 12, fontWeight: '700', color: '#065F46' },
   tagNeutral: { backgroundColor: '#F1F5F9', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
-  tagNeutralText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '600' },
+  tagNeutralText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
   tagRed: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FEF2F2', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
-  tagRedText: { fontSize: 12, fontWeight: '600', color: COLORS.error },
+  tagRedText: { fontSize: 12, fontWeight: '600', color: colors.error },
 
   // Highlights
   highlights: { flexDirection: 'row', gap: 8 },
 
   // Section
   section: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 12,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 12,
   },
-  sectionTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
+  sectionTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
 
   // AI Tools
   aiToolsRow: { flexDirection: 'row', gap: 8 },
 
   // AI Panel
   aiPanel: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 2, borderColor: COLORS.primaryLight, gap: 12,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 2, borderColor: colors.primaryLight, gap: 12,
   },
   aiPanelHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  aiPanelTitle: { fontSize: 14, fontWeight: '800', color: COLORS.textPrimary },
-  panelErr: { fontSize: 13, color: COLORS.error, textAlign: 'center' },
+  aiPanelTitle: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  panelErr: { fontSize: 13, color: colors.error, textAlign: 'center' },
+  panelSub: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
   scoreRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  scoreBig: { fontSize: 36, fontWeight: '900', color: COLORS.textPrimary },
-  scoreOf: { fontSize: 15, color: COLORS.textSecondary, marginRight: 10 },
+  scoreBig: { fontSize: 36, fontWeight: '900', color: colors.textPrimary },
+  scoreOf: { fontSize: 15, color: colors.textSecondary, marginRight: 10 },
   verdictPill: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
   verdictText: { fontSize: 12, fontWeight: '700' },
   gapRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  gapSkill: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  gapMeta: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+  gapSkill: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  gapMeta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   impBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
 
   // Action grid
@@ -711,52 +695,53 @@ const styles = StyleSheet.create({
   actionTile: {
     flex: 1, minWidth: '44%', alignItems: 'center', gap: 8,
     backgroundColor: '#F8FAFC', borderRadius: 12, paddingVertical: 14,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: colors.border,
   },
-  actionTileText: { fontSize: 12, fontWeight: '700', color: COLORS.textPrimary },
+  actionTileText: { fontSize: 12, fontWeight: '700', color: colors.textPrimary },
 
   // Description
-  descText: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22 },
+  descText: { fontSize: 14, color: colors.textSecondary, lineHeight: 22 },
   showMoreBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  showMoreText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  showMoreText: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
   // Source
   srcBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primaryLight, borderRadius: 12, paddingVertical: 12,
+    backgroundColor: colors.primaryLight, borderRadius: 12, paddingVertical: 12,
     borderWidth: 1, borderColor: '#BFDBFE',
   },
-  srcBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  srcBtnText: { fontSize: 14, fontWeight: '700', color: colors.primary },
 
   // Similar
   similarList: { gap: 0 },
   similarCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 10, borderTopWidth: 1, borderTopColor: COLORS.border,
+    paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border,
   },
   simLogo: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   simLogoText: { fontSize: 16, fontWeight: '800' },
-  simTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  simCompany: { fontSize: 12, color: COLORS.textSecondary },
+  simTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  simCompany: { fontSize: 12, color: colors.textSecondary },
   simMatch: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
 
   // Sticky bar
   stickyBar: {
     flexDirection: 'row', gap: 10,
     paddingHorizontal: 16, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 28 : 16,
-    backgroundColor: COLORS.surface,
-    borderTopWidth: 1, borderTopColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1, borderTopColor: colors.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.08, shadowRadius: 8,
   },
   stickyQuickApply: {
     flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 14,
+    backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14,
   },
   stickyQuickText: { fontSize: 15, fontWeight: '800', color: '#fff' },
   stickyFullApply: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primaryLight, borderRadius: 14, paddingVertical: 14,
-    borderWidth: 1.5, borderColor: COLORS.primary,
+    backgroundColor: colors.primaryLight, borderRadius: 14, paddingVertical: 14,
+    borderWidth: 1.5, borderColor: colors.primary,
   },
-  stickyFullText: { fontSize: 15, fontWeight: '800', color: COLORS.primary },
-});
+  stickyFullText: { fontSize: 15, fontWeight: '800', color: colors.primary },
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView, SafeAreaView,
@@ -8,7 +8,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useDispatch } from 'react-redux';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { ResumeStackParamList } from '../../navigation/types';
 import { addResume } from '../../store/slices/resumeSlice';
 import { Resume, ResumeUploadResponse } from '../../types/api.types';
@@ -35,6 +37,8 @@ function formatSize(bytes: number) {
 }
 
 export default function ResumeUploadScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
 
@@ -149,13 +153,13 @@ export default function ResumeUploadScreen() {
                 style={styles.swapBtn}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="swap-horizontal-outline" size={18} color={COLORS.primary} />
+                <Ionicons name="swap-horizontal-outline" size={18} color={colors.primary} />
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.dropPrompt}>
               <View style={styles.uploadIconCircle}>
-                <Ionicons name="cloud-upload-outline" size={36} color={COLORS.primary} />
+                <Ionicons name="cloud-upload-outline" size={36} color={colors.primary} />
               </View>
               <Text style={styles.dropTitle}>Tap to select a file</Text>
               <Text style={styles.dropFormats}>PDF or DOCX • max 5 MB</Text>
@@ -166,7 +170,7 @@ export default function ResumeUploadScreen() {
         {/* Error */}
         {error && (
           <View style={styles.errorBox}>
-            <Ionicons name="alert-circle" size={16} color={COLORS.error} />
+            <Ionicons name="alert-circle" size={16} color={colors.error} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -180,7 +184,7 @@ export default function ResumeUploadScreen() {
             </View>
             {TIPS.map((tip, i) => (
               <View key={i} style={styles.tipRow}>
-                <Ionicons name={tip.icon} size={14} color={COLORS.primary} />
+                <Ionicons name={tip.icon} size={14} color={colors.primary} />
                 <Text style={styles.tipText}>{tip.text}</Text>
               </View>
             ))}
@@ -235,13 +239,14 @@ export default function ResumeUploadScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 14, gap: 14 },
 
   hero: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: COLORS.primary, borderRadius: 18, padding: 18,
+    backgroundColor: colors.primary, borderRadius: 18, padding: 18,
   },
   heroIconBox: {
     width: 52, height: 52, borderRadius: 16,
@@ -256,20 +261,20 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderStyle: 'dashed',
   },
   dropZoneEmpty: {
-    borderColor: COLORS.border, backgroundColor: COLORS.surface,
+    borderColor: colors.border, backgroundColor: colors.surface,
   },
   dropZoneActive: {
-    borderColor: COLORS.primary, borderStyle: 'solid',
-    backgroundColor: COLORS.primaryLight,
+    borderColor: colors.primary, borderStyle: 'solid',
+    backgroundColor: colors.primaryLight,
   },
 
   dropPrompt: { alignItems: 'center', gap: 10 },
   uploadIconCircle: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
   },
-  dropTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  dropFormats: { fontSize: 13, color: COLORS.textMuted },
+  dropTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+  dropFormats: { fontSize: 13, color: colors.textMuted },
 
   selectedFile: { flexDirection: 'row', alignItems: 'center', width: '100%', gap: 14 },
   fileTypeIcon: {
@@ -277,18 +282,18 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   fileDetails: { flex: 1, gap: 6 },
-  fileName: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  fileName: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   fileMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  fileSize: { fontSize: 12, color: COLORS.textMuted },
+  fileSize: { fontSize: 12, color: colors.textMuted },
   formatBadge: {
-    backgroundColor: COLORS.primaryLight, borderRadius: 6,
+    backgroundColor: colors.primaryLight, borderRadius: 6,
     paddingHorizontal: 7, paddingVertical: 2,
   },
-  formatBadgeText: { fontSize: 11, fontWeight: '800', color: COLORS.primary },
+  formatBadgeText: { fontSize: 11, fontWeight: '800', color: colors.primary },
   swapBtn: {
     width: 36, height: 36, borderRadius: 10,
-    backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: colors.border,
   },
 
   errorBox: {
@@ -296,16 +301,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEE2E2', borderRadius: 12, padding: 12,
     borderWidth: 1, borderColor: '#FECACA',
   },
-  errorText: { flex: 1, fontSize: 13, color: COLORS.error },
+  errorText: { flex: 1, fontSize: 13, color: colors.error },
 
   tipsCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 10,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 10,
   },
   tipsHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tipsTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  tipsTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
   tipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  tipText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
+  tipText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 19 },
 
   aiInfoCard: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
@@ -318,15 +323,16 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 12 },
   cancelBtn: {
     flex: 1, borderRadius: 14, paddingVertical: 14, alignItems: 'center',
-    borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface,
+    borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
   },
-  cancelBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.textSecondary },
+  cancelBtnText: { fontSize: 15, fontWeight: '700', color: colors.textSecondary },
   uploadBtn: {
     flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    borderRadius: 14, paddingVertical: 14, backgroundColor: COLORS.primary,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 },
+    borderRadius: 14, paddingVertical: 14, backgroundColor: colors.primary,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3, shadowRadius: 6, elevation: 4,
   },
   uploadBtnDisabled: { opacity: 0.5, shadowOpacity: 0 },
   uploadBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});
+  });
+}

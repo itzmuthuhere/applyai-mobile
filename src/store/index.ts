@@ -10,6 +10,7 @@ import blacklistReducer from './blacklistSlice';
 import notificationReducer from './notificationSlice';
 import feedReducer from './slices/feedSlice';
 import chatReducer from './slices/chatSlice';
+import themeReducer from './slices/themeSlice';
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     notifications: notificationReducer,
     feed: feedReducer,
     chat: chatReducer,
+    theme: themeReducer,
   },
 });
 

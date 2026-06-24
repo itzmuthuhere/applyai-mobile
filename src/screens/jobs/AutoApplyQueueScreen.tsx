@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, Alert, ActivityIndicator,
@@ -8,7 +8,9 @@ import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { AutoApplyQueueItem } from '../../types/api.types';
 
@@ -21,6 +23,8 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; l
 };
 
 function StatusBadge({ status }: { status: string }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING;
   return (
     <View style={[styles.badge, { backgroundColor: cfg.bg }]}>
@@ -33,6 +37,8 @@ function StatusBadge({ status }: { status: string }) {
 function QueueCard({
   item, onRemove,
 }: { item: AutoApplyQueueItem; onRemove: (id: number) => void }) {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const initial = item.company ? item.company[0].toUpperCase() : '?';
   const canRemove = item.status === 'PENDING' || item.status === 'FAILED' || item.status === 'SKIPPED';
 
@@ -59,7 +65,7 @@ function QueueCard({
         </View>
         {item.tailoredResumeText && (
           <View style={styles.tailoredBadge}>
-            <Ionicons name="sparkles" size={11} color={COLORS.primary} />
+            <Ionicons name="sparkles" size={11} color={colors.primary} />
             <Text style={styles.tailoredText}>Resume tailored</Text>
           </View>
         )}
@@ -74,7 +80,7 @@ function QueueCard({
           onPress={() => onRemove(item.id)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="trash-outline" size={18} color={COLORS.error} />
+          <Ionicons name="trash-outline" size={18} color={colors.error} />
         </TouchableOpacity>
       )}
     </View>
@@ -82,6 +88,8 @@ function QueueCard({
 }
 
 export default function AutoApplyQueueScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation();
   const [items, setItems] = useState<AutoApplyQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -152,17 +160,17 @@ export default function AutoApplyQueueScreen() {
 
       {/* Extension hint banner */}
       <View testID="extension-hint-banner" style={styles.hintBanner}>
-        <Ionicons name="extension-puzzle-outline" size={15} color={COLORS.primary} />
+        <Ionicons name="extension-puzzle-outline" size={15} color={colors.primary} />
         <Text style={styles.hintText}>
           Install the ApplyAI Chrome extension — it picks up queued jobs and auto-fills applications on Naukri, LinkedIn & Indeed.
         </Text>
       </View>
 
       {isLoading ? (
-        <View testID="queue-loading"><ActivityIndicator color={COLORS.primary} style={{ marginTop: 60 }} /></View>
+        <View testID="queue-loading"><ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} /></View>
       ) : error ? (
         <View testID="queue-error" style={styles.centerState}>
-          <Ionicons name="cloud-offline-outline" size={52} color={COLORS.textMuted} />
+          <Ionicons name="cloud-offline-outline" size={52} color={colors.textMuted} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => load()}>
             <Text style={styles.retryBtnText}>Try Again</Text>
@@ -178,12 +186,12 @@ export default function AutoApplyQueueScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={() => { setIsRefreshing(true); load(true); }}
-              tintColor={COLORS.primary}
+              tintColor={colors.primary}
             />
           }
           ListEmptyComponent={
             <View testID="queue-empty-state" style={styles.centerState}>
-              <Ionicons name="rocket-outline" size={56} color={COLORS.border} />
+              <Ionicons name="rocket-outline" size={56} color={colors.border} />
               <Text style={styles.emptyTitle}>Queue is empty</Text>
               <Text style={styles.emptySubtitle}>
                 On the Jobs tab, tap "Select" then "Auto Apply" to queue jobs for automatic application.
@@ -202,14 +210,15 @@ export default function AutoApplyQueueScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
 
   summaryBar: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   summaryPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
@@ -221,28 +230,28 @@ const styles = StyleSheet.create({
   hintBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
     paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
   },
-  hintText: { flex: 1, fontSize: 12, color: COLORS.primary, lineHeight: 17 },
+  hintText: { flex: 1, fontSize: 12, color: colors.primary, lineHeight: 17 },
 
   listContent: { padding: 12, gap: 10 },
 
   card: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: colors.border,
   },
   cardLeft: { paddingTop: 2 },
   logoCircle: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center', justifyContent: 'center',
   },
-  logoInitial: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
+  logoInitial: { fontSize: 16, fontWeight: '700', color: colors.primary },
   cardBody: { flex: 1, gap: 4 },
-  jobTitle: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  company: { fontSize: 12, color: COLORS.textSecondary },
+  jobTitle: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  company: { fontSize: 12, color: colors.textSecondary },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
 
   badge: {
@@ -252,17 +261,17 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11, fontWeight: '600' },
 
   scorePill: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10,
   },
-  scoreText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
-  queuedAt: { fontSize: 11, color: COLORS.textMuted },
+  scoreText: { fontSize: 11, color: colors.textSecondary, fontWeight: '500' },
+  queuedAt: { fontSize: 11, color: colors.textMuted },
 
   tailoredBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2,
   },
-  tailoredText: { fontSize: 11, color: COLORS.primary, fontWeight: '500' },
-  appliedAt: { fontSize: 11, color: COLORS.success, marginTop: 2 },
+  tailoredText: { fontSize: 11, color: colors.primary, fontWeight: '500' },
+  appliedAt: { fontSize: 11, color: colors.success, marginTop: 2 },
 
   removeBtn: { padding: 4 },
 
@@ -270,17 +279,18 @@ const styles = StyleSheet.create({
     flex: 1, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 32, gap: 12,
   },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
-  errorText: { fontSize: 14, color: COLORS.error, textAlign: 'center' },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
+  emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  errorText: { fontSize: 14, color: colors.error, textAlign: 'center' },
   retryBtn: {
-    marginTop: 8, backgroundColor: COLORS.primary,
+    marginTop: 8, backgroundColor: colors.primary,
     paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8,
   },
   retryBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
   goToJobsBtn: {
-    marginTop: 8, backgroundColor: COLORS.primary,
+    marginTop: 8, backgroundColor: colors.primary,
     paddingHorizontal: 24, paddingVertical: 11, borderRadius: 8,
   },
   goToJobsText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-});
+  });
+}

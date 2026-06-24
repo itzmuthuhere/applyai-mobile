@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Share, SafeAreaView,
@@ -7,7 +7,9 @@ import ResumeDropdown from '../../components/common/ResumeDropdown';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import { ResumeStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { setResumes } from '../../store/slices/resumeSlice';
@@ -21,6 +23,8 @@ const companyColor = (name: string) =>
   COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
 
 export default function CoverLetterScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const { params } = useRoute<RouteProps>();
   const dispatch = useDispatch();
 
@@ -77,7 +81,7 @@ export default function CoverLetterScreen() {
 
   const jobTitle = selectedJob?.title ?? `Job #${params.jobId}`;
   const jobCompany = selectedJob?.company ?? '';
-  const jColor = jobCompany ? companyColor(jobCompany) : COLORS.primary;
+  const jColor = jobCompany ? companyColor(jobCompany) : colors.primary;
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -115,7 +119,7 @@ export default function CoverLetterScreen() {
           <>
             <View style={styles.card}>
               <View style={styles.cardHead}>
-                <Ionicons name="document-attach-outline" size={14} color={COLORS.primary} />
+                <Ionicons name="document-attach-outline" size={14} color={colors.primary} />
                 <Text style={styles.cardTitle}>Select Resume</Text>
               </View>
               <Text style={styles.cardHint}>Only analyzed resumes can generate a cover letter</Text>
@@ -129,7 +133,7 @@ export default function CoverLetterScreen() {
 
             {error && (
               <View testID="cover-letter-error" style={styles.errorBox}>
-                <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+                <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
@@ -155,14 +159,14 @@ export default function CoverLetterScreen() {
 
             {isLoading && (
               <View testID="cover-letter-loading" style={styles.loadingCard}>
-                <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
+                <Ionicons name="time-outline" size={14} color={colors.textMuted} />
                 <Text style={styles.loadingHint}>AI is personalising your letter… ~10 seconds</Text>
               </View>
             )}
 
             {isLoading && showWarmup && (
               <View testID="warmup-message" style={styles.loadingCard}>
-                <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
+                <Ionicons name="time-outline" size={14} color={colors.textMuted} />
                 <Text style={styles.loadingHint}>Server warming up — please wait a moment…</Text>
               </View>
             )}
@@ -180,7 +184,7 @@ export default function CoverLetterScreen() {
                   'Professional closing with a strong call-to-action',
                 ].map((t, i) => (
                   <View key={i} style={styles.expectRow}>
-                    <Ionicons name="checkmark-circle-outline" size={14} color={COLORS.primary} />
+                    <Ionicons name="checkmark-circle-outline" size={14} color={colors.primary} />
                     <Text style={styles.expectText}>{t}</Text>
                   </View>
                 ))}
@@ -194,7 +198,7 @@ export default function CoverLetterScreen() {
             {/* Success banner */}
             <View style={styles.successBanner}>
               <View style={styles.successLeft}>
-                <Ionicons name="checkmark-circle" size={22} color={COLORS.success} />
+                <Ionicons name="checkmark-circle" size={22} color={colors.success} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.successTitle}>Cover letter ready!</Text>
@@ -211,7 +215,7 @@ export default function CoverLetterScreen() {
                   style={styles.copyInlineBtn}
                   onPress={() => Share.share({ message: coverLetter })}
                 >
-                  <Ionicons name="copy-outline" size={15} color={COLORS.primary} />
+                  <Ionicons name="copy-outline" size={15} color={colors.primary} />
                   <Text style={styles.copyInlineBtnText}>Copy</Text>
                 </TouchableOpacity>
               </View>
@@ -232,7 +236,7 @@ export default function CoverLetterScreen() {
               style={styles.regenerateBtn}
               onPress={() => { setCoverLetter(null); setSelectedResumeId(params.resumeId ?? null); handleGenerate(); }}
             >
-              <Ionicons name="refresh-outline" size={16} color={COLORS.primary} />
+              <Ionicons name="refresh-outline" size={16} color={colors.primary} />
               <Text style={styles.regenerateBtnText}>Generate Again</Text>
             </TouchableOpacity>
           </>
@@ -244,8 +248,9 @@ export default function CoverLetterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 14, gap: 12 },
 
   hero: {
@@ -261,8 +266,8 @@ const styles = StyleSheet.create({
   heroSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)' },
 
   jobCard: {
-    backgroundColor: COLORS.surface, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: colors.border,
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   jobIcon: {
@@ -270,8 +275,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   jobInitial: { fontSize: 18, fontWeight: '900' },
-  jobTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  jobCompany: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  jobTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  jobCompany: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   aiChip: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
     backgroundColor: '#EDE9FE', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
@@ -279,19 +284,19 @@ const styles = StyleSheet.create({
   aiChipText: { fontSize: 11, fontWeight: '800', color: '#7C3AED' },
 
   card: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border, gap: 10,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 10,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cardTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
-  cardHint: { fontSize: 12, color: COLORS.textMuted },
+  cardTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  cardHint: { fontSize: 12, color: colors.textMuted },
 
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12,
     borderWidth: 1, borderColor: '#FECACA',
   },
-  errorText: { flex: 1, fontSize: 13, color: COLORS.error },
+  errorText: { flex: 1, fontSize: 13, color: colors.error },
 
   generateBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -304,10 +309,10 @@ const styles = StyleSheet.create({
 
   loadingCard: {
     flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center',
-    backgroundColor: COLORS.surface, borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: colors.border,
   },
-  loadingHint: { fontSize: 13, color: COLORS.textMuted, fontStyle: 'italic' },
+  loadingHint: { fontSize: 13, color: colors.textMuted, fontStyle: 'italic' },
 
   expectCard: {
     backgroundColor: '#FFFBEB', borderRadius: 14, padding: 14,
@@ -331,39 +336,40 @@ const styles = StyleSheet.create({
   successSub: { fontSize: 12, color: '#047857', marginTop: 2 },
 
   letterCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
+    backgroundColor: colors.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
   },
   letterHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     borderBottomWidth: 1, borderBottomColor: '#BFDBFE',
   },
-  letterHeaderText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  letterHeaderText: { fontSize: 13, fontWeight: '700', color: colors.primary },
   copyInlineBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: COLORS.surface, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, borderColor: colors.border,
   },
-  copyInlineBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  copyInlineBtnText: { fontSize: 12, fontWeight: '700', color: colors.primary },
   letterText: {
-    fontSize: 14, color: COLORS.textPrimary, lineHeight: 23,
+    fontSize: 14, color: colors.textPrimary, lineHeight: 23,
     padding: 16,
   },
 
   shareBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 14,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 },
+    backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
   shareBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
 
   regenerateBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: 14,
-    paddingVertical: 12, backgroundColor: COLORS.surface,
+    borderWidth: 1.5, borderColor: colors.primary, borderRadius: 14,
+    paddingVertical: 12, backgroundColor: colors.surface,
   },
-  regenerateBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
-});
+  regenerateBtnText: { fontSize: 14, fontWeight: '700', color: colors.primary },
+  });
+}

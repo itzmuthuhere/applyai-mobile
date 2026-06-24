@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, SafeAreaView, ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS } from '../../constants';
+import { useTheme } from '../../theme/ThemeContext';
+import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { FeedStackParamList } from '../../navigation/types';
 
@@ -22,6 +24,8 @@ interface PublicProfile {
 }
 
 export default function PublicProfileScreen() {
+  const colors = useTheme();
+  const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const route = useRoute<RouteT>();
   const { userId, userName } = route.params;
@@ -43,7 +47,7 @@ export default function PublicProfileScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.loadingCenter}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
@@ -57,7 +61,7 @@ export default function PublicProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+          <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{name}</Text>
         <View style={{ width: 34 }} />
@@ -84,7 +88,7 @@ export default function PublicProfileScreen() {
           ) : null}
           {profile?.targetLocation ? (
             <View style={styles.locationRow}>
-              <Ionicons name="location-outline" size={14} color={COLORS.textMuted} />
+              <Ionicons name="location-outline" size={14} color={colors.textMuted} />
               <Text style={styles.locationText}>{profile.targetLocation}</Text>
             </View>
           ) : null}
@@ -110,7 +114,7 @@ export default function PublicProfileScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Looking for</Text>
             <View style={styles.roleChip}>
-              <Ionicons name="briefcase-outline" size={14} color={COLORS.primary} />
+              <Ionicons name="briefcase-outline" size={14} color={colors.primary} />
               <Text style={styles.roleText}>{profile.targetRole}</Text>
             </View>
           </View>
@@ -136,51 +140,53 @@ export default function PublicProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+function makeStyles(colors: AppColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
   loadingCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary, flex: 1, textAlign: 'center', marginHorizontal: 8 },
+  headerTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary, flex: 1, textAlign: 'center', marginHorizontal: 8 },
 
-  coverBg: { height: 110, backgroundColor: COLORS.primary },
+  coverBg: { height: 110, backgroundColor: colors.primary },
   avatarSection: { alignItems: 'flex-start', paddingHorizontal: 16, marginTop: -40 },
-  avatar: { width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: COLORS.surface },
+  avatar: { width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: colors.surface },
   avatarFallback: { backgroundColor: '#7C3AED', alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#fff', fontWeight: '900', fontSize: 32 },
 
-  infoSection: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, backgroundColor: COLORS.surface, marginBottom: 10 },
-  name: { fontSize: 22, fontWeight: '900', color: COLORS.textPrimary, marginBottom: 4 },
-  headline: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 6 },
+  infoSection: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, backgroundColor: colors.surface, marginBottom: 10 },
+  name: { fontSize: 22, fontWeight: '900', color: colors.textPrimary, marginBottom: 4 },
+  headline: { fontSize: 14, color: colors.textSecondary, marginBottom: 6 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 14 },
-  locationText: { fontSize: 13, color: COLORS.textMuted },
+  locationText: { fontSize: 13, color: colors.textMuted },
   messageBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-    backgroundColor: COLORS.primary, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 9,
+    backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 9,
   },
   messageBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
 
   card: {
-    backgroundColor: COLORS.surface, marginHorizontal: 12, marginBottom: 10,
-    borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, marginHorizontal: 12, marginBottom: 10,
+    borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border,
   },
-  cardTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 12 },
+  cardTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: 12 },
 
   roleChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-    backgroundColor: COLORS.primaryLight, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7,
+    backgroundColor: colors.primaryLight, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7,
   },
-  roleText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  roleText: { fontSize: 14, fontWeight: '700', color: colors.primary },
 
   skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   skillChip: {
-    backgroundColor: COLORS.background, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.background, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
+    borderWidth: 1, borderColor: colors.border,
   },
-  skillText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
-});
+  skillText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+  });
+}
