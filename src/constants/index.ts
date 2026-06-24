@@ -133,12 +133,26 @@ export const API_ENDPOINTS = {
   FEED_REACT: (postId: number) => `/api/feed/${postId}/react`,
   FEED_COMMENTS: (postId: number) => `/api/feed/${postId}/comments`,
   FEED_COMMENT_DELETE: (postId: number, commentId: number) => `/api/feed/${postId}/comments/${commentId}`,
+  FEED_MEDIA: '/api/feed/media',
+  FEED_HASHTAG: (tag: string) => `/api/feed/hashtag/${tag}`,
   // Chat
   CHAT_CONVERSATIONS: '/api/chat/conversations',
   CHAT_MESSAGES: '/api/chat/messages',
   CHAT_READ: '/api/chat/read',
   // Public profiles
   PUBLIC_PROFILE: (userId: number) => `/api/users/${userId}/profile`,
+  USER_POSTS: (userId: number) => `/api/users/${userId}/posts`,
+  USER_SEARCH: '/api/users/search',
+  // Follow
+  FOLLOW: (userId: number) => `/api/users/${userId}/follow`,
+  IS_FOLLOWING: (userId: number) => `/api/users/${userId}/is-following`,
+  USER_FOLLOWERS: (userId: number) => `/api/users/${userId}/followers`,
+  USER_FOLLOWING: (userId: number) => `/api/users/${userId}/following`,
+  // Social Notifications
+  SOCIAL_NOTIFICATIONS: '/api/notifications/social',
+  SOCIAL_NOTIFICATIONS_UNREAD: '/api/notifications/social/unread-count',
+  SOCIAL_NOTIFICATIONS_READ_ALL: '/api/notifications/social/read-all',
+  SOCIAL_NOTIFICATION_READ: (id: number) => `/api/notifications/social/${id}/read`,
 } as const;
 
 export const PLAN_LIMITS = {

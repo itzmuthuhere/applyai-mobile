@@ -1,7 +1,7 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
-  SafeAreaView, RefreshControl, TextInput, ActivityIndicator, Animated,
+  SafeAreaView, RefreshControl, ActivityIndicator, Linking,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { RootState, AppDispatch } from '../../store';
 import { setPosts, appendPosts, removePost, setReaction, FeedPost } from '../../store/slices/feedSlice';
+import { setUnreadCount } from '../../store/slices/notificationSlice';
 import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
@@ -26,14 +27,16 @@ const REACTION_COLORS: Record<string, string> = {
   LOVE: '#EF4444', INSIGHTFUL: '#8B5CF6', FUNNY: '#F97316',
 };
 
-function Avatar({ uri, name, size = 40 }: { uri?: string; name?: string; size?: number }) {
+function Avatar({ uri, name, size = 40 }: { uri?: string | null; name?: string; size?: number }) {
   const colors = useTheme();
-  const styles = makeStyles(colors);
   if (uri) {
     return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
   }
   return (
-    <View style={[styles.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}>
+    <View style={{
+      width: size, height: size, borderRadius: size / 2,
+      backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+    }}>
       <Text style={{ color: '#fff', fontWeight: '800', fontSize: size * 0.4 }}>
         {(name ?? '?').charAt(0).toUpperCase()}
       </Text>
@@ -41,18 +44,84 @@ function Avatar({ uri, name, size = 40 }: { uri?: string; name?: string; size?: 
   );
 }
 
+function RichContent({ content, colors, navigation }: { content: string; colors: AppColors; navigation: any }) {
+  const parts = content.split(/(#\w+|@\w+)/g);
+  return (
+    <Text style={{ fontSize: 15, color: colors.textPrimary, lineHeight: 22, paddingHorizontal: 14, paddingBottom: 12 }}>
+      {parts.map((part, i) => {
+        if (part.startsWith('#')) {
+          const tag = part.slice(1);
+          return (
+            <Text key={i} style={{ color: colors.primary, fontWeight: '700' }}
+              onPress={() => navigation.navigate('HashtagFeed', { tag })}>
+              {part}
+            </Text>
+          );
+        }
+        if (part.startsWith('@')) {
+          return <Text key={i} style={{ color: colors.primary, fontWeight: '700' }}>{part}</Text>;
+        }
+        return <Text key={i}>{part}</Text>;
+      })}
+    </Text>
+  );
+}
+
 function ReactionPicker({ onPick }: { onPick: (r: string) => void }) {
   const colors = useTheme();
-  const styles = makeStyles(colors);
   return (
-    <View style={styles.reactionPicker}>
+    <View style={{
+      position: 'absolute', bottom: 44, left: 0,
+      flexDirection: 'row', backgroundColor: colors.surface,
+      borderRadius: 30, paddingHorizontal: 8, paddingVertical: 6, gap: 4,
+      borderWidth: 1, borderColor: colors.border,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 6,
+      zIndex: 99,
+    }}>
       {Object.entries(REACTION_EMOJIS).map(([key, emoji]) => (
-        <TouchableOpacity key={key} onPress={() => onPick(key)} style={styles.reactionPickerBtn} activeOpacity={0.7}>
-          <Text style={styles.reactionPickerEmoji}>{emoji}</Text>
+        <TouchableOpacity key={key} onPress={() => onPick(key)} style={{ padding: 4 }} activeOpacity={0.7}>
+          <Text style={{ fontSize: 26 }}>{emoji}</Text>
         </TouchableOpacity>
       ))}
     </View>
   );
+}
+
+function AttachmentRow({ post, colors }: { post: FeedPost; colors: AppColors }) {
+  if (post.imageUrl) {
+    return (
+      <Image
+        source={{ uri: post.imageUrl }}
+        style={{ width: '100%', height: 200, borderRadius: 0, marginBottom: 0 }}
+        resizeMode="cover"
+      />
+    );
+  }
+  if (post.attachmentUrl) {
+    const icon = post.attachmentType === 'PDF' ? 'document-text-outline' : 'document-outline';
+    return (
+      <TouchableOpacity
+        style={{
+          flexDirection: 'row', alignItems: 'center', gap: 10,
+          marginHorizontal: 14, marginBottom: 10,
+          backgroundColor: colors.background, borderRadius: 12, padding: 12,
+          borderWidth: 1, borderColor: colors.border,
+        }}
+        onPress={() => Linking.openURL(post.attachmentUrl!)}
+        activeOpacity={0.8}
+      >
+        <Ionicons name={icon} size={24} color={colors.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }} numberOfLines={1}>
+            {post.attachmentName ?? 'Attachment'}
+          </Text>
+          <Text style={{ fontSize: 11, color: colors.textMuted }}>{post.attachmentType}</Text>
+        </View>
+        <Ionicons name="download-outline" size={18} color={colors.textSecondary} />
+      </TouchableOpacity>
+    );
+  }
+  return null;
 }
 
 function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: number }) {
@@ -71,7 +140,6 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
     const prevReaction = myReaction;
     const prevLikes = post.likesCount;
 
-    // Optimistic update
     dispatch(setReaction({
       postId: post.id,
       reaction: removing ? null : type,
@@ -85,7 +153,6 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
         await apiClient.post(API_ENDPOINTS.FEED_REACT(post.id), { type });
       }
     } catch {
-      // Revert on failure
       dispatch(setReaction({ postId: post.id, reaction: prevReaction ?? null, likesCount: prevLikes }));
     }
   }
@@ -105,7 +172,6 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
 
   return (
     <View style={styles.card}>
-      {/* Author row */}
       <View style={styles.cardHeader}>
         <TouchableOpacity
           style={styles.authorRow}
@@ -128,10 +194,10 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
         )}
       </View>
 
-      {/* Content */}
-      <Text style={styles.postContent}>{post.content}</Text>
+      <RichContent content={post.content} colors={colors} navigation={navigation} />
 
-      {/* Reaction counts */}
+      <AttachmentRow post={post} colors={colors} />
+
       {post.likesCount > 0 || post.commentsCount > 0 ? (
         <View style={styles.countRow}>
           {post.likesCount > 0 && (
@@ -149,7 +215,6 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
 
       <View style={styles.divider} />
 
-      {/* Action bar */}
       <View style={styles.actions}>
         <View>
           <TouchableOpacity
@@ -183,7 +248,7 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
           onPress={() => navigation.navigate('ChatDetail', {
             partnerId: post.author.id,
             partnerName: post.author.name,
-            partnerPicture: post.author.profilePicture,
+            partnerPicture: post.author.profilePicture ?? undefined,
           })}
           activeOpacity={0.7}
         >
@@ -204,15 +269,14 @@ export default function FeedScreen() {
   const posts = useSelector((s: RootState) => s.feed.posts);
   const hasMore = useSelector((s: RootState) => s.feed.hasMore);
   const page = useSelector((s: RootState) => s.feed.page);
+  const unreadCount = useSelector((s: RootState) => s.socialNotifications.unreadCount);
 
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [initialLoading, setInitialLoading] = useState(posts.length === 0);
 
   async function loadFeed(reset = false) {
-    if (reset) {
-      setRefreshing(true);
-    }
+    if (reset) setRefreshing(true);
     try {
       const p = reset ? 0 : page;
       const { data } = await apiClient.get(API_ENDPOINTS.FEED, { params: { page: p, size: 20 } });
@@ -228,7 +292,17 @@ export default function FeedScreen() {
     setLoadingMore(false);
   }
 
-  useEffect(() => { loadFeed(true); }, []);
+  async function loadUnreadCount() {
+    try {
+      const { data } = await apiClient.get(API_ENDPOINTS.SOCIAL_NOTIFICATIONS_UNREAD);
+      dispatch(setUnreadCount(data.count ?? 0));
+    } catch {}
+  }
+
+  useEffect(() => {
+    loadFeed(true);
+    loadUnreadCount();
+  }, []);
 
   function loadMore() {
     if (!hasMore || loadingMore || refreshing) return;
@@ -238,7 +312,6 @@ export default function FeedScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.headerLogo}>
@@ -247,6 +320,18 @@ export default function FeedScreen() {
           <Text style={styles.headerTitle}>Feed</Text>
         </View>
         <View style={styles.headerRight}>
+          {/* Notification bell */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SocialNotifications')}
+            style={styles.headerBtn}
+          >
+            <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : String(unreadCount)}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('ChatList')} style={styles.headerBtn}>
             <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
@@ -277,7 +362,7 @@ export default function FeedScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="newspaper-outline" size={52} color={colors.border} />
               <Text style={styles.emptyTitle}>Nothing here yet</Text>
-              <Text style={styles.emptySub}>Be the first to post a career update!</Text>
+              <Text style={styles.emptySub}>Follow people or be the first to post!</Text>
               <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('CreatePost')}>
                 <Text style={styles.emptyBtnText}>Create a post</Text>
               </TouchableOpacity>
@@ -308,7 +393,13 @@ function makeStyles(colors: AppColors) {
   headerLogoText: { color: '#fff', fontWeight: '900', fontSize: 18 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerBtn: { padding: 6 },
+  headerBtn: { padding: 6, position: 'relative' },
+  badge: {
+    position: 'absolute', top: 2, right: 2,
+    backgroundColor: colors.error, borderRadius: 9, minWidth: 18, height: 18,
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+  },
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   createBtn: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
@@ -319,24 +410,18 @@ function makeStyles(colors: AppColors) {
   card: {
     backgroundColor: colors.surface, marginHorizontal: 12, marginTop: 10,
     borderRadius: 16, borderWidth: 1, borderColor: colors.border,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
     padding: 14, paddingBottom: 10,
   },
   authorRow: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 },
-  avatarFallback: { backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   authorInfo: { flex: 1 },
   authorName: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
   authorHeadline: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
   postTime: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   deleteBtn: { padding: 6 },
-
-  postContent: {
-    fontSize: 15, color: colors.textPrimary, lineHeight: 22,
-    paddingHorizontal: 14, paddingBottom: 12,
-  },
 
   countRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -346,26 +431,13 @@ function makeStyles(colors: AppColors) {
 
   divider: { height: 1, backgroundColor: colors.border, marginHorizontal: 14 },
 
-  actions: {
-    flexDirection: 'row', paddingHorizontal: 6, paddingVertical: 4, gap: 0,
-  },
+  actions: { flexDirection: 'row', paddingHorizontal: 6, paddingVertical: 4 },
   actionBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 5, paddingVertical: 8, borderRadius: 10,
   },
   actionEmoji: { fontSize: 18 },
   actionLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
-
-  reactionPicker: {
-    position: 'absolute', bottom: 44, left: 0,
-    flexDirection: 'row', backgroundColor: colors.surface,
-    borderRadius: 30, paddingHorizontal: 8, paddingVertical: 6, gap: 4,
-    borderWidth: 1, borderColor: colors.border,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 6,
-    zIndex: 99,
-  },
-  reactionPickerBtn: { padding: 4 },
-  reactionPickerEmoji: { fontSize: 26 },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },

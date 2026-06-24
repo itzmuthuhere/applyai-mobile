@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import feedReducer, { FeedPost } from '../store/slices/feedSlice';
 import authReducer from '../store/slices/authSlice';
+import socialNotificationReducer from '../store/slices/notificationSlice';
 import FeedScreen from '../screens/feed/FeedScreen';
 
 const mockNavigate = jest.fn();
@@ -33,10 +34,11 @@ const AUTH_USER = { id: 42, name: 'Bob', email: 'bob@test.com', subscriptionPlan
 
 function makeStore(posts: FeedPost[] = []) {
   return configureStore({
-    reducer: { feed: feedReducer, auth: authReducer },
+    reducer: { feed: feedReducer, auth: authReducer, socialNotifications: socialNotificationReducer },
     preloadedState: {
       feed: { posts, page: 0, hasMore: true, loading: false },
       auth: { jwt: 'tok', user: AUTH_USER },
+      socialNotifications: { notifications: [], unreadCount: 0, hasMore: true, page: 0 },
     } as any,
   });
 }
@@ -52,7 +54,10 @@ function renderScreen(posts: FeedPost[] = []) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockGet.mockResolvedValue({ data: { content: [], totalPages: 1 } });
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
+    return Promise.resolve({ data: { content: [], totalPages: 1 } });
+  });
 });
 
 it('shows empty state when API returns empty', async () => {
@@ -61,7 +66,10 @@ it('shows empty state when API returns empty', async () => {
 });
 
 it('renders posts returned by API', async () => {
-  mockGet.mockResolvedValue({ data: { content: [MOCK_POST] } });
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
+    return Promise.resolve({ data: { content: [MOCK_POST] } });
+  });
   const { getByText } = renderScreen([]);
   await waitFor(() => expect(getByText('Just got a job!')).toBeTruthy());
   expect(getByText('Alice')).toBeTruthy();
@@ -69,14 +77,20 @@ it('renders posts returned by API', async () => {
 });
 
 it('react button is present when post is shown', async () => {
-  mockGet.mockResolvedValue({ data: { content: [MOCK_POST] } });
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
+    return Promise.resolve({ data: { content: [MOCK_POST] } });
+  });
   const { getByTestId } = renderScreen([]);
   await waitFor(() => getByTestId(`react-btn-${MOCK_POST.id}`));
   expect(getByTestId(`react-btn-${MOCK_POST.id}`)).toBeTruthy();
 });
 
 it('tapping react on unreacted post calls API and optimistic-updates like count', async () => {
-  mockGet.mockResolvedValue({ data: { content: [MOCK_POST] } });
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
+    return Promise.resolve({ data: { content: [MOCK_POST] } });
+  });
   mockPost.mockResolvedValue({ data: {} });
   const { getByTestId, getByText } = renderScreen([]);
   await waitFor(() => getByTestId(`react-btn-${MOCK_POST.id}`));
@@ -85,7 +99,10 @@ it('tapping react on unreacted post calls API and optimistic-updates like count'
 });
 
 it('navigates to PublicProfile when author name pressed', async () => {
-  mockGet.mockResolvedValue({ data: { content: [MOCK_POST] } });
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
+    return Promise.resolve({ data: { content: [MOCK_POST] } });
+  });
   const { getByText } = renderScreen([]);
   await waitFor(() => getByText('Alice'));
   fireEvent.press(getByText('Alice'));
@@ -93,7 +110,10 @@ it('navigates to PublicProfile when author name pressed', async () => {
 });
 
 it('navigates to PostDetail when Comment pressed', async () => {
-  mockGet.mockResolvedValue({ data: { content: [MOCK_POST] } });
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
+    return Promise.resolve({ data: { content: [MOCK_POST] } });
+  });
   const { getByText } = renderScreen([]);
   await waitFor(() => getByText('Comment'));
   fireEvent.press(getByText('Comment'));

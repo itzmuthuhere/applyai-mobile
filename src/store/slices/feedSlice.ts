@@ -4,7 +4,11 @@ export interface FeedPost {
   id: number;
   author: { id: number; name: string; headline?: string; profilePicture?: string };
   content: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
+  hashtags?: string | null;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
+  attachmentName?: string | null;
   likesCount: number;
   commentsCount: number;
   createdAt: string;

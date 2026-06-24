@@ -1,15 +1,21 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, SafeAreaView, ActivityIndicator,
+  Image, SafeAreaView, ActivityIndicator, FlatList,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { RootState } from '../../store';
 import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { FeedStackParamList } from '../../navigation/types';
+
+dayjs.extend(relativeTime);
 
 type RouteT = RouteProp<FeedStackParamList, 'PublicProfile'>;
 
@@ -21,6 +27,18 @@ interface PublicProfile {
   targetRole?: string;
   targetLocation?: string;
   skills: string[];
+  followersCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+}
+
+interface UserPost {
+  id: number;
+  content: string;
+  imageUrl?: string | null;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
 }
 
 export default function PublicProfileScreen() {
@@ -29,19 +47,46 @@ export default function PublicProfileScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteT>();
   const { userId, userName } = route.params;
+  const currentUser = useSelector((s: RootState) => s.auth.user);
+  const isOwnProfile = currentUser?.id === userId;
 
   const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [posts, setPosts] = useState<UserPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await apiClient.get(API_ENDPOINTS.PUBLIC_PROFILE(userId));
-        setProfile(data);
-      } catch {}
-      setLoading(false);
-    })();
+  const load = useCallback(async () => {
+    try {
+      const [profileRes, postsRes] = await Promise.all([
+        apiClient.get(API_ENDPOINTS.PUBLIC_PROFILE(userId)),
+        apiClient.get(API_ENDPOINTS.USER_POSTS(userId), { params: { page: 0, size: 10 } }),
+      ]);
+      setProfile(profileRes.data);
+      setFollowing(profileRes.data.isFollowing ?? false);
+      setPosts(postsRes.data.content ?? []);
+    } catch {}
+    setLoading(false);
   }, [userId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function handleFollow() {
+    if (!profile || isOwnProfile) return;
+    setFollowLoading(true);
+    try {
+      if (following) {
+        await apiClient.delete(API_ENDPOINTS.FOLLOW(userId));
+        setFollowing(false);
+        setProfile(p => p ? { ...p, followersCount: p.followersCount - 1 } : p);
+      } else {
+        await apiClient.post(API_ENDPOINTS.FOLLOW(userId));
+        setFollowing(true);
+        setProfile(p => p ? { ...p, followersCount: p.followersCount + 1 } : p);
+      }
+    } catch {}
+    setFollowLoading(false);
+  }
 
   if (loading) {
     return (
@@ -58,7 +103,6 @@ export default function PublicProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
@@ -83,9 +127,7 @@ export default function PublicProfileScreen() {
         {/* Profile info */}
         <View style={styles.infoSection}>
           <Text style={styles.name}>{name}</Text>
-          {profile?.headline ? (
-            <Text style={styles.headline}>{profile.headline}</Text>
-          ) : null}
+          {profile?.headline ? <Text style={styles.headline}>{profile.headline}</Text> : null}
           {profile?.targetLocation ? (
             <View style={styles.locationRow}>
               <Ionicons name="location-outline" size={14} color={colors.textMuted} />
@@ -93,20 +135,64 @@ export default function PublicProfileScreen() {
             </View>
           ) : null}
 
-          {/* Message button */}
-          <TouchableOpacity
-            testID="message-btn"
-            style={styles.messageBtn}
-            onPress={() => navigation.navigate('ChatDetail', {
-              partnerId: userId,
-              partnerName: name,
-              partnerPicture: profile?.profilePicture,
-            })}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="chatbubble-outline" size={16} color="#fff" />
-            <Text style={styles.messageBtnText}>Message</Text>
-          </TouchableOpacity>
+          {/* Follow stats */}
+          <View style={styles.statsRow}>
+            <TouchableOpacity
+              style={styles.statItem}
+              onPress={() => navigation.navigate('Followers', { userId, userName: name })}
+            >
+              <Text style={styles.statNumber}>{profile?.followersCount ?? 0}</Text>
+              <Text style={styles.statLabel}>followers</Text>
+            </TouchableOpacity>
+            <View style={styles.statDivider} />
+            <TouchableOpacity
+              style={styles.statItem}
+              onPress={() => navigation.navigate('Following', { userId, userName: name })}
+            >
+              <Text style={styles.statNumber}>{profile?.followingCount ?? 0}</Text>
+              <Text style={styles.statLabel}>following</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Action buttons */}
+          <View style={styles.actionRow}>
+            {!isOwnProfile && (
+              <TouchableOpacity
+                testID="follow-btn"
+                style={[styles.followBtn, following && styles.followingBtn]}
+                onPress={handleFollow}
+                disabled={followLoading}
+                activeOpacity={0.85}
+              >
+                {followLoading ? (
+                  <ActivityIndicator size="small" color={following ? colors.primary : '#fff'} />
+                ) : (
+                  <>
+                    <Ionicons
+                      name={following ? 'checkmark' : 'person-add-outline'}
+                      size={15} color={following ? colors.primary : '#fff'}
+                    />
+                    <Text style={[styles.followBtnText, following && styles.followingBtnText]}>
+                      {following ? 'Following' : 'Follow'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              testID="message-btn"
+              style={styles.messageBtn}
+              onPress={() => navigation.navigate('ChatDetail', {
+                partnerId: userId,
+                partnerName: name,
+                partnerPicture: profile?.profilePicture,
+              })}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="chatbubble-outline" size={15} color={colors.primary} />
+              <Text style={styles.messageBtnText}>Message</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Looking for */}
@@ -131,6 +217,30 @@ export default function PublicProfileScreen() {
                 </View>
               ))}
             </View>
+          </View>
+        )}
+
+        {/* Recent posts */}
+        {posts.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Recent Posts</Text>
+            {posts.slice(0, 5).map(post => (
+              <TouchableOpacity
+                key={post.id}
+                style={styles.postItem}
+                onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.postContent} numberOfLines={3}>{post.content}</Text>
+                {post.imageUrl ? (
+                  <Image source={{ uri: post.imageUrl }} style={styles.postThumb} resizeMode="cover" />
+                ) : null}
+                <View style={styles.postMeta}>
+                  <Text style={styles.postMetaText}>👍 {post.likesCount}  💬 {post.commentsCount}</Text>
+                  <Text style={styles.postMetaText}>{dayjs(post.createdAt).fromNow()}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
@@ -162,13 +272,28 @@ function makeStyles(colors: AppColors) {
   infoSection: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, backgroundColor: colors.surface, marginBottom: 10 },
   name: { fontSize: 22, fontWeight: '900', color: colors.textPrimary, marginBottom: 4 },
   headline: { fontSize: 14, color: colors.textSecondary, marginBottom: 6 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 14 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 12 },
   locationText: { fontSize: 13, color: colors.textMuted },
-  messageBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-    backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 9,
+
+  statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  statItem: { alignItems: 'center', paddingHorizontal: 16, paddingVertical: 4 },
+  statNumber: { fontSize: 17, fontWeight: '900', color: colors.textPrimary },
+  statLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
+  statDivider: { width: 1, height: 28, backgroundColor: colors.border },
+
+  actionRow: { flexDirection: 'row', gap: 10 },
+  followBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 9,
   },
-  messageBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  followingBtn: { backgroundColor: colors.primaryLight, borderWidth: 1, borderColor: colors.primary },
+  followBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  followingBtnText: { color: colors.primary },
+  messageBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    borderWidth: 1, borderColor: colors.primary, borderRadius: 12, paddingVertical: 9,
+  },
+  messageBtnText: { color: colors.primary, fontWeight: '800', fontSize: 14 },
 
   card: {
     backgroundColor: colors.surface, marginHorizontal: 12, marginBottom: 10,
@@ -188,5 +313,13 @@ function makeStyles(colors: AppColors) {
     borderWidth: 1, borderColor: colors.border,
   },
   skillText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+
+  postItem: {
+    paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.border,
+  },
+  postContent: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, marginBottom: 8 },
+  postThumb: { width: '100%', height: 120, borderRadius: 10, marginBottom: 8 },
+  postMeta: { flexDirection: 'row', justifyContent: 'space-between' },
+  postMetaText: { fontSize: 12, color: colors.textMuted },
   });
 }

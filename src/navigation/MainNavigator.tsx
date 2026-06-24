@@ -44,6 +44,10 @@ import PostDetailScreen from '../screens/feed/PostDetailScreen';
 import PublicProfileScreen from '../screens/feed/PublicProfileScreen';
 import ChatListScreen from '../screens/feed/ChatListScreen';
 import ChatDetailScreen from '../screens/feed/ChatDetailScreen';
+import SocialNotificationsScreen from '../screens/feed/SocialNotificationsScreen';
+import FollowersScreen from '../screens/feed/FollowersScreen';
+import FollowingScreen from '../screens/feed/FollowingScreen';
+import HashtagFeedScreen from '../screens/feed/HashtagFeedScreen';
 import NotificationsScreen from '../screens/common/NotificationsScreen';
 import ApplicationsListScreen from '../screens/applications/ApplicationsListScreen';
 import ApplicationDetailScreen from '../screens/applications/ApplicationDetailScreen';
@@ -70,6 +74,10 @@ function FeedNavigator() {
       <FeedStack.Screen name="PublicProfile" component={PublicProfileScreen} />
       <FeedStack.Screen name="ChatList" component={ChatListScreen} />
       <FeedStack.Screen name="ChatDetail" component={ChatDetailScreen} />
+      <FeedStack.Screen name="SocialNotifications" component={SocialNotificationsScreen} />
+      <FeedStack.Screen name="Followers" component={FollowersScreen} />
+      <FeedStack.Screen name="Following" component={FollowingScreen} />
+      <FeedStack.Screen name="HashtagFeed" component={HashtagFeedScreen} />
     </FeedStack.Navigator>
   );
 }

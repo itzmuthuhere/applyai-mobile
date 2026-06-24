@@ -61,6 +61,10 @@ export type FeedStackParamList = {
   PublicProfile: { userId: number; userName?: string };
   ChatList: undefined;
   ChatDetail: { partnerId: number; partnerName: string; partnerPicture?: string };
+  SocialNotifications: undefined;
+  Followers: { userId: number; userName?: string };
+  Following: { userId: number; userName?: string };
+  HashtagFeed: { tag: string };
 };
 
 export type MainTabParamList = {

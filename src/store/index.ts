@@ -11,6 +11,7 @@ import notificationReducer from './notificationSlice';
 import feedReducer from './slices/feedSlice';
 import chatReducer from './slices/chatSlice';
 import themeReducer from './slices/themeSlice';
+import socialNotificationReducer from './slices/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     feed: feedReducer,
     chat: chatReducer,
     theme: themeReducer,
+    socialNotifications: socialNotificationReducer,
   },
 });
 
