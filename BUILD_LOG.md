@@ -27,7 +27,7 @@
 
 | ID | Description | Day | Date | Status |
 |----|-------------|-----|------|--------|
-| — | None yet | — | — | — |
+| FEAT-UI-001 | Centralized theme system — dark mode + 5 accent colors, single-place change propagates to all 41 screens | — | Jun 24, 2026 | ✅ Complete |
 
 ---
 
@@ -44,9 +44,28 @@
 
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
-**Open bugs:** None (BUG-001 fixed Jun 11, BUG-MOB-001 fixed Jun 16)
-**Last push:** Jun 16, 2026 (BUG-MOB-001 fix — apply flow Railway cold-start + 409 handling + resume filename decode)
-**Resume point:** All phases complete. Device-tested. Apply flow now works correctly on physical device.
+**Open bugs:** None
+**Last push:** Jun 24, 2026 (FEAT-UI-001 — centralized theme system: dark mode + 5 accent colors across 41 screens, 328 tests passing)
+**Resume point:** All phases complete. Theme system added. Device-test theme toggle on physical device next.
+
+---
+
+## SESSION — Jun 24, 2026 — Theme System (FEAT-UI-001)
+
+**What was built:**
+- `src/theme/themes.ts` — `buildTheme(mode, accent)` producing full `AppColors` palette; `ACCENT_PRESETS` for 5 colors (blue, purple, green, orange, pink); light/dark mode palettes
+- `src/store/slices/themeSlice.ts` — Redux slice: `{ mode, accent }`; actions `setMode`, `setAccent`, `toggleMode`
+- `src/theme/ThemeContext.tsx` — `ThemeProvider` (reads/writes SecureStore for persistence); `useTheme()` hook; `useThemeSettings()` hook
+- `App.tsx` — wrapped with `ThemeProvider` inside Redux `Provider`
+- `src/__tests__/setup.ts` — global `useTheme` mock for all 40+ test files
+- `src/screens/home/ProfileSettingsScreen.tsx` — added Appearance card: dark mode Switch + 5 accent color dot pickers
+- All 41 screens migrated from `COLORS.*` → `useTheme()` + `makeStyles(colors)` pattern
+- Fixed all pre-export helper components (StatsBar, AppCard, TabPill, PostCard, SectionCard, etc.) to call `useTheme()` directly
+- Fixed module-level StyleSheets referencing colors (barStyles, sectionStyles, tlStyles) → converted to factory functions
+- Fixed makeStyles closing brace bug across all 41 files + JSX return restoration
+
+**Tests:** 328 tests pass (40 suites)
+**Commit:** 74cc8cb
 
 ---
 

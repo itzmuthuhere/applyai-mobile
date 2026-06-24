@@ -23,10 +23,10 @@
 
 ## CURRENT BUILD PHASE
 
-**Phase:** 1 — Core Screens (Days 1–12)
-**Active Day:** Phase 1 complete — ready for EAS APK build + device testing
-**Last Session:** Jun 8, 2026
-**Overall Status:** Phase 1 complete — all 12 days built. TypeScript clean (0 errors). Ready for EAS build.
+**Phase:** 1 — Core Screens (Days 1–12) + Theming
+**Active Day:** Phase 1 complete — theming layer added Jun 24, 2026
+**Last Session:** Jun 24, 2026
+**Overall Status:** Phase 1 complete. Centralized theme system (dark mode + 5 accent colors) added across all 41 screens. TypeScript clean (0 screen errors). 328 tests passing.
 
 ---
 
@@ -102,13 +102,17 @@ src/
 │       ├── InterviewQuestionScreen.tsx ✅ Placeholder
 │       └── InterviewReportScreen.tsx ✅ Placeholder
 ├── store/
-│   ├── index.ts               ✅ configureStore with all slices
+│   ├── index.ts               ✅ configureStore with all slices (incl. themeReducer)
 │   └── slices/
 │       ├── authSlice.ts       ✅ jwt, user, isLoading, error
 │       ├── resumeSlice.ts     ✅ list, selected, isUploading, isAnalyzing
 │       ├── jobSlice.ts        ✅ feed, matchScores, pagination
 │       ├── applicationSlice.ts ✅ list, selected
-│       └── interviewSlice.ts  ✅ currentSession, history
+│       ├── interviewSlice.ts  ✅ currentSession, history
+│       └── themeSlice.ts      ✅ mode (light/dark), accent (blue/purple/green/orange/pink); actions: setMode, setAccent, toggleMode
+├── theme/
+│   ├── themes.ts              ✅ buildTheme(mode, accent) → AppColors; ACCENT_PRESETS; 5 accent presets
+│   └── ThemeContext.tsx       ✅ ThemeProvider (Redux + SecureStore persistence); useTheme() → AppColors; useThemeSettings() → {colors, isDark, mode, accent}
 ├── types/
 │   └── api.types.ts           ✅ All API response interfaces
 ├── constants/
