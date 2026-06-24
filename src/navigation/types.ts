@@ -54,8 +54,18 @@ export type InterviewStackParamList = {
   InterviewReport: { sessionId: number };
 };
 
+export type FeedStackParamList = {
+  Feed: undefined;
+  CreatePost: undefined;
+  PostDetail: { postId: number };
+  PublicProfile: { userId: number; userName?: string };
+  ChatList: undefined;
+  ChatDetail: { partnerId: number; partnerName: string; partnerPicture?: string };
+};
+
 export type MainTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList>;
+  FeedTab: NavigatorScreenParams<FeedStackParamList>;
   JobsTab: NavigatorScreenParams<JobsStackParamList>;
   ResumeTab: NavigatorScreenParams<ResumeStackParamList>;
   ApplicationsTab: NavigatorScreenParams<ApplicationsStackParamList>;

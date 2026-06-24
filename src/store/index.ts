@@ -8,6 +8,8 @@ import analyticsReducer from './analyticsSlice';
 import intelligenceReducer from './intelligenceSlice';
 import blacklistReducer from './blacklistSlice';
 import notificationReducer from './notificationSlice';
+import feedReducer from './slices/feedSlice';
+import chatReducer from './slices/chatSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +22,8 @@ export const store = configureStore({
     intelligence: intelligenceReducer,
     blacklist: blacklistReducer,
     notifications: notificationReducer,
+    feed: feedReducer,
+    chat: chatReducer,
   },
 });
 

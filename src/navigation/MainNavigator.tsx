@@ -10,6 +10,7 @@ import {
   ResumeStackParamList,
   ApplicationsStackParamList,
   InterviewStackParamList,
+  FeedStackParamList,
 } from './types';
 
 import HomeScreen from '../screens/home/HomeScreen';
@@ -37,6 +38,12 @@ import HrPostJobScreen from '../screens/jobs/HrPostJobScreen';
 import HrMyJobsScreen from '../screens/jobs/HrMyJobsScreen';
 import AutoApplyQueueScreen from '../screens/jobs/AutoApplyQueueScreen';
 import CareerPathScreen from '../screens/home/CareerPathScreen';
+import FeedScreen from '../screens/feed/FeedScreen';
+import CreatePostScreen from '../screens/feed/CreatePostScreen';
+import PostDetailScreen from '../screens/feed/PostDetailScreen';
+import PublicProfileScreen from '../screens/feed/PublicProfileScreen';
+import ChatListScreen from '../screens/feed/ChatListScreen';
+import ChatDetailScreen from '../screens/feed/ChatDetailScreen';
 import NotificationsScreen from '../screens/common/NotificationsScreen';
 import ApplicationsListScreen from '../screens/applications/ApplicationsListScreen';
 import ApplicationDetailScreen from '../screens/applications/ApplicationDetailScreen';
@@ -46,12 +53,26 @@ import InterviewQuestionScreen from '../screens/interview/InterviewQuestionScree
 import InterviewReportScreen from '../screens/interview/InterviewReportScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const FeedStack = createNativeStackNavigator<FeedStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const JobsStack = createNativeStackNavigator<JobsStackParamList>();
 const ResumeStack = createNativeStackNavigator<ResumeStackParamList>();
 const ApplicationsStack =
   createNativeStackNavigator<ApplicationsStackParamList>();
 const InterviewStack = createNativeStackNavigator<InterviewStackParamList>();
+
+function FeedNavigator() {
+  return (
+    <FeedStack.Navigator screenOptions={{ headerShown: false }}>
+      <FeedStack.Screen name="Feed" component={FeedScreen} />
+      <FeedStack.Screen name="CreatePost" component={CreatePostScreen} />
+      <FeedStack.Screen name="PostDetail" component={PostDetailScreen} />
+      <FeedStack.Screen name="PublicProfile" component={PublicProfileScreen} />
+      <FeedStack.Screen name="ChatList" component={ChatListScreen} />
+      <FeedStack.Screen name="ChatDetail" component={ChatDetailScreen} />
+    </FeedStack.Navigator>
+  );
+}
 
 function HomeNavigator() {
   return (
@@ -132,6 +153,7 @@ export default function MainNavigator() {
         tabBarIcon: ({ color, size }) => {
           const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
             Home: 'home-outline',
+            FeedTab: 'newspaper-outline',
             JobsTab: 'briefcase-outline',
             ResumeTab: 'document-text-outline',
             ApplicationsTab: 'list-outline',
@@ -139,13 +161,15 @@ export default function MainNavigator() {
           };
           return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
         },
+        tabBarShowLabel: false,
       })}
     >
-      <Tab.Screen name="Home" component={HomeNavigator} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="JobsTab" component={JobsNavigator} options={{ tabBarLabel: 'Jobs' }} />
-      <Tab.Screen name="ResumeTab" component={ResumeNavigator} options={{ tabBarLabel: 'Resume' }} />
-      <Tab.Screen name="ApplicationsTab" component={ApplicationsNavigator} options={{ tabBarLabel: 'Applications' }} />
-      <Tab.Screen name="InterviewTab" component={InterviewNavigator} options={{ tabBarLabel: 'Interview' }} />
+      <Tab.Screen name="Home" component={HomeNavigator} />
+      <Tab.Screen name="FeedTab" component={FeedNavigator} />
+      <Tab.Screen name="JobsTab" component={JobsNavigator} />
+      <Tab.Screen name="ResumeTab" component={ResumeNavigator} />
+      <Tab.Screen name="ApplicationsTab" component={ApplicationsNavigator} />
+      <Tab.Screen name="InterviewTab" component={InterviewNavigator} />
     </Tab.Navigator>
   );
 }

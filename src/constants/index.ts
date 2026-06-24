@@ -128,6 +128,17 @@ export const API_ENDPOINTS = {
   AUTO_APPLY_STATUS: (id: number) => `/api/auto-apply/${id}/status`,
   AUTO_APPLY_DELETE: (id: number) => `/api/auto-apply/${id}`,
   AUTO_APPLY_COUNT: '/api/auto-apply/count',
+  // Social Feed
+  FEED: '/api/feed',
+  FEED_REACT: (postId: number) => `/api/feed/${postId}/react`,
+  FEED_COMMENTS: (postId: number) => `/api/feed/${postId}/comments`,
+  FEED_COMMENT_DELETE: (postId: number, commentId: number) => `/api/feed/${postId}/comments/${commentId}`,
+  // Chat
+  CHAT_CONVERSATIONS: '/api/chat/conversations',
+  CHAT_MESSAGES: '/api/chat/messages',
+  CHAT_READ: '/api/chat/read',
+  // Public profiles
+  PUBLIC_PROFILE: (userId: number) => `/api/users/${userId}/profile`,
 } as const;
 
 export const PLAN_LIMITS = {
