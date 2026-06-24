@@ -25,8 +25,16 @@ export const signInWithGoogle = createAsyncThunk<
 >('auth/signInWithGoogle', async (_, { rejectWithValue }) => {
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    await GoogleSignin.signIn();
-    const { idToken } = await GoogleSignin.getTokens();
+
+    // v16+: signIn() returns { type, data } — read idToken directly so we always
+    // get a fresh token, not a stale cached one from getTokens()
+    const signInResult = await GoogleSignin.signIn();
+
+    if (signInResult.type === 'cancelled') {
+      return rejectWithValue('Sign-in cancelled');
+    }
+
+    const idToken = (signInResult as any).data?.idToken ?? null;
 
     if (!idToken) {
       return rejectWithValue('Failed to get ID token from Google');
@@ -48,7 +56,10 @@ export const signInWithGoogle = createAsyncThunk<
       return rejectWithValue('Google Play Services not available');
     }
     const message =
-      error.response?.data?.message || error.message || 'Sign-in failed';
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      error.message ||
+      'Sign-in failed';
     return rejectWithValue(message);
   }
 });
