@@ -153,6 +153,9 @@ export const API_ENDPOINTS = {
   SOCIAL_NOTIFICATIONS_UNREAD: '/api/notifications/social/unread-count',
   SOCIAL_NOTIFICATIONS_READ_ALL: '/api/notifications/social/read-all',
   SOCIAL_NOTIFICATION_READ: (id: number) => `/api/notifications/social/${id}/read`,
+  // Search
+  FEED_SEARCH: '/api/feed/search',
+  FEED_HASHTAGS_SUGGEST: '/api/feed/hashtags/suggest',
 } as const;
 
 export const PLAN_LIMITS = {

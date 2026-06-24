@@ -65,6 +65,7 @@ export type FeedStackParamList = {
   Followers: { userId: number; userName?: string };
   Following: { userId: number; userName?: string };
   HashtagFeed: { tag: string };
+  Search: { initialQuery?: string } | undefined;
 };
 
 export type MainTabParamList = {
