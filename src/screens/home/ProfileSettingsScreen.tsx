@@ -1,8 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView, StyleSheet,
-  SafeAreaView, Alert, TextInput, ActivityIndicator, Image,
-  Switch, Platform,
+  View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView,
+  Alert, TextInput, ActivityIndicator, Image, Switch, Modal, Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,34 +11,174 @@ import { AppDispatch, RootState } from '../../store';
 import { setAuth, signOut } from '../../store/slices/authSlice';
 import { toggleMode, setAccent } from '../../store/slices/themeSlice';
 import { API_ENDPOINTS } from '../../constants';
-import { User, RemotePreference } from '../../types/api.types';
+import { FullProfile, Experience, Education, Certification } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { useTheme, useThemeSettings } from '../../theme/ThemeContext';
 import { AppColors, AccentColor, ACCENT_PRESETS } from '../../theme/themes';
 
-const REMOTE_OPTIONS: { label: string; value: RemotePreference; icon: string }[] = [
+// ─── Remote / Role options ────────────────────────────────────────────────────
+const REMOTE_OPTIONS = [
   { label: 'Remote', value: 'REMOTE', icon: 'wifi-outline' },
   { label: 'Hybrid', value: 'HYBRID', icon: 'git-branch-outline' },
   { label: 'Onsite', value: 'ONSITE', icon: 'business-outline' },
-  { label: 'Any', value: 'ANY', icon: 'globe-outline' },
-];
+  { label: 'Any',    value: 'ANY',    icon: 'globe-outline' },
+] as const;
 
 const SALARY_PRESETS = [
-  { label: '₹5L', value: 500_000 },
-  { label: '₹8L', value: 800_000 },
-  { label: '₹12L', value: 1_200_000 },
-  { label: '₹15L', value: 1_500_000 },
-  { label: '₹20L', value: 2_000_000 },
-  { label: '₹30L', value: 3_000_000 },
+  { label: '₹5L',  value: 500_000 },  { label: '₹8L',  value: 800_000 },
+  { label: '₹12L', value: 1_200_000 }, { label: '₹15L', value: 1_500_000 },
+  { label: '₹20L', value: 2_000_000 }, { label: '₹30L', value: 3_000_000 },
   { label: '₹50L', value: 5_000_000 },
 ];
 
 function fmt(n: number) {
   if (n >= 10_000_000) return `₹${(n / 10_000_000).toFixed(1)}Cr`;
-  if (n >= 100_000) return `₹${Math.round(n / 100_000)}L`;
+  if (n >= 100_000)    return `₹${Math.round(n / 100_000)}L`;
   return `₹${n.toLocaleString('en-IN')}`;
 }
 
+// ─── Shared small components ──────────────────────────────────────────────────
+function FieldInput({ label, value, onChange, placeholder, multiline, keyboardType, colors }: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; multiline?: boolean; keyboardType?: any; colors: AppColors;
+}) {
+  return (
+    <View style={{ gap: 5 }}>
+      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>{label}</Text>
+      <TextInput
+        style={[{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: colors.textPrimary, backgroundColor: colors.background }, multiline && { minHeight: 80, textAlignVertical: 'top' }]}
+        value={value} onChangeText={onChange} placeholder={placeholder}
+        placeholderTextColor={colors.textMuted} multiline={multiline} keyboardType={keyboardType}
+      />
+    </View>
+  );
+}
+
+function SectionCard({ title, icon, children, colors }: { title: string; icon: any; children: React.ReactNode; colors: AppColors }) {
+  return (
+    <View style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, overflow: 'hidden' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <Ionicons name={icon} size={17} color={colors.primary} />
+        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>{title}</Text>
+      </View>
+      <View style={{ padding: 16, gap: 14 }}>{children}</View>
+    </View>
+  );
+}
+
+// ─── Experience modal ─────────────────────────────────────────────────────────
+interface ExpForm { company: string; title: string; location: string; startMonth: string; startYear: string; endMonth: string; endYear: string; current: boolean; description: string; }
+const emptyExp: ExpForm = { company: '', title: '', location: '', startMonth: '', startYear: '', endMonth: '', endYear: '', current: false, description: '' };
+
+function ExperienceModal({ visible, initial, onClose, onSave, colors }: {
+  visible: boolean; initial: ExpForm | null; onClose: () => void; onSave: (f: ExpForm) => void; colors: AppColors;
+}) {
+  const [f, setF] = useState<ExpForm>(initial ?? emptyExp);
+  useEffect(() => { setF(initial ?? emptyExp); }, [initial]);
+  const set = (k: keyof ExpForm) => (v: any) => setF(p => ({ ...p, [k]: v }));
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }}>
+          <TouchableOpacity onPress={onClose}><Text style={{ fontSize: 15, color: colors.textSecondary }}>Cancel</Text></TouchableOpacity>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: colors.textPrimary }}>Experience</Text>
+          <TouchableOpacity onPress={() => onSave(f)}><Text style={{ fontSize: 15, fontWeight: '700', color: colors.primary }}>Save</Text></TouchableOpacity>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }} showsVerticalScrollIndicator={false}>
+          <FieldInput label="Company *" value={f.company} onChange={set('company')} placeholder="Bank of America" colors={colors} />
+          <FieldInput label="Title *" value={f.title} onChange={set('title')} placeholder="Senior Java Developer" colors={colors} />
+          <FieldInput label="Location" value={f.location} onChange={set('location')} placeholder="Chennai, India" colors={colors} />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}><FieldInput label="Start Month" value={f.startMonth} onChange={set('startMonth')} placeholder="1" keyboardType="number-pad" colors={colors} /></View>
+            <View style={{ flex: 1 }}><FieldInput label="Start Year *" value={f.startYear} onChange={set('startYear')} placeholder="2020" keyboardType="number-pad" colors={colors} /></View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textPrimary }}>I currently work here</Text>
+            <Switch value={f.current} onValueChange={set('current')} trackColor={{ false: colors.border, true: colors.primary }} thumbColor="#fff" />
+          </View>
+          {!f.current && (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flex: 1 }}><FieldInput label="End Month" value={f.endMonth} onChange={set('endMonth')} placeholder="12" keyboardType="number-pad" colors={colors} /></View>
+              <View style={{ flex: 1 }}><FieldInput label="End Year" value={f.endYear} onChange={set('endYear')} placeholder="2024" keyboardType="number-pad" colors={colors} /></View>
+            </View>
+          )}
+          <FieldInput label="Description" value={f.description} onChange={set('description')} placeholder="Describe your role and achievements..." multiline colors={colors} />
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+// ─── Education modal ──────────────────────────────────────────────────────────
+interface EduForm { school: string; degree: string; fieldOfStudy: string; startYear: string; endYear: string; current: boolean; grade: string; description: string; }
+const emptyEdu: EduForm = { school: '', degree: '', fieldOfStudy: '', startYear: '', endYear: '', current: false, grade: '', description: '' };
+
+function EducationModal({ visible, initial, onClose, onSave, colors }: {
+  visible: boolean; initial: EduForm | null; onClose: () => void; onSave: (f: EduForm) => void; colors: AppColors;
+}) {
+  const [f, setF] = useState<EduForm>(initial ?? emptyEdu);
+  useEffect(() => { setF(initial ?? emptyEdu); }, [initial]);
+  const set = (k: keyof EduForm) => (v: any) => setF(p => ({ ...p, [k]: v }));
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }}>
+          <TouchableOpacity onPress={onClose}><Text style={{ fontSize: 15, color: colors.textSecondary }}>Cancel</Text></TouchableOpacity>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: colors.textPrimary }}>Education</Text>
+          <TouchableOpacity onPress={() => onSave(f)}><Text style={{ fontSize: 15, fontWeight: '700', color: colors.primary }}>Save</Text></TouchableOpacity>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }} showsVerticalScrollIndicator={false}>
+          <FieldInput label="School *" value={f.school} onChange={set('school')} placeholder="Anna University" colors={colors} />
+          <FieldInput label="Degree" value={f.degree} onChange={set('degree')} placeholder="B.E. / B.Tech / M.Tech" colors={colors} />
+          <FieldInput label="Field of Study" value={f.fieldOfStudy} onChange={set('fieldOfStudy')} placeholder="Computer Science" colors={colors} />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}><FieldInput label="Start Year" value={f.startYear} onChange={set('startYear')} placeholder="2016" keyboardType="number-pad" colors={colors} /></View>
+            <View style={{ flex: 1 }}><FieldInput label="End Year" value={f.endYear} onChange={set('endYear')} placeholder="2020" keyboardType="number-pad" colors={colors} /></View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textPrimary }}>Currently studying here</Text>
+            <Switch value={f.current} onValueChange={set('current')} trackColor={{ false: colors.border, true: colors.primary }} thumbColor="#fff" />
+          </View>
+          <FieldInput label="Grade / CGPA" value={f.grade} onChange={set('grade')} placeholder="8.5 / 10" colors={colors} />
+          <FieldInput label="Description" value={f.description} onChange={set('description')} placeholder="Activities, achievements..." multiline colors={colors} />
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+// ─── Certification modal ──────────────────────────────────────────────────────
+interface CertForm { name: string; issuer: string; issueDate: string; expiryDate: string; credentialId: string; credentialUrl: string; }
+const emptyCert: CertForm = { name: '', issuer: '', issueDate: '', expiryDate: '', credentialId: '', credentialUrl: '' };
+
+function CertificationModal({ visible, initial, onClose, onSave, colors }: {
+  visible: boolean; initial: CertForm | null; onClose: () => void; onSave: (f: CertForm) => void; colors: AppColors;
+}) {
+  const [f, setF] = useState<CertForm>(initial ?? emptyCert);
+  useEffect(() => { setF(initial ?? emptyCert); }, [initial]);
+  const set = (k: keyof CertForm) => (v: string) => setF(p => ({ ...p, [k]: v }));
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }}>
+          <TouchableOpacity onPress={onClose}><Text style={{ fontSize: 15, color: colors.textSecondary }}>Cancel</Text></TouchableOpacity>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: colors.textPrimary }}>Certification</Text>
+          <TouchableOpacity onPress={() => onSave(f)}><Text style={{ fontSize: 15, fontWeight: '700', color: colors.primary }}>Save</Text></TouchableOpacity>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }} showsVerticalScrollIndicator={false}>
+          <FieldInput label="Certification Name *" value={f.name} onChange={set('name')} placeholder="AWS Certified Solutions Architect" colors={colors} />
+          <FieldInput label="Issuing Organisation *" value={f.issuer} onChange={set('issuer')} placeholder="Amazon Web Services" colors={colors} />
+          <FieldInput label="Issue Date (YYYY-MM-DD)" value={f.issueDate} onChange={set('issueDate')} placeholder="2024-01-15" colors={colors} />
+          <FieldInput label="Expiry Date (YYYY-MM-DD)" value={f.expiryDate} onChange={set('expiryDate')} placeholder="2027-01-15 (leave blank if no expiry)" colors={colors} />
+          <FieldInput label="Credential ID" value={f.credentialId} onChange={set('credentialId')} placeholder="ABC123XYZ" colors={colors} />
+          <FieldInput label="Credential URL" value={f.credentialUrl} onChange={set('credentialUrl')} placeholder="https://..." colors={colors} />
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
 export default function ProfileSettingsScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<any>();
@@ -49,59 +188,94 @@ export default function ProfileSettingsScreen() {
   const { isDark, accent } = useThemeSettings();
   const styles = makeStyles(colors);
 
-  const [profile, setProfile] = useState<User | null>(storeUser);
-  const [editMode, setEditMode] = useState(false);
+  const [profile, setProfile] = useState<FullProfile | null>(null);
   const [saving, setSaving] = useState(false);
-  const [loadingCareerPath, setLoadingCareerPath] = useState(false);
   const [uploadingPic, setUploadingPic] = useState(false);
 
-  const [name, setName] = useState(storeUser?.name ?? '');
-  const [headline, setHeadline] = useState(storeUser?.headline ?? '');
-  const [targetRole, setTargetRole] = useState(storeUser?.targetRole ?? '');
-  const [targetLocation, setTargetLocation] = useState(storeUser?.targetLocation ?? '');
-  const [minSalary, setMinSalary] = useState<number | null>(storeUser?.minSalary ?? null);
-  const [remotePreference, setRemotePreference] = useState<RemotePreference | null>(storeUser?.remotePreference ?? null);
-  const [skills, setSkills] = useState(storeUser?.skills ?? '');
-  const [isHr, setIsHr] = useState(storeUser?.role === 'HR');
+  // Basic info
+  const [name, setName] = useState('');
+  const [headline, setHeadline] = useState('');
+  const [phone, setPhone] = useState('');
+  const [bio, setBio] = useState('');
+  const [city, setCity] = useState('');
+  const [country, setCountry] = useState('');
+  const [yearsExp, setYearsExp] = useState('');
+  // Job prefs
+  const [targetRole, setTargetRole] = useState('');
+  const [targetLocation, setTargetLocation] = useState('');
+  const [minSalary, setMinSalary] = useState<number | null>(null);
+  const [remotePref, setRemotePref] = useState('');
+  const [skills, setSkills] = useState('');
+  const [isHr, setIsHr] = useState(false);
+  // Social
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [twitterUrl, setTwitterUrl] = useState('');
 
-  useEffect(() => {
-    apiClient.get<User>(API_ENDPOINTS.AUTH_ME)
-      .then(r => {
-        setProfile(r.data);
-        setName(r.data.name ?? '');
-        setHeadline(r.data.headline ?? '');
-        setTargetRole(r.data.targetRole ?? '');
-        setTargetLocation(r.data.targetLocation ?? '');
-        setMinSalary(r.data.minSalary ?? null);
-        setRemotePreference(r.data.remotePreference ?? null);
-        setSkills(r.data.skills ?? '');
-        setIsHr(r.data.role === 'HR');
-      })
-      .catch(() => {});
+  // Experience modal
+  const [expModalVisible, setExpModalVisible] = useState(false);
+  const [editingExp, setEditingExp] = useState<{ id: number; form: ExpForm } | null>(null);
+  // Education modal
+  const [eduModalVisible, setEduModalVisible] = useState(false);
+  const [editingEdu, setEditingEdu] = useState<{ id: number; form: EduForm } | null>(null);
+  // Cert modal
+  const [certModalVisible, setCertModalVisible] = useState(false);
+  const [editingCert, setEditingCert] = useState<{ id: number; form: CertForm } | null>(null);
+
+  const loadProfile = useCallback(async () => {
+    try {
+      const { data } = await apiClient.get<FullProfile>(API_ENDPOINTS.PROFILE);
+      setProfile(data);
+      setName(data.name ?? '');
+      setHeadline(data.headline ?? '');
+      setPhone(data.phone ?? '');
+      setBio(data.bio ?? '');
+      setCity(data.city ?? '');
+      setCountry(data.country ?? '');
+      setYearsExp(data.yearsOfExperience?.toString() ?? '');
+      setTargetRole(data.targetRole ?? '');
+      setTargetLocation(data.targetLocation ?? '');
+      setMinSalary(data.minSalary ?? null);
+      setRemotePref(data.remotePreference ?? '');
+      setSkills(data.skills ?? '');
+      setIsHr(data.role === 'HR');
+      setLinkedinUrl(data.linkedinUrl ?? '');
+      setGithubUrl(data.githubUrl ?? '');
+      setPortfolioUrl(data.portfolioUrl ?? '');
+      setTwitterUrl(data.twitterUrl ?? '');
+    } catch { /* keep form defaults */ }
   }, []);
 
-  const displayUser = profile ?? storeUser;
+  useEffect(() => { loadProfile(); }, []);
 
   async function handleSave() {
     setSaving(true);
     try {
-      const payload: Record<string, any> = {
+      const { data } = await apiClient.put<FullProfile>(API_ENDPOINTS.PROFILE, {
         name: name.trim() || undefined,
         headline: headline.trim() || undefined,
+        phone: phone.trim() || undefined,
+        bio: bio.trim() || undefined,
+        city: city.trim() || undefined,
+        country: country.trim() || undefined,
+        yearsOfExperience: yearsExp ? parseInt(yearsExp, 10) : undefined,
         targetRole: targetRole.trim() || undefined,
         targetLocation: targetLocation.trim() || undefined,
         minSalary: minSalary ?? undefined,
-        remotePreference: remotePreference ?? undefined,
+        remotePreference: remotePref || undefined,
         skills: skills.trim() || undefined,
         role: isHr ? 'HR' : 'JOBSEEKER',
-      };
-      const { data } = await apiClient.put<User>(API_ENDPOINTS.PROFILE_UPDATE, payload);
+        linkedinUrl: linkedinUrl.trim() || undefined,
+        githubUrl: githubUrl.trim() || undefined,
+        portfolioUrl: portfolioUrl.trim() || undefined,
+        twitterUrl: twitterUrl.trim() || undefined,
+      });
       setProfile(data);
       if (storeJwt) dispatch(setAuth({ jwt: storeJwt, user: data }));
-      setEditMode(false);
       Alert.alert('Saved', 'Profile updated successfully.');
     } catch (e: any) {
-      Alert.alert('Error', e?.response?.data?.message ?? 'Could not save profile.');
+      Alert.alert('Error', e?.response?.data?.error ?? e?.response?.data?.message ?? 'Could not save profile.');
     } finally {
       setSaving(false);
     }
@@ -115,506 +289,371 @@ export default function ProfileSettingsScreen() {
         return;
       }
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.8 });
     if (result.canceled || !result.assets?.length) return;
-
     const asset = result.assets[0];
     setUploadingPic(true);
     try {
       const formData = new FormData();
-      formData.append('file', {
-        uri: asset.uri,
-        name: asset.fileName ?? 'profile.jpg',
-        type: asset.mimeType ?? 'image/jpeg',
-      } as any);
-
-      const { data } = await apiClient.post<any>(
-        API_ENDPOINTS.PROFILE_PICTURE_UPLOAD,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
-      );
-
-      setProfile(data);
+      formData.append('file', { uri: asset.uri, name: asset.fileName ?? 'profile.jpg', type: asset.mimeType ?? 'image/jpeg' } as any);
+      const { data } = await apiClient.post<any>(API_ENDPOINTS.PROFILE_PICTURE_UPLOAD, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setProfile(prev => prev ? { ...prev, profilePicture: data.profilePicture } : prev);
       if (storeJwt) dispatch(setAuth({ jwt: storeJwt, user: data }));
       Alert.alert('Updated', 'Profile picture updated successfully.');
     } catch (e: any) {
       Alert.alert('Error', e?.response?.data?.error ?? 'Could not upload photo.');
-    } finally {
-      setUploadingPic(false);
-    }
+    } finally { setUploadingPic(false); }
   }
 
-  async function handleCareerPath() {
-    setLoadingCareerPath(true);
+  // ── Experience CRUD ────────────────────────────────────────────────────────
+  function openAddExp() { setEditingExp(null); setExpModalVisible(true); }
+  function openEditExp(exp: Experience) {
+    setEditingExp({ id: exp.id, form: { company: exp.company, title: exp.title, location: exp.location ?? '', startMonth: exp.startMonth?.toString() ?? '', startYear: exp.startYear.toString(), endMonth: exp.endMonth?.toString() ?? '', endYear: exp.endYear?.toString() ?? '', current: exp.current, description: exp.description ?? '' } });
+    setExpModalVisible(true);
+  }
+  async function handleSaveExp(f: ExpForm) {
+    if (!f.company.trim() || !f.title.trim() || !f.startYear) { Alert.alert('Error', 'Company, title, and start year are required.'); return; }
+    const body = { company: f.company.trim(), title: f.title.trim(), location: f.location.trim() || undefined, startMonth: f.startMonth ? parseInt(f.startMonth, 10) : undefined, startYear: parseInt(f.startYear, 10), endMonth: !f.current && f.endMonth ? parseInt(f.endMonth, 10) : undefined, endYear: !f.current && f.endYear ? parseInt(f.endYear, 10) : undefined, current: f.current, description: f.description.trim() || undefined };
     try {
-      const { data } = await apiClient.get<any[]>(API_ENDPOINTS.RESUMES);
-      const parsed = data.find((r: any) => r.isParsed && r.isOriginal) ?? data[0];
-      if (!parsed) { Alert.alert('No resume', 'Upload and parse a resume first.'); return; }
-      navigation.navigate('CareerPath', { resumeId: parsed.id });
-    } catch {
-      Alert.alert('Error', 'Could not load resumes.');
-    } finally {
-      setLoadingCareerPath(false);
-    }
+      if (editingExp) {
+        await apiClient.put(API_ENDPOINTS.PROFILE_EXPERIENCE_BY_ID(editingExp.id), body);
+      } else {
+        await apiClient.post(API_ENDPOINTS.PROFILE_EXPERIENCE, body);
+      }
+      setExpModalVisible(false);
+      await loadProfile();
+    } catch (e: any) { Alert.alert('Error', e?.response?.data?.error ?? 'Could not save experience.'); }
+  }
+  async function handleDeleteExp(id: number) {
+    Alert.alert('Delete', 'Remove this experience?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try { await apiClient.delete(API_ENDPOINTS.PROFILE_EXPERIENCE_BY_ID(id)); await loadProfile(); } catch { Alert.alert('Error', 'Could not delete.'); }
+      }},
+    ]);
   }
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure?', [
+  // ── Education CRUD ─────────────────────────────────────────────────────────
+  function openAddEdu() { setEditingEdu(null); setEduModalVisible(true); }
+  function openEditEdu(edu: Education) {
+    setEditingEdu({ id: edu.id, form: { school: edu.school, degree: edu.degree ?? '', fieldOfStudy: edu.fieldOfStudy ?? '', startYear: edu.startYear?.toString() ?? '', endYear: edu.endYear?.toString() ?? '', current: edu.current, grade: edu.grade ?? '', description: edu.description ?? '' } });
+    setEduModalVisible(true);
+  }
+  async function handleSaveEdu(f: EduForm) {
+    if (!f.school.trim()) { Alert.alert('Error', 'School name is required.'); return; }
+    const body = { school: f.school.trim(), degree: f.degree.trim() || undefined, fieldOfStudy: f.fieldOfStudy.trim() || undefined, startYear: f.startYear ? parseInt(f.startYear, 10) : undefined, endYear: !f.current && f.endYear ? parseInt(f.endYear, 10) : undefined, current: f.current, grade: f.grade.trim() || undefined, description: f.description.trim() || undefined };
+    try {
+      if (editingEdu) { await apiClient.put(API_ENDPOINTS.PROFILE_EDUCATION_BY_ID(editingEdu.id), body); } else { await apiClient.post(API_ENDPOINTS.PROFILE_EDUCATION, body); }
+      setEduModalVisible(false);
+      await loadProfile();
+    } catch (e: any) { Alert.alert('Error', e?.response?.data?.error ?? 'Could not save education.'); }
+  }
+  async function handleDeleteEdu(id: number) {
+    Alert.alert('Delete', 'Remove this education?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: () => dispatch(signOut()) },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try { await apiClient.delete(API_ENDPOINTS.PROFILE_EDUCATION_BY_ID(id)); await loadProfile(); } catch { Alert.alert('Error', 'Could not delete.'); }
+      }},
     ]);
-  };
+  }
 
+  // ── Certification CRUD ─────────────────────────────────────────────────────
+  function openAddCert() { setEditingCert(null); setCertModalVisible(true); }
+  function openEditCert(cert: Certification) {
+    setEditingCert({ id: cert.id, form: { name: cert.name, issuer: cert.issuer, issueDate: cert.issueDate ?? '', expiryDate: cert.expiryDate ?? '', credentialId: cert.credentialId ?? '', credentialUrl: cert.credentialUrl ?? '' } });
+    setCertModalVisible(true);
+  }
+  async function handleSaveCert(f: CertForm) {
+    if (!f.name.trim() || !f.issuer.trim()) { Alert.alert('Error', 'Name and issuer are required.'); return; }
+    const body = { name: f.name.trim(), issuer: f.issuer.trim(), issueDate: f.issueDate.trim() || undefined, expiryDate: f.expiryDate.trim() || undefined, credentialId: f.credentialId.trim() || undefined, credentialUrl: f.credentialUrl.trim() || undefined };
+    try {
+      if (editingCert) { await apiClient.put(API_ENDPOINTS.PROFILE_CERTIFICATION_BY_ID(editingCert.id), body); } else { await apiClient.post(API_ENDPOINTS.PROFILE_CERTIFICATIONS, body); }
+      setCertModalVisible(false);
+      await loadProfile();
+    } catch (e: any) { Alert.alert('Error', e?.response?.data?.error ?? 'Could not save certification.'); }
+  }
+  async function handleDeleteCert(id: number) {
+    Alert.alert('Delete', 'Remove this certification?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try { await apiClient.delete(API_ENDPOINTS.PROFILE_CERTIFICATION_BY_ID(id)); await loadProfile(); } catch { Alert.alert('Error', 'Could not delete.'); }
+      }},
+    ]);
+  }
+
+  const displayUser = profile ?? storeUser;
   const score = displayUser?.completenessScore ?? 0;
-  const hints = displayUser?.completenessHints ?? [];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} testID="profile-settings-screen">
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Profile</Text>
-        <TouchableOpacity onPress={editMode ? handleSave : () => setEditMode(true)} disabled={saving}>
-          {saving
-            ? <ActivityIndicator size="small" color={colors.primary} />
-            : <Text style={styles.headerAction}>{editMode ? 'Save' : 'Edit'}</Text>}
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <TouchableOpacity onPress={handleSave} disabled={saving} testID="save-btn">
+          {saving ? <ActivityIndicator size="small" color={colors.primary} /> : <Text style={styles.headerAction}>Save</Text>}
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* Hero Card */}
-        <View style={styles.heroCard}>
-          <View style={styles.coverBanner} />
-          <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.85} disabled={uploadingPic}>
-            <View style={styles.avatarWrapper}>
+        {/* Avatar */}
+        <View style={styles.avatarSection}>
+          <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.85} disabled={uploadingPic} testID="avatar-btn">
+            <View style={styles.avatarWrap}>
               {displayUser?.profilePicture ? (
                 <Image source={{ uri: displayUser.profilePicture }} style={styles.avatar} />
               ) : (
-                <View style={styles.avatarFallback}>
+                <View style={[styles.avatarFallback, { backgroundColor: colors.primary }]}>
                   <Text style={styles.avatarInitial}>{(displayUser?.name ?? 'U').charAt(0).toUpperCase()}</Text>
                 </View>
               )}
-              {/* Camera button overlay */}
-              <View style={styles.cameraOverlay}>
-                {uploadingPic
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <Ionicons name="camera" size={14} color="#fff" />}
-              </View>
-              <View style={[styles.scoreRingSmall, {
-                borderColor: score >= 80 ? '#10B981' : score >= 50 ? colors.primary : '#F59E0B',
-              }]}>
-                <Text style={[styles.scoreRingText, {
-                  color: score >= 80 ? '#10B981' : score >= 50 ? colors.primary : '#F59E0B',
-                }]}>{score}%</Text>
+              <View style={[styles.cameraBtn, { backgroundColor: colors.primary, borderColor: colors.surface }]}>
+                {uploadingPic ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="camera" size={14} color="#fff" />}
               </View>
             </View>
           </TouchableOpacity>
-          <View style={styles.heroInfo}>
-            {editMode ? (
-              <TextInput style={styles.nameInput} value={name} onChangeText={setName}
-                placeholder="Your name" placeholderTextColor={colors.textMuted} />
-            ) : (
-              <Text style={styles.nameText}>{displayUser?.name ?? 'User'}</Text>
-            )}
-            {editMode ? (
-              <TextInput style={styles.headlineInput} value={headline} onChangeText={setHeadline}
-                placeholder="e.g. Senior Java Developer at Bank of America"
-                placeholderTextColor={colors.textMuted} maxLength={200} />
-            ) : displayUser?.headline ? (
-              <Text style={styles.headlineText}>{displayUser.headline}</Text>
-            ) : (
-              <TouchableOpacity onPress={() => setEditMode(true)}>
-                <Text style={styles.addHeadline}>+ Add headline</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={styles.emailText}>{displayUser?.email}</Text>
-            {!editMode && (
-              <TouchableOpacity style={styles.editInlineBtn} onPress={() => setEditMode(true)}>
-                <Ionicons name="pencil-outline" size={13} color={colors.primary} />
-                <Text style={styles.editInlineBtnText}>Edit Profile</Text>
-              </TouchableOpacity>
-            )}
+          <View style={{ alignItems: 'center', gap: 2 }}>
+            <Text style={{ fontSize: 13, color: colors.textMuted }}>Tap to change photo</Text>
+            <Text style={{ fontSize: 12, color: score >= 80 ? colors.success : colors.primary, fontWeight: '700' }}>Profile {score}% complete</Text>
           </View>
         </View>
 
-        {/* Profile Completeness */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Profile Completeness</Text>
-            <Text style={[styles.scoreText, score >= 80 && { color: colors.success }]}>{score}%</Text>
+        {/* Basic Info */}
+        <SectionCard title="Basic Info" icon="person-outline" colors={colors}>
+          <FieldInput label="Full Name" value={name} onChange={setName} placeholder="Muthu Raja" colors={colors} />
+          <FieldInput label="Headline" value={headline} onChange={setHeadline} placeholder="Senior Java Developer at Bank of America" colors={colors} />
+          <FieldInput label="Phone" value={phone} onChange={setPhone} placeholder="+91 98765 43210" keyboardType="phone-pad" colors={colors} />
+          <FieldInput label="Bio" value={bio} onChange={setBio} placeholder="Brief professional summary..." multiline colors={colors} />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}><FieldInput label="City" value={city} onChange={setCity} placeholder="Chennai" colors={colors} /></View>
+            <View style={{ flex: 1 }}><FieldInput label="Country" value={country} onChange={setCountry} placeholder="India" colors={colors} /></View>
           </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, {
-              width: `${score}%` as any,
-              backgroundColor: score >= 80 ? colors.success : colors.primary,
-            }]} />
-          </View>
-          {hints.length > 0 && (
-            <View style={styles.hintsList}>
-              {hints.slice(0, 3).map((hint, i) => (
-                <View key={i} style={styles.hintRow}>
-                  <Ionicons name="alert-circle-outline" size={13} color={colors.warning} />
-                  <Text style={styles.hintText}>{hint}</Text>
-                </View>
-              ))}
+          <FieldInput label="Years of Experience" value={yearsExp} onChange={setYearsExp} placeholder="5" keyboardType="number-pad" colors={colors} />
+        </SectionCard>
+
+        {/* Experience */}
+        <View style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, overflow: 'hidden' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="briefcase-outline" size={17} color={colors.primary} />
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Experience</Text>
             </View>
-          )}
+            <TouchableOpacity onPress={openAddExp} activeOpacity={0.7} testID="add-exp-btn">
+              <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+          {(profile?.experience?.length ?? 0) === 0 ? (
+            <TouchableOpacity onPress={openAddExp} style={{ padding: 16, alignItems: 'center' }}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>+ Add work experience</Text>
+            </TouchableOpacity>
+          ) : profile!.experience.map((exp, i) => (
+            <View key={exp.id} style={[{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 10 }, i < profile!.experience.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>{exp.title}</Text>
+                <Text style={{ fontSize: 13, color: colors.textSecondary }}>{exp.company}</Text>
+              </View>
+              <TouchableOpacity onPress={() => openEditExp(exp)} style={{ padding: 6 }}>
+                <Ionicons name="pencil-outline" size={18} color={colors.textSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDeleteExp(exp.id)} style={{ padding: 6 }}>
+                <Ionicons name="trash-outline" size={18} color={colors.error} />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
 
-        {/* Job Preferences */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Job Preferences</Text>
-          <Field label="Target Role" icon="briefcase-outline" value={targetRole}
-            placeholder="e.g. Senior Java Developer" editMode={editMode} onChangeText={setTargetRole} colors={colors} />
-          <View style={styles.divider} />
-          <Field label="Target Location" icon="location-outline" value={targetLocation}
-            placeholder="e.g. Bengaluru, Remote" editMode={editMode} onChangeText={setTargetLocation} colors={colors} />
-          <View style={styles.divider} />
-          <View style={styles.fieldRow}>
-            <Ionicons name="cash-outline" size={16} color={colors.textSecondary} />
-            <Text style={styles.fieldLabel}>Min. Salary</Text>
-            <Text style={styles.fieldValue}>{minSalary ? fmt(minSalary) : '—'}</Text>
-          </View>
-          {editMode && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.presetsRow}>
-              {SALARY_PRESETS.map(p => (
-                <TouchableOpacity key={p.value}
-                  style={[styles.presetChip, minSalary === p.value && { backgroundColor: colors.primary, borderColor: colors.primary }]}
-                  onPress={() => setMinSalary(p.value === minSalary ? null : p.value)}>
-                  <Text style={[styles.presetChipText, minSalary === p.value && { color: '#fff', fontWeight: '700' }]}>
-                    {p.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-          <View style={styles.divider} />
-          <View style={styles.fieldRow}>
-            <Ionicons name="wifi-outline" size={16} color={colors.textSecondary} />
-            <Text style={styles.fieldLabel}>Work Mode</Text>
-            <Text style={styles.fieldValue}>{remotePreference ?? '—'}</Text>
-          </View>
-          {editMode && (
-            <View style={styles.remoteOptions}>
-              {REMOTE_OPTIONS.map(opt => (
-                <TouchableOpacity key={opt.value}
-                  style={[styles.remoteChip, remotePreference === opt.value && { backgroundColor: colors.primary, borderColor: colors.primary }]}
-                  onPress={() => setRemotePreference(remotePreference === opt.value ? null : opt.value)}>
-                  <Ionicons name={opt.icon as any} size={13}
-                    color={remotePreference === opt.value ? '#fff' : colors.textSecondary} />
-                  <Text style={[styles.remoteChipText, remotePreference === opt.value && { color: '#fff', fontWeight: '600' }]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+        {/* Education */}
+        <View style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, overflow: 'hidden' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="school-outline" size={17} color={colors.primary} />
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Education</Text>
             </View>
-          )}
+            <TouchableOpacity onPress={openAddEdu} activeOpacity={0.7} testID="add-edu-btn">
+              <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+          {(profile?.education?.length ?? 0) === 0 ? (
+            <TouchableOpacity onPress={openAddEdu} style={{ padding: 16, alignItems: 'center' }}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>+ Add education</Text>
+            </TouchableOpacity>
+          ) : profile!.education.map((edu, i) => (
+            <View key={edu.id} style={[{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 10 }, i < profile!.education.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>{edu.school}</Text>
+                {edu.degree && <Text style={{ fontSize: 13, color: colors.textSecondary }}>{edu.degree}</Text>}
+              </View>
+              <TouchableOpacity onPress={() => openEditEdu(edu)} style={{ padding: 6 }}>
+                <Ionicons name="pencil-outline" size={18} color={colors.textSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDeleteEdu(edu.id)} style={{ padding: 6 }}>
+                <Ionicons name="trash-outline" size={18} color={colors.error} />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+
+        {/* Certifications */}
+        <View style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, overflow: 'hidden' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="ribbon-outline" size={17} color={colors.primary} />
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Certifications</Text>
+            </View>
+            <TouchableOpacity onPress={openAddCert} activeOpacity={0.7} testID="add-cert-btn">
+              <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+          {(profile?.certifications?.length ?? 0) === 0 ? (
+            <TouchableOpacity onPress={openAddCert} style={{ padding: 16, alignItems: 'center' }}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>+ Add certification</Text>
+            </TouchableOpacity>
+          ) : profile!.certifications.map((cert, i) => (
+            <View key={cert.id} style={[{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 10 }, i < profile!.certifications.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>{cert.name}</Text>
+                <Text style={{ fontSize: 13, color: colors.textSecondary }}>{cert.issuer}</Text>
+              </View>
+              <TouchableOpacity onPress={() => openEditCert(cert)} style={{ padding: 6 }}>
+                <Ionicons name="pencil-outline" size={18} color={colors.textSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDeleteCert(cert.id)} style={{ padding: 6 }}>
+                <Ionicons name="trash-outline" size={18} color={colors.error} />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
 
         {/* Skills */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Skills</Text>
-            <Ionicons name="code-slash-outline" size={16} color={colors.textSecondary} />
+        <SectionCard title="Skills" icon="code-slash-outline" colors={colors}>
+          <TextInput
+            style={[styles.textArea, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.background }]}
+            value={skills} onChangeText={setSkills}
+            placeholder="Java, Spring Boot, React Native, PostgreSQL, Docker…"
+            placeholderTextColor={colors.textMuted} multiline numberOfLines={3}
+            testID="skills-input"
+          />
+          <Text style={{ fontSize: 11, color: colors.textMuted }}>Separate skills with commas</Text>
+        </SectionCard>
+
+        {/* Job Preferences */}
+        <SectionCard title="Job Preferences" icon="search-outline" colors={colors}>
+          <FieldInput label="Target Role" value={targetRole} onChange={setTargetRole} placeholder="Senior Java Developer" colors={colors} />
+          <FieldInput label="Target Location" value={targetLocation} onChange={setTargetLocation} placeholder="Bengaluru, Remote" colors={colors} />
+          <View>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, marginBottom: 8 }}>Min. Salary: {minSalary ? fmt(minSalary) : '—'}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {SALARY_PRESETS.map(p => (
+                  <TouchableOpacity key={p.value}
+                    style={[styles.chip, minSalary === p.value && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                    onPress={() => setMinSalary(minSalary === p.value ? null : p.value)}>
+                    <Text style={[styles.chipText, { color: minSalary === p.value ? '#fff' : colors.textSecondary }]}>{p.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
           </View>
-          {editMode ? (
-            <>
-              <TextInput style={styles.skillsInput} value={skills} onChangeText={setSkills}
-                placeholder="Java, Spring Boot, React Native, PostgreSQL…"
-                placeholderTextColor={colors.textMuted} multiline numberOfLines={3} />
-              <Text style={styles.skillsHint}>Separate skills with commas</Text>
-            </>
-          ) : skills ? (
-            <View style={styles.skillsWrap}>
-              {skills.split(',').map((s, i) => s.trim() && (
-                <View key={i} style={styles.skillChip}>
-                  <Text style={styles.skillChipText}>{s.trim()}</Text>
-                </View>
+          <View>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, marginBottom: 8 }}>Work Mode</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {REMOTE_OPTIONS.map(opt => (
+                <TouchableOpacity key={opt.value}
+                  style={[styles.chip, remotePref === opt.value && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  onPress={() => setRemotePref(remotePref === opt.value ? '' : opt.value)}>
+                  <Ionicons name={opt.icon as any} size={13} color={remotePref === opt.value ? '#fff' : colors.textSecondary} />
+                  <Text style={[styles.chipText, { color: remotePref === opt.value ? '#fff' : colors.textSecondary }]}>{opt.label}</Text>
+                </TouchableOpacity>
               ))}
             </View>
-          ) : (
-            <TouchableOpacity onPress={() => setEditMode(true)}>
-              <Text style={styles.addSkills}>+ Add your skills</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Account Type (HR) */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View>
-              <Text style={styles.cardTitle}>Account Type</Text>
-              <Text style={styles.hrSubtitle}>
-                {isHr ? 'HR mode: post and manage job openings' : 'Job seeker mode: browse and apply to jobs'}
-              </Text>
-            </View>
           </View>
-          <View style={styles.hrRow}>
-            <View style={styles.hrLeft}>
-              <Ionicons name={isHr ? 'business-outline' : 'person-outline'} size={20}
-                color={isHr ? '#059669' : colors.primary} />
-              <Text style={[styles.hrModeText, { color: isHr ? '#059669' : colors.primary }]}>
+        </SectionCard>
+
+        {/* Social Links */}
+        <SectionCard title="Social Links" icon="share-social-outline" colors={colors}>
+          <FieldInput label="LinkedIn URL" value={linkedinUrl} onChange={setLinkedinUrl} placeholder="https://linkedin.com/in/yourname" colors={colors} />
+          <FieldInput label="GitHub URL" value={githubUrl} onChange={setGithubUrl} placeholder="https://github.com/yourname" colors={colors} />
+          <FieldInput label="Portfolio URL" value={portfolioUrl} onChange={setPortfolioUrl} placeholder="https://yoursite.com" colors={colors} />
+          <FieldInput label="Twitter / X URL" value={twitterUrl} onChange={setTwitterUrl} placeholder="https://twitter.com/yourhandle" colors={colors} />
+        </SectionCard>
+
+        {/* Account Type */}
+        <SectionCard title="Account Type" icon="person-circle-outline" colors={colors}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: isHr ? '#059669' : colors.primary }}>
                 {isHr ? 'HR / Recruiter' : 'Job Seeker'}
               </Text>
+              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+                {isHr ? 'Post and manage job openings' : 'Browse and apply to jobs'}
+              </Text>
             </View>
-            {editMode && (
-              <Switch value={isHr} onValueChange={setIsHr}
-                trackColor={{ false: colors.border, true: '#059669' }} thumbColor="#fff" />
-            )}
+            <Switch value={isHr} onValueChange={setIsHr} trackColor={{ false: colors.border, true: '#059669' }} thumbColor="#fff" />
           </View>
-          {isHr && (
-            <TouchableOpacity style={styles.hrPostBtn}
-              onPress={() => navigation.navigate('JobsTab', { screen: 'HrPostJob' })}>
-              <Ionicons name="add-circle-outline" size={18} color="#fff" />
-              <Text style={styles.hrPostBtnText}>Post a New Job</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        </SectionCard>
 
-        {/* ── Appearance ── */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Appearance</Text>
-
-          {/* Dark mode toggle */}
-          <View style={styles.themeRow}>
+        {/* Appearance */}
+        <SectionCard title="Appearance" icon="color-palette-outline" colors={colors}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Ionicons name={isDark ? 'moon' : 'sunny-outline'} size={20} color={colors.primary} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.themeLabel}>{isDark ? 'Dark Mode' : 'Light Mode'}</Text>
-              <Text style={styles.themeSub}>Change how ApplyAI looks</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>{isDark ? 'Dark Mode' : 'Light Mode'}</Text>
+              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 1 }}>Change how ApplyAI looks</Text>
             </View>
-            <Switch
-              value={isDark}
-              onValueChange={() => { dispatch(toggleMode()); }}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor="#fff"
-            />
+            <Switch value={isDark} onValueChange={() => dispatch(toggleMode())} trackColor={{ false: colors.border, true: colors.primary }} thumbColor="#fff" />
           </View>
-
-          <View style={styles.divider} />
-
-          {/* Accent color picker */}
+          <View style={{ height: 1, backgroundColor: colors.border }} />
           <View>
-            <Text style={styles.accentLabel}>Accent Color</Text>
-            <View style={styles.accentRow}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, marginBottom: 12 }}>Accent Color</Text>
+            <View style={{ flexDirection: 'row', gap: 14 }}>
               {(Object.entries(ACCENT_PRESETS) as [AccentColor, { label: string; primary: string }][]).map(([key, val]) => (
-                <TouchableOpacity
-                  key={key}
-                  style={[styles.accentDot, { backgroundColor: val.primary },
-                    accent === key && styles.accentDotActive]}
-                  onPress={() => dispatch(setAccent(key))}
-                  activeOpacity={0.8}
-                >
+                <TouchableOpacity key={key}
+                  style={[{ width: 34, height: 34, borderRadius: 17, backgroundColor: val.primary, alignItems: 'center', justifyContent: 'center' }, accent === key && { borderWidth: 3, borderColor: colors.surface, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 }]}
+                  onPress={() => dispatch(setAccent(key))} activeOpacity={0.8}>
                   {accent === key && <Ionicons name="checkmark" size={14} color="#fff" />}
                 </TouchableOpacity>
               ))}
             </View>
           </View>
-        </View>
-
-        {/* Plan */}
-        <View style={[styles.card, styles.planCard]}>
-          <View style={styles.planLeft}>
-            <Ionicons name="flash-outline" size={20} color={colors.warning} />
-            <View>
-              <Text style={styles.planTitle}>{displayUser?.subscriptionPlan ?? 'Free'} Plan</Text>
-              <Text style={styles.planSub}>
-                {displayUser?.subscriptionPlan === 'FREE'
-                  ? 'Upgrade to unlock unlimited applications'
-                  : 'Full access unlocked'}
-              </Text>
-            </View>
-          </View>
-          {displayUser?.subscriptionPlan === 'FREE' && (
-            <TouchableOpacity style={styles.upgradeBtn} onPress={() => navigation.navigate('Paywall', {})}>
-              <Text style={styles.upgradeBtnText}>Upgrade</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Career Path */}
-        <TouchableOpacity style={styles.careerBtn} onPress={handleCareerPath} disabled={loadingCareerPath}>
-          {loadingCareerPath ? <ActivityIndicator color="#fff" /> : (
-            <>
-              <Ionicons name="rocket-outline" size={20} color="#fff" />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.careerBtnTitle}>AI Career Path</Text>
-                <Text style={styles.careerBtnSub}>Get your AI-generated career roadmap</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color="#fff" />
-            </>
-          )}
-        </TouchableOpacity>
-
-        {/* Menu */}
-        <View style={styles.menuCard}>
-          {[
-            { icon: 'bar-chart-outline', label: 'Analytics', route: 'Analytics' },
-            { icon: 'cash-outline', label: 'Salary Intelligence', route: 'SalaryIntel' },
-            { icon: 'trending-up-outline', label: 'Negotiation Coach', route: 'NegotiationCoach' },
-            { icon: 'ban-outline', label: 'Company Blacklist', route: 'Blacklist' },
-            { icon: 'bookmark-outline', label: 'Saved Jobs', route: null, tab: 'JobsTab', screen: 'SavedJobs' },
-            { icon: 'notifications-outline', label: 'Job Alerts', route: null, tab: 'JobsTab', screen: 'JobAlerts' },
-          ].map((item, i, arr) => (
-            <TouchableOpacity key={i}
-              style={[styles.menuItem, i < arr.length - 1 && styles.menuDivider]}
-              onPress={() => {
-                if (item.tab) navigation.navigate(item.tab, { screen: item.screen });
-                else navigation.navigate(item.route!);
-              }}>
-              <Ionicons name={item.icon as any} size={20} color={colors.textSecondary} />
-              <Text style={styles.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-          ))}
-        </View>
+        </SectionCard>
 
         {/* Sign Out */}
-        <TouchableOpacity style={styles.signOutBtn} onPress={handleLogout}>
+        <TouchableOpacity style={styles.signOutBtn} onPress={() => Alert.alert('Log Out', 'Are you sure?', [{ text: 'Cancel', style: 'cancel' }, { text: 'Log Out', style: 'destructive', onPress: () => dispatch(signOut()) }])} testID="signout-btn">
           <Ionicons name="log-out-outline" size={18} color={colors.error} />
-          <Text style={styles.signOutText}>Sign Out</Text>
+          <Text style={[styles.signOutText, { color: colors.error }]}>Sign Out</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>ApplyAI v1.0.0</Text>
+        <Text style={{ textAlign: 'center', fontSize: 12, color: colors.textMuted }}>ApplyAI v1.0.0</Text>
         <View style={{ height: 20 }} />
       </ScrollView>
-    </SafeAreaView>
-  );
-}
 
-function Field({ label, icon, value, placeholder, editMode, onChangeText, colors }: {
-  label: string; icon: any; value: string; placeholder: string;
-  editMode: boolean; onChangeText: (t: string) => void; colors: AppColors;
-}) {
-  return (
-    <View style={{ gap: 6 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Ionicons name={icon} size={16} color={colors.textSecondary} />
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: colors.textSecondary }}>{label}</Text>
-        {!editMode && <Text style={{ fontSize: 14, color: colors.textPrimary, fontWeight: '500', textAlign: 'right', flexShrink: 1 }}>{value || '—'}</Text>}
-      </View>
-      {editMode && (
-        <TextInput
-          style={{ backgroundColor: colors.background, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border }}
-          value={value} onChangeText={onChangeText} placeholder={placeholder}
-          placeholderTextColor={colors.textMuted}
-        />
-      )}
-    </View>
+      {/* Modals */}
+      <ExperienceModal visible={expModalVisible} initial={editingExp?.form ?? null} onClose={() => setExpModalVisible(false)} onSave={handleSaveExp} colors={colors} />
+      <EducationModal visible={eduModalVisible} initial={editingEdu?.form ?? null} onClose={() => setEduModalVisible(false)} onSave={handleSaveEdu} colors={colors} />
+      <CertificationModal visible={certModalVisible} initial={editingCert?.form ?? null} onClose={() => setCertModalVisible(false)} onSave={handleSaveCert} colors={colors} />
+    </SafeAreaView>
   );
 }
 
 function makeStyles(colors: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    scroll: { padding: 16, gap: 12, paddingTop: 12 },
-
-    header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingVertical: 14,
-      backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
-    },
+    scroll: { padding: 16, gap: 14, paddingTop: 12 },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
     headerTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
     headerAction: { fontSize: 15, fontWeight: '700', color: colors.primary },
-
-    heroCard: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
-    coverBanner: { height: 88, backgroundColor: colors.primary, opacity: 0.85 },
-    avatarWrapper: { marginTop: -44, marginLeft: 16, position: 'relative', width: 88, alignSelf: 'flex-start' },
-    avatar: { width: 88, height: 88, borderRadius: 44, borderWidth: 3, borderColor: colors.surface },
-    avatarFallback: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.surface },
+    avatarSection: { alignItems: 'center', gap: 10, paddingVertical: 8 },
+    avatarWrap: { position: 'relative' },
+    avatar: { width: 90, height: 90, borderRadius: 45, borderWidth: 3, borderColor: colors.surface },
+    avatarFallback: { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.surface },
     avatarInitial: { color: '#fff', fontSize: 34, fontWeight: '800' },
-    cameraOverlay: {
-      position: 'absolute', bottom: 0, right: 0,
-      width: 28, height: 28, borderRadius: 14,
-      backgroundColor: colors.primary,
-      alignItems: 'center', justifyContent: 'center',
-      borderWidth: 2, borderColor: colors.surface,
-    },
-    scoreRingSmall: { position: 'absolute', bottom: -4, right: -4, width: 32, height: 32, borderRadius: 16, borderWidth: 2.5, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-    scoreRingText: { fontSize: 9, fontWeight: '800' },
-    heroInfo: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 18, alignItems: 'flex-start', gap: 4 },
-    nameText: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
-    nameInput: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, borderBottomWidth: 1.5, borderBottomColor: colors.primary, paddingBottom: 2, minWidth: 200 },
-    headlineText: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
-    headlineInput: { fontSize: 13, color: colors.textPrimary, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 2, minWidth: 260, maxWidth: 320 },
-    addHeadline: { fontSize: 13, color: colors.primary, fontWeight: '600' },
-    emailText: { fontSize: 12, color: colors.textMuted },
-    editInlineBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4, borderWidth: 1, borderColor: colors.primary, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5 },
-    editInlineBtnText: { fontSize: 12, fontWeight: '700', color: colors.primary },
-
-    card: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.border, gap: 10 },
-    cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    cardTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
-    divider: { height: 1, backgroundColor: colors.border },
-
-    scoreText: { fontSize: 15, fontWeight: '800', color: colors.primary },
-    progressTrack: { height: 7, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden' },
-    progressFill: { height: 7, borderRadius: 4 },
-    hintsList: { gap: 6 },
-    hintRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    hintText: { flex: 1, fontSize: 12, color: colors.textSecondary },
-
-    fieldRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    fieldLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textSecondary },
-    fieldValue: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', textAlign: 'right', flexShrink: 1 },
-
-    presetsRow: { marginTop: 6 },
-    presetChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: colors.border, marginRight: 8, backgroundColor: colors.surfaceAlt },
-    presetChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-
-    remoteOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-    remoteChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceAlt },
-    remoteChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
-
-    skillsInput: { backgroundColor: colors.background, borderRadius: 10, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.border, minHeight: 72, textAlignVertical: 'top' },
-    skillsHint: { fontSize: 11, color: colors.textMuted },
-    skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    skillChip: { backgroundColor: colors.primaryLight, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
-    skillChipText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
-    addSkills: { fontSize: 14, color: colors.primary, fontWeight: '600' },
-
-    hrSubtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-    hrRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    hrLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    hrModeText: { fontSize: 15, fontWeight: '700' },
-    hrPostBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#059669', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginTop: 4 },
-    hrPostBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-
-    // Appearance
-    themeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    themeLabel: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
-    themeSub: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
-    accentLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 10 },
-    accentRow: { flexDirection: 'row', gap: 14 },
-    accentDot: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-    accentDotActive: { borderWidth: 3, borderColor: colors.surface, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
-
-    planCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-    planLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-    planTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-    planSub: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
-    upgradeBtn: { backgroundColor: colors.primary, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-    upgradeBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-
-    careerBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.secondary, borderRadius: 14, padding: 16 },
-    careerBtnTitle: { fontSize: 15, fontWeight: '700', color: '#fff' },
-    careerBtnSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
-
-    menuCard: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
-    menuItem: { flexDirection: 'row', alignItems: 'center', padding: 15, gap: 12 },
-    menuDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
-    menuLabel: { flex: 1, fontSize: 15, color: colors.textPrimary },
-
+    cameraBtn: { position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
+    textArea: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 14, minHeight: 72, textAlignVertical: 'top' },
+    chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceAlt },
+    chipText: { fontSize: 13, fontWeight: '500' },
     signOutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 14, borderWidth: 1, borderColor: '#FCA5A5' },
-    signOutText: { fontSize: 15, fontWeight: '700', color: colors.error },
-    version: { textAlign: 'center', fontSize: 12, color: colors.textMuted },
+    signOutText: { fontSize: 15, fontWeight: '700' },
   });
 }

@@ -158,6 +158,14 @@ export const API_ENDPOINTS = {
   FEED_HASHTAGS_SUGGEST: '/api/feed/hashtags/suggest',
   // Profile picture
   PROFILE_PICTURE_UPLOAD: '/api/auth/profile/picture',
+  // Full profile (experience, education, certifications)
+  PROFILE: '/api/profile',
+  PROFILE_EXPERIENCE: '/api/profile/experience',
+  PROFILE_EXPERIENCE_BY_ID: (id: number) => `/api/profile/experience/${id}`,
+  PROFILE_EDUCATION: '/api/profile/education',
+  PROFILE_EDUCATION_BY_ID: (id: number) => `/api/profile/education/${id}`,
+  PROFILE_CERTIFICATIONS: '/api/profile/certifications',
+  PROFILE_CERTIFICATION_BY_ID: (id: number) => `/api/profile/certifications/${id}`,
 } as const;
 
 export const PLAN_LIMITS = {

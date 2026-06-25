@@ -33,15 +33,70 @@ export interface User {
   subscriptionPlan: SubscriptionPlan;
   role: UserRole;
   headline: string | null;
+  phone: string | null;
+  bio: string | null;
+  city: string | null;
+  country: string | null;
+  yearsOfExperience: number | null;
+  linkedinUrl: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  twitterUrl: string | null;
   targetRole: string | null;
   targetLocation: string | null;
   minSalary: number | null;
   remotePreference: RemotePreference | null;
   profilePicture: string | null;
   skills: string | null;
+  followersCount: number;
+  followingCount: number;
   completenessScore: number;
   completenessHints: string[];
   createdAt: string;
+}
+
+export interface Experience {
+  id: number;
+  company: string;
+  title: string;
+  location: string | null;
+  startMonth: number | null;
+  startYear: number;
+  endMonth: number | null;
+  endYear: number | null;
+  current: boolean;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface Education {
+  id: number;
+  school: string;
+  degree: string | null;
+  fieldOfStudy: string | null;
+  startYear: number | null;
+  endYear: number | null;
+  current: boolean;
+  grade: string | null;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface Certification {
+  id: number;
+  name: string;
+  issuer: string;
+  issueDate: string | null;
+  expiryDate: string | null;
+  credentialId: string | null;
+  credentialUrl: string | null;
+  createdAt: string;
+}
+
+export interface FullProfile extends User {
+  experience: Experience[];
+  education: Education[];
+  certifications: Certification[];
 }
 
 export interface DashboardSummary {
