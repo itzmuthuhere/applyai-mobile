@@ -2,8 +2,9 @@
 import {
   View, Text, TouchableOpacity, ScrollView, StyleSheet,
   SafeAreaView, Alert, TextInput, ActivityIndicator, Image,
-  Switch,
+  Switch, Platform,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -52,6 +53,7 @@ export default function ProfileSettingsScreen() {
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingCareerPath, setLoadingCareerPath] = useState(false);
+  const [uploadingPic, setUploadingPic] = useState(false);
 
   const [name, setName] = useState(storeUser?.name ?? '');
   const [headline, setHeadline] = useState(storeUser?.headline ?? '');
@@ -105,6 +107,50 @@ export default function ProfileSettingsScreen() {
     }
   }
 
+  async function handlePickPhoto() {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'Please allow photo access to upload a profile picture.');
+        return;
+      }
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets?.length) return;
+
+    const asset = result.assets[0];
+    setUploadingPic(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: asset.uri,
+        name: asset.fileName ?? 'profile.jpg',
+        type: asset.mimeType ?? 'image/jpeg',
+      } as any);
+
+      const { data } = await apiClient.post<any>(
+        API_ENDPOINTS.PROFILE_PICTURE_UPLOAD,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+
+      setProfile(data);
+      if (storeJwt) dispatch(setAuth({ jwt: storeJwt, user: data }));
+      Alert.alert('Updated', 'Profile picture updated successfully.');
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.error ?? 'Could not upload photo.');
+    } finally {
+      setUploadingPic(false);
+    }
+  }
+
   async function handleCareerPath() {
     setLoadingCareerPath(true);
     try {
@@ -148,22 +194,30 @@ export default function ProfileSettingsScreen() {
         {/* Hero Card */}
         <View style={styles.heroCard}>
           <View style={styles.coverBanner} />
-          <View style={styles.avatarWrapper}>
-            {displayUser?.profilePicture ? (
-              <Image source={{ uri: displayUser.profilePicture }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarFallback}>
-                <Text style={styles.avatarInitial}>{(displayUser?.name ?? 'U').charAt(0).toUpperCase()}</Text>
+          <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.85} disabled={uploadingPic}>
+            <View style={styles.avatarWrapper}>
+              {displayUser?.profilePicture ? (
+                <Image source={{ uri: displayUser.profilePicture }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <Text style={styles.avatarInitial}>{(displayUser?.name ?? 'U').charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
+              {/* Camera button overlay */}
+              <View style={styles.cameraOverlay}>
+                {uploadingPic
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Ionicons name="camera" size={14} color="#fff" />}
               </View>
-            )}
-            <View style={[styles.scoreRingSmall, {
-              borderColor: score >= 80 ? '#10B981' : score >= 50 ? colors.primary : '#F59E0B',
-            }]}>
-              <Text style={[styles.scoreRingText, {
-                color: score >= 80 ? '#10B981' : score >= 50 ? colors.primary : '#F59E0B',
-              }]}>{score}%</Text>
+              <View style={[styles.scoreRingSmall, {
+                borderColor: score >= 80 ? '#10B981' : score >= 50 ? colors.primary : '#F59E0B',
+              }]}>
+                <Text style={[styles.scoreRingText, {
+                  color: score >= 80 ? '#10B981' : score >= 50 ? colors.primary : '#F59E0B',
+                }]}>{score}%</Text>
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
           <View style={styles.heroInfo}>
             {editMode ? (
               <TextInput style={styles.nameInput} value={name} onChangeText={setName}
@@ -477,6 +531,13 @@ function makeStyles(colors: AppColors) {
     avatar: { width: 88, height: 88, borderRadius: 44, borderWidth: 3, borderColor: colors.surface },
     avatarFallback: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.surface },
     avatarInitial: { color: '#fff', fontSize: 34, fontWeight: '800' },
+    cameraOverlay: {
+      position: 'absolute', bottom: 0, right: 0,
+      width: 28, height: 28, borderRadius: 14,
+      backgroundColor: colors.primary,
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 2, borderColor: colors.surface,
+    },
     scoreRingSmall: { position: 'absolute', bottom: -4, right: -4, width: 32, height: 32, borderRadius: 16, borderWidth: 2.5, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
     scoreRingText: { fontSize: 9, fontWeight: '800' },
     heroInfo: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 18, alignItems: 'flex-start', gap: 4 },

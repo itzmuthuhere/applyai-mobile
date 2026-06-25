@@ -156,6 +156,8 @@ export const API_ENDPOINTS = {
   // Search
   FEED_SEARCH: '/api/feed/search',
   FEED_HASHTAGS_SUGGEST: '/api/feed/hashtags/suggest',
+  // Profile picture
+  PROFILE_PICTURE_UPLOAD: '/api/auth/profile/picture',
 } as const;
 
 export const PLAN_LIMITS = {

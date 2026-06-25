@@ -33,6 +33,7 @@ export default function ChatDetailScreen() {
   const [loading, setLoading] = useState(messages.length === 0);
   const flatRef = useRef<FlatList<ChatMsg>>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inputRef = useRef<TextInput>(null);
 
   const loadMessages = useCallback(async () => {
     try {
@@ -65,6 +66,7 @@ export default function ChatDetailScreen() {
     if (!text || sending) return;
     setSending(true);
     setInputText('');
+    inputRef.current?.clear(); // Force-clear on Android — multiline controlled TextInput ignores value='' without this
     try {
       const { data } = await apiClient.post(API_ENDPOINTS.CHAT_MESSAGES, {
         recipientId: partnerId,
@@ -148,6 +150,7 @@ export default function ChatDetailScreen() {
         {/* Input */}
         <View style={styles.inputRow}>
           <TextInput
+            ref={inputRef}
             testID="chat-input"
             style={styles.chatInput}
             placeholder={`Message ${partnerName}...`}
