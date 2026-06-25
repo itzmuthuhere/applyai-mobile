@@ -161,4 +161,16 @@ describe('HomeScreen', () => {
       expect(screen.getByText(/Muthu/i)).toBeTruthy();
     });
   });
+
+  it('renders all quick action chip labels', async () => {
+    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Upload Resume')).toBeTruthy();
+      expect(screen.getByText('Browse Jobs')).toBeTruthy();
+      expect(screen.getByText('Mock Interview')).toBeTruthy();
+      expect(screen.getByText('Applications')).toBeTruthy();
+    });
+  });
 });

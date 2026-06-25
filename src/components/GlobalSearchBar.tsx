@@ -38,6 +38,13 @@ export default function GlobalSearchBar({ topInset }: Props) {
     });
   };
 
+  const openChat = () => {
+    navigation.navigate('Main', {
+      screen: 'FeedTab',
+      params: { screen: 'ChatList' },
+    });
+  };
+
   return (
     <View style={[styles.wrapper, { paddingTop: topInset }]}>
       <View style={styles.row}>
@@ -65,8 +72,13 @@ export default function GlobalSearchBar({ topInset }: Props) {
           </Text>
         </TouchableOpacity>
 
+        {/* Chat icon */}
+        <TouchableOpacity onPress={openChat} activeOpacity={0.8} style={styles.iconBtn} testID="global-chat-btn">
+          <Ionicons name="chatbubble-ellipses-outline" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+
         {/* Notifications bell */}
-        <TouchableOpacity onPress={openNotifications} activeOpacity={0.8} style={styles.bellBtn}>
+        <TouchableOpacity onPress={openNotifications} activeOpacity={0.8} style={styles.bellBtn} testID="global-bell-btn">
           <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
           <View style={styles.bellDot} />
         </TouchableOpacity>
@@ -121,6 +133,8 @@ const styles = StyleSheet.create({
   },
   searchIcon: { marginRight: 7, flexShrink: 0 },
   placeholder: { flex: 1, fontSize: 14, color: COLORS.textMuted },
+  // Icon buttons (chat, bell)
+  iconBtn: { flexShrink: 0, padding: 2 },
   // Bell
   bellBtn: { flexShrink: 0, position: 'relative', padding: 2 },
   bellDot: {

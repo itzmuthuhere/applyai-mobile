@@ -234,17 +234,16 @@ export default function HomeScreen() {
         {/* ── Quick Actions ────────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScroll}>
             {QUICK_ACTIONS.map(item => (
-              <TouchableOpacity key={item.label} style={styles.actionCard} onPress={item.onPress} activeOpacity={0.8}>
-                <View style={[styles.actionIconBox, { backgroundColor: item.color + '15' }]}>
-                  <Ionicons name={item.icon} size={26} color={item.color} />
+              <TouchableOpacity key={item.label} style={styles.actionChip} onPress={item.onPress} activeOpacity={0.75}>
+                <View style={[styles.actionChipIcon, { backgroundColor: item.color + '18' }]}>
+                  <Ionicons name={item.icon} size={24} color={item.color} />
                 </View>
-                <Text style={styles.actionLabel}>{item.label}</Text>
-                <Text style={styles.actionSub}>{item.sub}</Text>
+                <Text style={styles.actionChipLabel} numberOfLines={2}>{item.label}</Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         </View>
 
         {/* ── Recent Applications ──────────────────────────────── */}
@@ -475,16 +474,17 @@ function makeStyles(colors: AppColors) {
     sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, marginBottom: 12 },
     seeAll: { fontSize: 13, fontWeight: '700', color: colors.primary, marginBottom: 12 },
 
-    // ── Quick Actions (2-col grid) ────────────────────────
-    actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    actionCard: {
-      width: '47.5%', backgroundColor: colors.surface, borderRadius: 18, padding: 16,
-      alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6,
-      shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    // ── Quick Actions (compact horizontal chips) ──────────
+    actionsScroll: { gap: 6, paddingRight: 16 },
+    actionChip: { alignItems: 'center', gap: 7, width: 72 },
+    actionChipIcon: {
+      width: 52, height: 52, borderRadius: 16,
+      alignItems: 'center', justifyContent: 'center',
     },
-    actionIconBox: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-    actionLabel: { fontSize: 13, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
-    actionSub: { fontSize: 11, color: colors.textSecondary, textAlign: 'center' },
+    actionChipLabel: {
+      fontSize: 11, fontWeight: '700', color: colors.textPrimary,
+      textAlign: 'center', lineHeight: 14,
+    },
 
     // ── Recent Applications ───────────────────────────────
     recentCard: {
