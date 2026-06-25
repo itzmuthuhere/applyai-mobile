@@ -26,7 +26,7 @@ export default function ChatDetailScreen() {
   const { partnerId, partnerName, partnerPicture } = route.params;
 
   const user = useSelector((s: RootState) => s.auth.user);
-  const messages = useSelector((s: RootState) => s.chat.messages[partnerId] ?? []);
+  const messages = useSelector((s: RootState) => s.chat?.messages?.[partnerId] ?? []);
 
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
