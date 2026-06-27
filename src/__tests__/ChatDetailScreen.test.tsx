@@ -37,6 +37,7 @@ jest.mock('../constants', () => ({
     CHAT_READ: '/api/chat/read',
     CHAT_MESSAGE_BY_ID: (id: number) => `/api/chat/messages/${id}`,
     CHAT_REACT: (id: number) => `/api/chat/messages/${id}/react`,
+    CHAT_UPLOAD: '/api/chat/upload',
   },
 }));
 
@@ -172,4 +173,46 @@ it('long pressing partner message shows no Edit or Delete options', async () => 
   await waitFor(() => screen.getByTestId('react-emoji-👍'));
   expect(screen.queryByTestId('action-edit-btn')).toBeNull();
   expect(screen.queryByTestId('action-delete-btn')).toBeNull();
+});
+
+it('attach button is visible in input row', () => {
+  renderScreen({});
+  expect(screen.getByTestId('attach-btn')).toBeTruthy();
+});
+
+it('shows image attachment in bubble for image message', async () => {
+  const imgMsg: ChatMsg = {
+    ...MSG, id: 3, content: null,
+    attachmentUrl: 'https://cdn.example.com/photo.jpg',
+    attachmentType: 'IMAGE', attachmentName: 'photo.jpg', attachmentSize: 102400,
+  };
+  mockGet.mockResolvedValue({ data: { content: [imgMsg] } });
+  renderScreen({});
+  await waitFor(() => expect(screen.getByTestId('attachment-image-3')).toBeTruthy());
+});
+
+it('shows file card in bubble for PDF message', async () => {
+  const pdfMsg: ChatMsg = {
+    ...MSG, id: 4, content: null,
+    attachmentUrl: 'https://cdn.example.com/doc.pdf',
+    attachmentType: 'PDF', attachmentName: 'document.pdf', attachmentSize: 512000,
+  };
+  mockGet.mockResolvedValue({ data: { content: [pdfMsg] } });
+  renderScreen({});
+  await waitFor(() => expect(screen.getByTestId('attachment-file-4')).toBeTruthy());
+  expect(screen.getByText('document.pdf')).toBeTruthy();
+});
+
+it('shows pending attachment chip after picking a document', async () => {
+  const docPicker = require('expo-document-picker');
+  docPicker.getDocumentAsync.mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: 'file://test.pdf', name: 'test.pdf', mimeType: 'application/pdf', size: 2048 }],
+  });
+  renderScreen({});
+  fireEvent.press(screen.getByTestId('attach-btn'));
+  await waitFor(() => screen.getByTestId('pick-files-btn'));
+  fireEvent.press(screen.getByTestId('pick-files-btn'));
+  await waitFor(() => expect(screen.getByTestId('pending-attachment-chip')).toBeTruthy());
+  expect(screen.getByText('test.pdf')).toBeTruthy();
 });

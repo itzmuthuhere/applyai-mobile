@@ -141,6 +141,7 @@ export const API_ENDPOINTS = {
   CHAT_MESSAGE_BY_ID: (id: number) => `/api/chat/messages/${id}`,
   CHAT_REACT: (id: number) => `/api/chat/messages/${id}/react`,
   CHAT_READ: '/api/chat/read',
+  CHAT_UPLOAD: '/api/chat/upload',
   // Public profiles
   PUBLIC_PROFILE: (userId: number) => `/api/users/${userId}/profile`,
   USER_POSTS: (userId: number) => `/api/users/${userId}/posts`,

@@ -20,6 +20,10 @@ export interface ChatMsg {
   createdAt: string;
   editedAt?: string;
   reactions?: Record<string, number[]>;
+  attachmentUrl?: string;
+  attachmentType?: string;
+  attachmentName?: string;
+  attachmentSize?: number;
 }
 
 interface ChatState {
