@@ -11,7 +11,7 @@ import { AppDispatch, RootState } from '../../store';
 import { setAuth, signOut } from '../../store/slices/authSlice';
 import { toggleMode, setAccent } from '../../store/slices/themeSlice';
 import { API_ENDPOINTS } from '../../constants';
-import { FullProfile, Experience, Education, Certification } from '../../types/api.types';
+import { FullProfile, Experience, Education, Certification, ProfileHint } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { useTheme, useThemeSettings } from '../../theme/ThemeContext';
 import { AppColors, AccentColor, ACCENT_PRESETS } from '../../theme/themes';
@@ -54,12 +54,17 @@ function FieldInput({ label, value, onChange, placeholder, multiline, keyboardTy
   );
 }
 
-function SectionCard({ title, icon, children, colors }: { title: string; icon: any; children: React.ReactNode; colors: AppColors }) {
+function SectionCard({ title, icon, children, colors, completionStatus }: {
+  title: string; icon: any; children: React.ReactNode; colors: AppColors;
+  completionStatus?: 'done' | 'pending';
+}) {
   return (
     <View style={{ backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, overflow: 'hidden' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <Ionicons name={icon} size={17} color={colors.primary} />
-        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>{title}</Text>
+        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary, flex: 1 }}>{title}</Text>
+        {completionStatus === 'done'    && <Ionicons name="checkmark-circle" size={18} color="#10B981" />}
+        {completionStatus === 'pending' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F97316' }} />}
       </View>
       <View style={{ padding: 16, gap: 14 }}>{children}</View>
     </View>
@@ -383,6 +388,11 @@ export default function ProfileSettingsScreen() {
 
   const displayUser = profile ?? storeUser;
   const score = displayUser?.completenessScore ?? 0;
+  const hints = (displayUser?.completenessHints as ProfileHint[] | undefined) ?? [];
+
+  function sectionStatus(section: string): 'done' | 'pending' {
+    return hints.some(h => h.section === section) ? 'pending' : 'done';
+  }
 
   return (
     <SafeAreaView style={styles.container} testID="profile-settings-screen">
@@ -421,7 +431,7 @@ export default function ProfileSettingsScreen() {
         </View>
 
         {/* Basic Info */}
-        <SectionCard title="Basic Info" icon="person-outline" colors={colors}>
+        <SectionCard title="Basic Info" icon="person-outline" colors={colors} completionStatus={sectionStatus('BASIC')}>
           <FieldInput label="Full Name" value={name} onChange={setName} placeholder="Muthu Raja" colors={colors} />
           <FieldInput label="Headline" value={headline} onChange={setHeadline} placeholder="Senior Java Developer at Bank of America" colors={colors} />
           <FieldInput label="Phone" value={phone} onChange={setPhone} placeholder="+91 98765 43210" keyboardType="phone-pad" colors={colors} />
@@ -439,6 +449,8 @@ export default function ProfileSettingsScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="briefcase-outline" size={17} color={colors.primary} />
               <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Experience</Text>
+              {sectionStatus('EXPERIENCE') === 'done'    && <Ionicons name="checkmark-circle" size={18} color="#10B981" />}
+              {sectionStatus('EXPERIENCE') === 'pending' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F97316' }} />}
             </View>
             <TouchableOpacity onPress={openAddExp} activeOpacity={0.7} testID="add-exp-btn">
               <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
@@ -470,6 +482,8 @@ export default function ProfileSettingsScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="school-outline" size={17} color={colors.primary} />
               <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Education</Text>
+              {sectionStatus('EDUCATION') === 'done'    && <Ionicons name="checkmark-circle" size={18} color="#10B981" />}
+              {sectionStatus('EDUCATION') === 'pending' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F97316' }} />}
             </View>
             <TouchableOpacity onPress={openAddEdu} activeOpacity={0.7} testID="add-edu-btn">
               <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
@@ -501,6 +515,8 @@ export default function ProfileSettingsScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="ribbon-outline" size={17} color={colors.primary} />
               <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Certifications</Text>
+              {sectionStatus('CERTIFICATIONS') === 'done'    && <Ionicons name="checkmark-circle" size={18} color="#10B981" />}
+              {sectionStatus('CERTIFICATIONS') === 'pending' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F97316' }} />}
             </View>
             <TouchableOpacity onPress={openAddCert} activeOpacity={0.7} testID="add-cert-btn">
               <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
@@ -527,7 +543,7 @@ export default function ProfileSettingsScreen() {
         </View>
 
         {/* Skills */}
-        <SectionCard title="Skills" icon="code-slash-outline" colors={colors}>
+        <SectionCard title="Skills" icon="code-slash-outline" colors={colors} completionStatus={sectionStatus('SKILLS')}>
           <TextInput
             style={[styles.textArea, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.background }]}
             value={skills} onChangeText={setSkills}
@@ -539,7 +555,7 @@ export default function ProfileSettingsScreen() {
         </SectionCard>
 
         {/* Job Preferences */}
-        <SectionCard title="Job Preferences" icon="search-outline" colors={colors}>
+        <SectionCard title="Job Preferences" icon="search-outline" colors={colors} completionStatus={sectionStatus('PREFERENCES')}>
           <FieldInput label="Target Role" value={targetRole} onChange={setTargetRole} placeholder="Senior Java Developer" colors={colors} />
           <FieldInput label="Target Location" value={targetLocation} onChange={setTargetLocation} placeholder="Bengaluru, Remote" colors={colors} />
           <View>
@@ -572,7 +588,7 @@ export default function ProfileSettingsScreen() {
         </SectionCard>
 
         {/* Social Links */}
-        <SectionCard title="Social Links" icon="share-social-outline" colors={colors}>
+        <SectionCard title="Social Links" icon="share-social-outline" colors={colors} completionStatus={sectionStatus('SOCIAL')}>
           <FieldInput label="LinkedIn URL" value={linkedinUrl} onChange={setLinkedinUrl} placeholder="https://linkedin.com/in/yourname" colors={colors} />
           <FieldInput label="GitHub URL" value={githubUrl} onChange={setGithubUrl} placeholder="https://github.com/yourname" colors={colors} />
           <FieldInput label="Portfolio URL" value={portfolioUrl} onChange={setPortfolioUrl} placeholder="https://yoursite.com" colors={colors} />

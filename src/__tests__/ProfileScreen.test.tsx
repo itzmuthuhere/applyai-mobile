@@ -57,7 +57,8 @@ function makeUser(overrides: any = {}) {
     phone: null, yearsOfExperience: 4,
     linkedinUrl: null, githubUrl: null, portfolioUrl: null, twitterUrl: null,
     profilePicture: null, followersCount: 12, followingCount: 5,
-    completenessScore: 65, completenessHints: ['Add a bio', 'Add experience'],
+    completenessScore: 65, profileStrengthLabel: 'Advanced',
+    completenessHints: [],
     createdAt: '2026-01-01T00:00:00',
     ...overrides,
   };
@@ -135,20 +136,26 @@ describe('ProfileScreen', () => {
     });
   });
 
-  it('shows profile completeness card when score < 100', async () => {
+  it('shows profile strength card with score', async () => {
     renderScreen();
     await waitFor(() => {
-      expect(screen.getByTestId('completeness-card')).toBeTruthy();
+      expect(screen.getByTestId('strength-score')).toBeTruthy();
     });
   });
 
-  it('does not show completeness card when score is 100', async () => {
-    mockGet.mockResolvedValue({
-      data: makeFullProfile(makeUser({ completenessScore: 100, completenessHints: [] })),
-    });
-    renderScreen(makeUser({ completenessScore: 100, completenessHints: [] }));
+  it('shows strength label badge', async () => {
+    renderScreen();
     await waitFor(() => {
-      expect(screen.queryByTestId('completeness-card')).toBeNull();
+      expect(screen.getByTestId('strength-label')).toBeTruthy();
+    });
+  });
+
+  it('shows all-star banner when score is 100', async () => {
+    const allStar = makeUser({ completenessScore: 100, profileStrengthLabel: 'All-Star', completenessHints: [] });
+    mockGet.mockResolvedValue({ data: makeFullProfile(allStar) });
+    renderScreen(allStar);
+    await waitFor(() => {
+      expect(screen.getByTestId('all-star-banner')).toBeTruthy();
     });
   });
 

@@ -13,14 +13,37 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { API_ENDPOINTS } from '../../constants';
-import { FullProfile, Experience, Education, Certification } from '../../types/api.types';
+import { FullProfile, Experience, Education, Certification, ProfileHint } from '../../types/api.types';
 
+// ── Plan config ───────────────────────────────────────────────────────────────
 const PLAN_CONFIG: Record<string, { bg: string; text: string; border: string; icon: string; label: string; accent: string }> = {
   FREE:   { bg: '#F1F5F9', text: '#64748B', border: '#E2E8F0', icon: 'person-outline',  label: 'Free Plan',   accent: '#94A3B8' },
   HUNTER: { bg: '#DBEAFE', text: '#1D4ED8', border: '#BFDBFE', icon: 'flash',           label: 'Hunter Plan', accent: '#2563EB' },
   PRO:    { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A', icon: 'rocket',           label: 'Pro Plan',    accent: '#D97706' },
 };
 
+// ── Profile strength config ───────────────────────────────────────────────────
+const STRENGTH_CONFIG: Record<string, { color: string; bg: string; icon: string }> = {
+  Beginner:     { color: '#EF4444', bg: '#FEF2F2', icon: 'leaf-outline' },
+  Developing:   { color: '#F97316', bg: '#FFF7ED', icon: 'trending-up-outline' },
+  Intermediate: { color: '#EAB308', bg: '#FEFCE8', icon: 'flash-outline' },
+  Advanced:     { color: '#3B82F6', bg: '#EFF6FF', icon: 'star-half-outline' },
+  Expert:       { color: '#7C3AED', bg: '#F5F3FF', icon: 'star-outline' },
+  'All-Star':   { color: '#10B981', bg: '#ECFDF5', icon: 'trophy-outline' },
+};
+
+// ── Section → icon map for hints ─────────────────────────────────────────────
+const SECTION_ICON: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
+  BASIC:          'person-circle-outline',
+  EXPERIENCE:     'briefcase-outline',
+  EDUCATION:      'school-outline',
+  CERTIFICATIONS: 'ribbon-outline',
+  SKILLS:         'code-slash-outline',
+  PREFERENCES:    'search-outline',
+  SOCIAL:         'share-social-outline',
+};
+
+// ── Month helper ──────────────────────────────────────────────────────────────
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function monthLabel(m: number | null | undefined, y: number | null | undefined): string {
   if (!y) return '';
@@ -28,11 +51,12 @@ function monthLabel(m: number | null | undefined, y: number | null | undefined):
   return `${MONTHS[(m - 1) % 12]} ${y}`;
 }
 
+// ── Section header ────────────────────────────────────────────────────────────
 function SectionHeader({ icon, title, onAdd, colors }: {
   icon: React.ComponentProps<typeof Ionicons>['name']; title: string; onAdd?: () => void; colors: AppColors;
 }) {
   return (
-    <View style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, marginBottom: 8 }, { borderBottomColor: colors.border }]}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Ionicons name={icon} size={16} color={colors.primary} />
         <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>{title}</Text>
@@ -55,6 +79,112 @@ function EmptyState({ label, onAdd, colors }: { label: string; onAdd?: () => voi
   );
 }
 
+// ── Profile Strength Card ─────────────────────────────────────────────────────
+function ProfileStrengthCard({ score, label, hints, onEditProfile, onSeeAll, colors }: {
+  score: number; label: string; hints: ProfileHint[];
+  onEditProfile: () => void; onSeeAll: () => void; colors: AppColors;
+}) {
+  const cfg = STRENGTH_CONFIG[label] ?? STRENGTH_CONFIG['Developing'];
+  const isAllStar = label === 'All-Star';
+  const nextLabel = nextStrengthLabel(label);
+  const shownHints = hints.slice(0, 3); // show top 3
+
+  return (
+    <View style={{ backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, overflow: 'hidden' }}>
+      {/* Header row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingBottom: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: cfg.bg, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name={cfg.icon as any} size={16} color={cfg.color} />
+          </View>
+          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textPrimary }}>Profile Strength</Text>
+        </View>
+        {!isAllStar && hints.length > 3 && (
+          <TouchableOpacity onPress={onSeeAll} activeOpacity={0.7}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary }}>See all →</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Progress bar + label */}
+      <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: cfg.color + '40' }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: cfg.color, letterSpacing: 0.5 }} testID="strength-label">{label.toUpperCase()}</Text>
+            </View>
+            {!isAllStar && nextLabel && (
+              <Text style={{ fontSize: 12, color: colors.textMuted }}>→ {nextLabel}</Text>
+            )}
+          </View>
+          <Text style={{ fontSize: 18, fontWeight: '800', color: cfg.color }} testID="strength-score">{score}%</Text>
+        </View>
+
+        {/* Bar track */}
+        <View style={{ height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden' }}>
+          <View style={{ height: 8, borderRadius: 4, backgroundColor: cfg.color, width: `${score}%` as any }} testID="strength-bar" />
+        </View>
+      </View>
+
+      {/* Divider */}
+      <View style={{ height: 1, backgroundColor: colors.border }} />
+
+      {/* Content */}
+      {isAllStar ? (
+        <TouchableOpacity onPress={onEditProfile} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 }} activeOpacity={0.8} testID="all-star-banner">
+          <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="checkmark-circle" size={22} color="#10B981" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#047857' }}>Your profile is complete!</Text>
+            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>You're discoverable to recruiters. Keep it updated.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+        </TouchableOpacity>
+      ) : (
+        <View style={{ paddingBottom: 4 }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, paddingHorizontal: 16, paddingVertical: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            {nextLabel ? `Complete these to reach ${nextLabel}` : 'Complete your profile'}
+          </Text>
+          {shownHints.map((hint, i) => (
+            <TouchableOpacity
+              key={hint.key}
+              onPress={onEditProfile}
+              activeOpacity={0.7}
+              testID={`hint-${hint.key}`}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 11, borderTopWidth: i === 0 ? 0 : 0.5, borderTopColor: colors.border }}
+            >
+              <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: cfg.bg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Ionicons name={SECTION_ICON[hint.section] as any} size={15} color={cfg.color} />
+              </View>
+              <Text style={{ flex: 1, fontSize: 13, color: colors.textPrimary, fontWeight: '500' }}>{hint.label}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: cfg.color }}>+{hint.points}</Text>
+                <Text style={{ fontSize: 11, color: colors.textMuted }}>pts</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={{ marginLeft: 2 }} />
+              </View>
+            </TouchableOpacity>
+          ))}
+          {hints.length > 3 && (
+            <TouchableOpacity onPress={onSeeAll} style={{ paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 0.5, borderTopColor: colors.border }} activeOpacity={0.7}>
+              <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600', textAlign: 'center' }}>
+                +{hints.length - 3} more items to complete
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function nextStrengthLabel(current: string): string | null {
+  const levels = ['Beginner', 'Developing', 'Intermediate', 'Advanced', 'Expert', 'All-Star'];
+  const idx = levels.indexOf(current);
+  return idx >= 0 && idx < levels.length - 1 ? levels[idx + 1] : null;
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const colors = useTheme();
   const styles = makeStyles(colors);
@@ -75,7 +205,7 @@ export default function ProfileScreen() {
       setProfile(data);
       if (storeJwt) dispatch(setAuth({ jwt: storeJwt, user: data }));
     } catch {
-      // use cached store user on error
+      // fall back to cached store user
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -102,6 +232,8 @@ export default function ProfileScreen() {
   const planCfg = PLAN_CONFIG[plan] ?? PLAN_CONFIG.FREE;
   const firstName = p?.name?.split(' ')[0] ?? '';
   const score = p?.completenessScore ?? 0;
+  const strengthLabel = p?.profileStrengthLabel ?? 'Beginner';
+  const hints = p?.completenessHints ?? [];
   const goToSettings = () => navigation.navigate('ProfileSettings');
 
   const fmtSalary = (n: number) => {
@@ -135,7 +267,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
-        {/* Hero card */}
+        {/* ── Hero card ──────────────────────────────────────────────────────── */}
         <View style={styles.heroCard}>
           <View style={[styles.cover, { backgroundColor: planCfg.accent }]} />
           <View style={styles.heroRow}>
@@ -174,24 +306,17 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Completeness */}
-        {score < 100 && (
-          <TouchableOpacity style={[styles.card, styles.scoreCard]} onPress={goToSettings} activeOpacity={0.85} testID="completeness-card">
-            <View style={styles.scoreCircle}>
-              <Text style={styles.scoreNum}>{score}%</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.scoreTitle}>Profile Completeness</Text>
-              <Text style={styles.scoreSub}>{(p?.completenessHints ?? []).slice(0, 2).join(' · ') || 'Complete your profile'}</Text>
-              <View style={styles.scoreTrack}>
-                <View style={[styles.scoreFill, { width: `${score}%` as any }]} />
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-          </TouchableOpacity>
-        )}
+        {/* ── Profile Strength ───────────────────────────────────────────────── */}
+        <ProfileStrengthCard
+          score={score}
+          label={strengthLabel}
+          hints={hints}
+          onEditProfile={goToSettings}
+          onSeeAll={goToSettings}
+          colors={colors}
+        />
 
-        {/* Bio */}
+        {/* ── Bio ───────────────────────────────────────────────────────────── */}
         {p?.bio ? (
           <View style={styles.card}>
             <SectionHeader icon="person-outline" title="About" colors={colors} />
@@ -199,7 +324,7 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
-        {/* Experience */}
+        {/* ── Experience ────────────────────────────────────────────────────── */}
         <View style={styles.card}>
           <SectionHeader icon="briefcase-outline" title="Experience" onAdd={goToSettings} colors={colors} />
           {(p?.experience?.length ?? 0) > 0 ? (
@@ -211,7 +336,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Education */}
+        {/* ── Education ─────────────────────────────────────────────────────── */}
         <View style={styles.card}>
           <SectionHeader icon="school-outline" title="Education" onAdd={goToSettings} colors={colors} />
           {(p?.education?.length ?? 0) > 0 ? (
@@ -223,7 +348,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Certifications */}
+        {/* ── Certifications ────────────────────────────────────────────────── */}
         {(p?.certifications?.length ?? 0) > 0 && (
           <View style={styles.card}>
             <SectionHeader icon="ribbon-outline" title="Certifications" onAdd={goToSettings} colors={colors} />
@@ -233,7 +358,7 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Skills */}
+        {/* ── Skills ────────────────────────────────────────────────────────── */}
         {p?.skills ? (
           <View style={styles.card}>
             <SectionHeader icon="code-slash-outline" title="Skills" colors={colors} />
@@ -247,7 +372,7 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
-        {/* Job Preferences */}
+        {/* ── Job Preferences ───────────────────────────────────────────────── */}
         {(p?.targetRole || p?.targetLocation || p?.minSalary || p?.remotePreference) && (
           <View style={styles.card}>
             <SectionHeader icon="search-outline" title="Job Preferences" colors={colors} />
@@ -260,7 +385,7 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Social Links */}
+        {/* ── Social Links ──────────────────────────────────────────────────── */}
         {(p?.linkedinUrl || p?.githubUrl || p?.portfolioUrl || p?.twitterUrl) && (
           <View style={styles.card}>
             <SectionHeader icon="share-social-outline" title="Social Links" colors={colors} />
@@ -273,21 +398,21 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Quick Links */}
+        {/* ── Quick Links ───────────────────────────────────────────────────── */}
         <View style={styles.menuCard}>
-          <QuickLink icon="document-text-outline" label="My Resumes" tint={colors.primary} onPress={() => navigation.navigate('ResumeTab', { screen: 'ResumeList' })} colors={colors} />
-          <QuickLink icon="briefcase-outline" label="My Applications" tint="#10B981" onPress={() => navigation.navigate('ApplicationsTab', { screen: 'ApplicationsList' })} colors={colors} />
-          <QuickLink icon="star-outline" label="Saved Jobs" tint="#7C3AED" onPress={() => navigation.navigate('JobsTab', { screen: 'SavedJobs' })} colors={colors} />
-          <QuickLink icon="notifications-outline" label="Notifications" tint="#F59E0B" onPress={() => navigation.navigate('Notifications')} colors={colors} isLast />
+          <QuickLink icon="document-text-outline" label="My Resumes"      tint={colors.primary} onPress={() => navigation.navigate('ResumeTab', { screen: 'ResumeList' })}         colors={colors} />
+          <QuickLink icon="briefcase-outline"     label="My Applications" tint="#10B981"        onPress={() => navigation.navigate('ApplicationsTab', { screen: 'ApplicationsList' })} colors={colors} />
+          <QuickLink icon="star-outline"          label="Saved Jobs"      tint="#7C3AED"        onPress={() => navigation.navigate('JobsTab', { screen: 'SavedJobs' })}              colors={colors} />
+          <QuickLink icon="notifications-outline" label="Notifications"   tint="#F59E0B"        onPress={() => navigation.navigate('Notifications')} isLast colors={colors} />
         </View>
 
-        {/* Account Info */}
+        {/* ── Account Info ──────────────────────────────────────────────────── */}
         <View style={styles.menuCard}>
           <InfoRow icon="person-circle-outline" label="Member Since" value={p?.createdAt ? new Date(p.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'} colors={colors} />
-          <InfoRow icon="id-card-outline" label="User ID" value={`#${p?.id ?? '—'}`} colors={colors} isLast />
+          <InfoRow icon="id-card-outline"       label="User ID"      value={`#${p?.id ?? '—'}`} colors={colors} isLast />
         </View>
 
-        {/* Upgrade CTA */}
+        {/* ── Upgrade CTA ───────────────────────────────────────────────────── */}
         {plan === 'FREE' && (
           <TouchableOpacity style={styles.upgradeCta} onPress={() => navigation.navigate('Paywall')} activeOpacity={0.85}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -305,7 +430,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Sign Out */}
+        {/* ── Sign Out ──────────────────────────────────────────────────────── */}
         <TouchableOpacity
           style={[styles.signOutBtn, signingOut && { opacity: 0.6 }]}
           onPress={handleSignOut} disabled={signingOut} activeOpacity={0.8} testID="sign-out-btn"
@@ -320,6 +445,8 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
+
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function ExperienceItem({ exp, isLast, colors }: { exp: Experience; isLast: boolean; colors: AppColors }) {
   const start = monthLabel(exp.startMonth, exp.startYear);
@@ -417,49 +544,43 @@ function QuickLink({ icon, label, tint, onPress, isLast = false, colors }: { ico
 
 function InfoRow({ icon, label, value, isLast = false, colors }: { icon: any; label: string; value: string; isLast?: boolean; colors: AppColors }) {
   return (
-    <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16 }, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-      <Ionicons name={icon} size={17} color={colors.textSecondary} />
-      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textPrimary, flex: 1 }}>{label}</Text>
-      <Text style={{ fontSize: 13, color: colors.textMuted }}>{value}</Text>
+    <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 }, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+      <Ionicons name={icon} size={18} color={colors.textMuted} />
+      <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 1 }}>{label}</Text>
+      <Text style={{ fontSize: 13, color: colors.textPrimary, fontWeight: '600' }}>{value}</Text>
     </View>
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 function makeStyles(colors: AppColors) {
   return StyleSheet.create({
-    safe: { flex: 1, backgroundColor: colors.background },
-    navBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
-    navTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.textPrimary },
-    content: { gap: 12, paddingBottom: 16 },
-    heroCard: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
-    cover: { height: 90 },
-    heroRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 4, marginTop: -36 },
-    avatarWrap: { borderRadius: 52, borderWidth: 4, borderColor: colors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 },
-    avatar: { width: 90, height: 90, borderRadius: 45 },
-    avatarFallback: { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { color: '#fff', fontSize: 38, fontWeight: '800' },
-    planPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, marginBottom: 4 },
-    planText: { fontSize: 12, fontWeight: '800' },
-    heroInfo: { paddingHorizontal: 20, paddingTop: 10, gap: 2 },
-    name: { fontSize: 24, fontWeight: '900', color: colors.textPrimary },
-    headline: { fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginTop: 2 },
-    locationText: { fontSize: 13, color: colors.textMuted },
-    email: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
-    followStat: { fontSize: 13, color: colors.textSecondary },
-    followNum: { fontWeight: '800', color: colors.textPrimary },
-    editProfileBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, margin: 16, marginTop: 12, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: colors.primary, alignSelf: 'flex-start' },
+    safe:           { flex: 1, backgroundColor: colors.background },
+    navBar:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 13, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+    navTitle:       { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+    content:        { paddingTop: 12, paddingBottom: 8, gap: 12 },
+    heroCard:       { backgroundColor: colors.surface, marginHorizontal: 16, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
+    cover:          { height: 64 },
+    heroRow:        { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 16, marginTop: -30 },
+    avatarWrap:     { position: 'relative' },
+    avatar:         { width: 70, height: 70, borderRadius: 35, borderWidth: 3, borderColor: colors.surface },
+    avatarFallback: { width: 70, height: 70, borderRadius: 35, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.surface },
+    avatarInitial:  { color: '#fff', fontSize: 26, fontWeight: '800' },
+    planPill:       { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
+    planText:       { fontSize: 12, fontWeight: '700' },
+    heroInfo:       { padding: 16, paddingTop: 10, gap: 2 },
+    name:           { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+    headline:       { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    locationText:   { fontSize: 13, color: colors.textMuted },
+    email:          { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+    followStat:     { fontSize: 13, color: colors.textSecondary },
+    followNum:      { fontWeight: '700', color: colors.textPrimary },
+    editProfileBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, margin: 16, marginTop: 4, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.primaryLight, justifyContent: 'center' },
     editProfileBtnText: { fontSize: 13, fontWeight: '700' },
-    card: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, gap: 4 },
-    scoreCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.primaryLight, borderColor: '#BFDBFE' },
-    scoreCircle: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-    scoreNum: { fontSize: 15, fontWeight: '900', color: '#fff' },
-    scoreTitle: { fontSize: 13, fontWeight: '800', color: colors.primary, marginBottom: 3 },
-    scoreSub: { fontSize: 11, color: colors.primary, opacity: 0.8, marginBottom: 6, lineHeight: 15 },
-    scoreTrack: { height: 5, backgroundColor: '#BFDBFE', borderRadius: 3, overflow: 'hidden' },
-    scoreFill: { height: 5, backgroundColor: colors.primary, borderRadius: 3 },
-    menuCard: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginHorizontal: 16 },
-    upgradeCta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.primary, borderRadius: 16, padding: 16, marginHorizontal: 16, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
-    signOutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FEF2F2', borderRadius: 14, paddingVertical: 16, marginHorizontal: 16, borderWidth: 1, borderColor: '#FECACA' },
-    signOutText: { fontSize: 15, fontWeight: '700', color: '#EF4444' },
+    card:           { backgroundColor: colors.surface, marginHorizontal: 16, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.border },
+    menuCard:       { backgroundColor: colors.surface, marginHorizontal: 16, borderRadius: 14, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+    upgradeCta:     { marginHorizontal: 16, borderRadius: 16, padding: 16, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    signOutBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 14, marginHorizontal: 16, borderWidth: 1, borderColor: '#FCA5A5' },
+    signOutText:    { fontSize: 15, fontWeight: '700', color: '#EF4444' },
   });
 }

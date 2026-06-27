@@ -75,7 +75,7 @@ function makeUser(overrides: any = {}) {
     linkedinUrl: 'https://linkedin.com/in/muthu',
     githubUrl: null, portfolioUrl: null, twitterUrl: null,
     profilePicture: null, followersCount: 12, followingCount: 5,
-    completenessScore: 65, completenessHints: [],
+    completenessScore: 65, profileStrengthLabel: 'Advanced', completenessHints: [],
     createdAt: '2026-01-01T00:00:00',
     ...overrides,
   };

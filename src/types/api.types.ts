@@ -1,5 +1,14 @@
 export type SubscriptionPlan = 'FREE' | 'HUNTER' | 'PRO';
 export type AutoApplyStatus = 'PENDING' | 'APPLYING' | 'APPLIED' | 'FAILED' | 'SKIPPED';
+export type ProfileStrengthLabel = 'Beginner' | 'Developing' | 'Intermediate' | 'Advanced' | 'Expert' | 'All-Star';
+export type ProfileHintSection = 'BASIC' | 'EXPERIENCE' | 'EDUCATION' | 'CERTIFICATIONS' | 'SKILLS' | 'PREFERENCES' | 'SOCIAL';
+
+export interface ProfileHint {
+  key: string;
+  label: string;
+  points: number;
+  section: ProfileHintSection;
+}
 
 export interface AutoApplyQueueItem {
   id: number;
@@ -51,7 +60,8 @@ export interface User {
   followersCount: number;
   followingCount: number;
   completenessScore: number;
-  completenessHints: string[];
+  profileStrengthLabel: ProfileStrengthLabel;
+  completenessHints: ProfileHint[];
   createdAt: string;
 }
 
