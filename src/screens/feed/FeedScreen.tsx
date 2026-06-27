@@ -4,7 +4,7 @@ import {
   SafeAreaView, RefreshControl, ActivityIndicator, Linking, Alert,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -27,6 +27,8 @@ const REACTION_COLORS: Record<string, string> = {
   LOVE: '#EF4444', INSIGHTFUL: '#8B5CF6', FUNNY: '#F97316',
 };
 
+const SEE_MORE_THRESHOLD = 280;
+
 function Avatar({ uri, name, size = 40 }: { uri?: string | null; name?: string; size?: number }) {
   const colors = useTheme();
   if (uri) {
@@ -47,7 +49,7 @@ function Avatar({ uri, name, size = 40 }: { uri?: string | null; name?: string; 
 function RichContent({ content, colors, navigation }: { content: string; colors: AppColors; navigation: any }) {
   const parts = content.split(/(#\w+|@\w+)/g);
   return (
-    <Text style={{ fontSize: 15, color: colors.textPrimary, lineHeight: 22, paddingHorizontal: 14, paddingBottom: 12 }}>
+    <Text style={{ fontSize: 15, color: colors.textPrimary, lineHeight: 22 }}>
       {parts.map((part, i) => {
         if (part.startsWith('#')) {
           const tag = part.slice(1);
@@ -64,6 +66,30 @@ function RichContent({ content, colors, navigation }: { content: string; colors:
         return <Text key={i}>{part}</Text>;
       })}
     </Text>
+  );
+}
+
+function ExpandableContent({ content, colors, navigation }: { content: string; colors: AppColors; navigation: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = content.length > SEE_MORE_THRESHOLD;
+  const displayed = isLong && !expanded ? content.slice(0, SEE_MORE_THRESHOLD) + '…' : content;
+
+  return (
+    <View style={{ paddingHorizontal: 14, paddingBottom: 12 }}>
+      <RichContent content={displayed} colors={colors} navigation={navigation} />
+      {isLong && (
+        <TouchableOpacity
+          testID="see-more-btn"
+          onPress={() => setExpanded(e => !e)}
+          activeOpacity={0.7}
+          style={{ marginTop: 4 }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>
+            {expanded ? 'See less' : 'See more'}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }
 
@@ -92,7 +118,7 @@ function AttachmentRow({ post, colors }: { post: FeedPost; colors: AppColors }) 
     return (
       <Image
         source={{ uri: post.imageUrl }}
-        style={{ width: '100%', height: 200, borderRadius: 0, marginBottom: 0 }}
+        style={{ width: '100%', height: 220, marginBottom: 0 }}
         resizeMode="cover"
       />
     );
@@ -136,6 +162,7 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
 
   async function handleReact(type: string) {
     setShowPicker(false);
+    if (pickerTimeout.current) clearTimeout(pickerTimeout.current);
     const removing = myReaction === type;
     const prevReaction = myReaction;
     const prevLikes = post.likesCount;
@@ -206,21 +233,21 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
         </TouchableOpacity>
         {post.author.id === currentUserId && (
           <View style={styles.ownerActions}>
-            <TouchableOpacity testID={`edit-btn-${post.id}`} onPress={handleEdit} style={styles.deleteBtn} activeOpacity={0.7}>
+            <TouchableOpacity testID={`edit-btn-${post.id}`} onPress={handleEdit} style={styles.iconBtn} activeOpacity={0.7}>
               <Ionicons name="pencil-outline" size={16} color={colors.textMuted} />
             </TouchableOpacity>
-            <TouchableOpacity testID={`delete-btn-${post.id}`} onPress={handleDelete} style={styles.deleteBtn} activeOpacity={0.7}>
+            <TouchableOpacity testID={`delete-btn-${post.id}`} onPress={handleDelete} style={styles.iconBtn} activeOpacity={0.7}>
               <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
         )}
       </View>
 
-      <RichContent content={post.content} colors={colors} navigation={navigation} />
+      <ExpandableContent content={post.content} colors={colors} navigation={navigation} />
 
       <AttachmentRow post={post} colors={colors} />
 
-      {post.likesCount > 0 || post.commentsCount > 0 ? (
+      {(post.likesCount > 0 || post.commentsCount > 0) && (
         <View style={styles.countRow}>
           {post.likesCount > 0 && (
             <Text style={styles.countText}>
@@ -229,16 +256,18 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
           )}
           {post.commentsCount > 0 && (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { postId: post.id })}>
-              <Text style={styles.countText}>{post.commentsCount} comment{post.commentsCount !== 1 ? 's' : ''}</Text>
+              <Text style={styles.countText}>
+                {post.commentsCount} comment{post.commentsCount !== 1 ? 's' : ''}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
-      ) : null}
+      )}
 
       <View style={styles.divider} />
 
       <View style={styles.actions}>
-        <View>
+        <View style={{ flex: 1, position: 'relative' }}>
           <TouchableOpacity
             testID={`react-btn-${post.id}`}
             style={styles.actionBtn}
@@ -297,22 +326,37 @@ export default function FeedScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [initialLoading, setInitialLoading] = useState(posts.length === 0);
 
-  async function loadFeed(reset = false) {
-    if (reset) setRefreshing(true);
+  // Ref guard prevents duplicate in-flight requests regardless of React render timing.
+  // React state updates are async — two rapid onEndReached calls both see loadingMore=false
+  // before the first setLoadingMore(true) commits. The ref is synchronously set.
+  const inFlightRef = useRef(false);
+
+  const loadFeed = useCallback(async (reset = false) => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+
+    if (reset) {
+      setRefreshing(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
       const p = reset ? 0 : page;
       const { data } = await apiClient.get(API_ENDPOINTS.FEED, { params: { page: p, size: 20 } });
-      const items = data.content ?? [];
+      const items: FeedPost[] = data.content ?? [];
       if (reset) {
         dispatch(setPosts(items));
       } else {
         dispatch(appendPosts(items));
       }
     } catch {}
+
+    inFlightRef.current = false;
     setInitialLoading(false);
     setRefreshing(false);
     setLoadingMore(false);
-  }
+  }, [page, dispatch]);
 
   async function loadUnreadCount() {
     try {
@@ -326,11 +370,26 @@ export default function FeedScreen() {
     loadUnreadCount();
   }, []);
 
-  function loadMore() {
-    if (!hasMore || loadingMore || refreshing) return;
-    setLoadingMore(true);
+  // Refresh unread count (cheap) each time the screen comes into focus.
+  // Full feed refresh only if there are no posts (e.g., first ever load after login).
+  useFocusEffect(
+    useCallback(() => {
+      loadUnreadCount();
+    }, [])
+  );
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || inFlightRef.current) return;
     loadFeed(false);
-  }
+  }, [hasMore, loadFeed]);
+
+  const onRefresh = useCallback(() => {
+    loadFeed(true);
+  }, [loadFeed]);
+
+  const renderItem = useCallback(({ item }: { item: FeedPost }) => (
+    <PostCard post={item} currentUserId={user?.id ?? -1} />
+  ), [user?.id]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -342,7 +401,6 @@ export default function FeedScreen() {
           <Text style={styles.headerTitle}>Feed</Text>
         </View>
         <View style={styles.headerRight}>
-          {/* Notification bell */}
           <TouchableOpacity
             onPress={() => navigation.navigate('SocialNotifications')}
             style={styles.headerBtn}
@@ -371,14 +429,12 @@ export default function FeedScreen() {
         <FlatList
           data={posts}
           keyExtractor={item => String(item.id)}
-          renderItem={({ item }) => (
-            <PostCard post={item} currentUserId={user?.id ?? -1} />
-          )}
+          renderItem={renderItem}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => loadFeed(true)} tintColor={colors.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           onEndReached={loadMore}
-          onEndReachedThreshold={0.3}
+          onEndReachedThreshold={0.4}
           ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ padding: 16 }} /> : null}
           ListEmptyComponent={
             <View style={styles.emptyState}>
@@ -392,6 +448,7 @@ export default function FeedScreen() {
           }
           contentContainerStyle={posts.length === 0 ? { flex: 1 } : { paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews
         />
       )}
     </SafeAreaView>
@@ -444,7 +501,7 @@ function makeStyles(colors: AppColors) {
   authorHeadline: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
   postTime: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   ownerActions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  deleteBtn: { padding: 6 },
+  iconBtn: { padding: 6 },
 
   countRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

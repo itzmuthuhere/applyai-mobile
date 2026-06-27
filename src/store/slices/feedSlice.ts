@@ -35,7 +35,7 @@ const feedSlice = createSlice({
   reducers: {
     setPosts(state, action: PayloadAction<FeedPost[]>) {
       state.posts = action.payload;
-      state.page = 0;
+      state.page = 1;  // page 0 just loaded; next loadMore requests page 1
       state.hasMore = action.payload.length >= 20;
     },
     appendPosts(state, action: PayloadAction<FeedPost[]>) {
