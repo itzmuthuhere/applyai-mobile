@@ -1,6 +1,6 @@
 import feedReducer, {
   setPosts, appendPosts, prependPost, removePost,
-  setReaction, incrementComments, updatePost,
+  setReaction, incrementComments, decrementComments, updatePost,
   FeedPost,
 } from '../store/slices/feedSlice';
 
@@ -121,5 +121,25 @@ describe('incrementComments', () => {
     const base = { ...initial, posts: [{ ...makePost(1), commentsCount: 2 }] };
     const state = feedReducer(base, incrementComments(1));
     expect(state.posts[0].commentsCount).toBe(3);
+  });
+});
+
+describe('decrementComments', () => {
+  it('decrements commentsCount on matching post', () => {
+    const base = { ...initial, posts: [{ ...makePost(1), commentsCount: 3 }] };
+    const state = feedReducer(base, decrementComments(1));
+    expect(state.posts[0].commentsCount).toBe(2);
+  });
+
+  it('does not go below 0', () => {
+    const base = { ...initial, posts: [{ ...makePost(1), commentsCount: 0 }] };
+    const state = feedReducer(base, decrementComments(1));
+    expect(state.posts[0].commentsCount).toBe(0);
+  });
+
+  it('is a no-op for unknown id', () => {
+    const base = { ...initial, posts: [{ ...makePost(1), commentsCount: 2 }] };
+    const state = feedReducer(base, decrementComments(999));
+    expect(state.posts[0].commentsCount).toBe(2);
   });
 });

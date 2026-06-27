@@ -130,8 +130,10 @@ export const API_ENDPOINTS = {
   AUTO_APPLY_COUNT: '/api/auto-apply/count',
   // Social Feed
   FEED: '/api/feed',
+  FEED_POST: (postId: number) => `/api/feed/${postId}`,
   FEED_REACT: (postId: number) => `/api/feed/${postId}/react`,
   FEED_COMMENTS: (postId: number) => `/api/feed/${postId}/comments`,
+  FEED_COMMENT: (postId: number, commentId: number) => `/api/feed/${postId}/comments/${commentId}`,
   FEED_COMMENT_DELETE: (postId: number, commentId: number) => `/api/feed/${postId}/comments/${commentId}`,
   FEED_MEDIA: '/api/feed/media',
   FEED_HASHTAG: (tag: string) => `/api/feed/hashtag/${tag}`,

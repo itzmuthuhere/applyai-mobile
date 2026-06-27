@@ -62,6 +62,10 @@ const feedSlice = createSlice({
       const post = state.posts.find(p => p.id === action.payload);
       if (post) post.commentsCount += 1;
     },
+    decrementComments(state, action: PayloadAction<number>) {
+      const post = state.posts.find(p => p.id === action.payload);
+      if (post && post.commentsCount > 0) post.commentsCount -= 1;
+    },
     updatePost(state, action: PayloadAction<FeedPost>) {
       const idx = state.posts.findIndex(p => p.id === action.payload.id);
       if (idx !== -1) state.posts[idx] = action.payload;
@@ -72,5 +76,5 @@ const feedSlice = createSlice({
   },
 });
 
-export const { setPosts, appendPosts, prependPost, removePost, setReaction, incrementComments, updatePost, setLoading } = feedSlice.actions;
+export const { setPosts, appendPosts, prependPost, removePost, setReaction, incrementComments, decrementComments, updatePost, setLoading } = feedSlice.actions;
 export default feedSlice.reducer;
