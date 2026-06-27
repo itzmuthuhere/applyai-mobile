@@ -138,6 +138,8 @@ export const API_ENDPOINTS = {
   // Chat
   CHAT_CONVERSATIONS: '/api/chat/conversations',
   CHAT_MESSAGES: '/api/chat/messages',
+  CHAT_MESSAGE_BY_ID: (id: number) => `/api/chat/messages/${id}`,
+  CHAT_REACT: (id: number) => `/api/chat/messages/${id}/react`,
   CHAT_READ: '/api/chat/read',
   // Public profiles
   PUBLIC_PROFILE: (userId: number) => `/api/users/${userId}/profile`,

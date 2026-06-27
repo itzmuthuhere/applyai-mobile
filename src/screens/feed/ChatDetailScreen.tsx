@@ -1,14 +1,15 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
   SafeAreaView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
+  Modal, Pressable,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { RootState, AppDispatch } from '../../store';
-import { setMessages, appendMessage, ChatMsg } from '../../store/slices/chatSlice';
+import { setMessages, appendMessage, updateMessage, ChatMsg } from '../../store/slices/chatSlice';
 import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
@@ -16,6 +17,8 @@ import apiClient from '../../api/apiClient';
 import { FeedStackParamList } from '../../navigation/types';
 
 type RouteT = RouteProp<FeedStackParamList, 'ChatDetail'>;
+
+const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export default function ChatDetailScreen() {
   const colors = useTheme();
@@ -31,6 +34,9 @@ export default function ChatDetailScreen() {
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(messages.length === 0);
+  const [actionSheet, setActionSheet] = useState<ChatMsg | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
   const flatRef = useRef<FlatList<ChatMsg>>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRef = useRef<TextInput>(null);
@@ -42,7 +48,6 @@ export default function ChatDetailScreen() {
       });
       const items: ChatMsg[] = (data.content ?? []).reverse();
       dispatch(setMessages({ partnerId, messages: items }));
-      // Mark as read
       await apiClient.post(API_ENDPOINTS.CHAT_READ, null, { params: { from: partnerId } });
     } catch {}
     setLoading(false);
@@ -50,7 +55,6 @@ export default function ChatDetailScreen() {
 
   useEffect(() => {
     loadMessages();
-    // Poll every 5 seconds for new messages
     pollRef.current = setInterval(loadMessages, 5000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [loadMessages]);
@@ -66,7 +70,7 @@ export default function ChatDetailScreen() {
     if (!text || sending) return;
     setSending(true);
     setInputText('');
-    inputRef.current?.clear(); // Force-clear on Android — multiline controlled TextInput ignores value='' without this
+    inputRef.current?.clear();
     try {
       const { data } = await apiClient.post(API_ENDPOINTS.CHAT_MESSAGES, {
         recipientId: partnerId,
@@ -80,10 +84,49 @@ export default function ChatDetailScreen() {
     setSending(false);
   }
 
+  async function submitEdit() {
+    const text = editText.trim();
+    if (!text || editingId === null) return;
+    try {
+      const { data } = await apiClient.put(API_ENDPOINTS.CHAT_MESSAGE_BY_ID(editingId), { content: text });
+      dispatch(updateMessage({ partnerId, message: data }));
+    } catch {}
+    setEditingId(null);
+    setEditText('');
+  }
+
+  async function handleDelete(msg: ChatMsg) {
+    setActionSheet(null);
+    try {
+      await apiClient.delete(API_ENDPOINTS.CHAT_MESSAGE_BY_ID(msg.id));
+      dispatch(updateMessage({ partnerId, message: { ...msg, deleted: true, content: null } }));
+    } catch {}
+  }
+
+  async function handleReact(msg: ChatMsg, emoji: string) {
+    setActionSheet(null);
+    try {
+      const { data } = await apiClient.post(API_ENDPOINTS.CHAT_REACT(msg.id), { emoji });
+      dispatch(updateMessage({ partnerId, message: data }));
+    } catch {}
+  }
+
+  function startEdit(msg: ChatMsg) {
+    setActionSheet(null);
+    setEditingId(msg.id);
+    setEditText(msg.content ?? '');
+  }
+
   function renderMessage({ item, index }: { item: ChatMsg; index: number }) {
     const isMine = item.senderId === user?.id;
     const prev = messages[index - 1];
     const showTime = !prev || dayjs(item.createdAt).diff(dayjs(prev.createdAt), 'minute') > 5;
+    const myReactedEmojis = new Set(
+      Object.entries(item.reactions ?? {})
+        .filter(([, ids]) => user && ids.includes(user.id))
+        .map(([emoji]) => emoji)
+    );
+    const reactionEntries = Object.entries(item.reactions ?? {}).filter(([, ids]) => ids.length > 0);
 
     return (
       <>
@@ -91,9 +134,49 @@ export default function ChatDetailScreen() {
           <Text style={styles.timeLabel}>{dayjs(item.createdAt).format('h:mm A')}</Text>
         )}
         <View style={[styles.msgRow, isMine && styles.msgRowMine]}>
-          <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
-            <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>{item.content}</Text>
-          </View>
+          <TouchableOpacity
+            testID={item.deleted ? `msg-deleted-${item.id}` : `msg-bubble-${item.id}`}
+            onLongPress={() => !item.deleted && setActionSheet(item)}
+            activeOpacity={0.85}
+            delayLongPress={300}
+          >
+            <View style={[
+              styles.bubble,
+              isMine ? styles.bubbleMine : styles.bubbleTheirs,
+              item.deleted && styles.bubbleDeleted,
+            ]}>
+              {item.deleted ? (
+                <Text style={styles.deletedText}>Message deleted</Text>
+              ) : (
+                <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>{item.content}</Text>
+              )}
+            </View>
+            {item.editedAt && !item.deleted && (
+              <Text
+                testID={`msg-edited-${item.id}`}
+                style={[styles.editedLabel, isMine && styles.editedLabelMine]}
+              >
+                edited
+              </Text>
+            )}
+            {reactionEntries.length > 0 && (
+              <View style={[styles.reactionRow, isMine && styles.reactionRowMine]}>
+                {reactionEntries.map(([emoji, ids]) => (
+                  <TouchableOpacity
+                    key={emoji}
+                    testID={`reaction-pill-${item.id}-${emoji}`}
+                    style={[styles.reactionPill, myReactedEmojis.has(emoji) && styles.reactionPillActive]}
+                    onPress={() => handleReact(item, emoji)}
+                  >
+                    <Text style={styles.reactionEmoji}>{emoji}</Text>
+                    <Text style={[styles.reactionCount, myReactedEmojis.has(emoji) && styles.reactionCountActive]}>
+                      {ids.length}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
       </>
     );
@@ -147,33 +230,98 @@ export default function ChatDetailScreen() {
           />
         )}
 
+        {/* Edit context bar */}
+        {editingId !== null && (
+          <View style={styles.editBar}>
+            <Ionicons name="pencil" size={14} color={colors.primary} />
+            <Text style={styles.editBarLabel}>Editing message</Text>
+            <TouchableOpacity onPress={() => { setEditingId(null); setEditText(''); }}>
+              <Ionicons name="close" size={18} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Input */}
         <View style={styles.inputRow}>
           <TextInput
             ref={inputRef}
             testID="chat-input"
             style={styles.chatInput}
-            placeholder={`Message ${partnerName}...`}
+            placeholder={editingId !== null ? 'Edit message...' : `Message ${partnerName}...`}
             placeholderTextColor={colors.textMuted}
-            value={inputText}
-            onChangeText={setInputText}
+            value={editingId !== null ? editText : inputText}
+            onChangeText={editingId !== null ? setEditText : setInputText}
             multiline
             maxLength={2000}
           />
           <TouchableOpacity
             testID="chat-send-btn"
-            onPress={sendMessage}
-            disabled={!inputText.trim() || sending}
-            style={[styles.sendBtn, (!inputText.trim() || sending) && styles.sendBtnDisabled]}
+            onPress={editingId !== null ? submitEdit : sendMessage}
+            disabled={editingId !== null ? !editText.trim() : (!inputText.trim() || sending)}
+            style={[
+              styles.sendBtn,
+              (editingId !== null ? !editText.trim() : (!inputText.trim() || sending)) && styles.sendBtnDisabled,
+            ]}
           >
             {sending ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Ionicons name="send" size={16} color="#fff" />
+              <Ionicons name={editingId !== null ? 'checkmark' : 'send'} size={16} color="#fff" />
             )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Action Sheet Modal */}
+      <Modal
+        testID="action-sheet-modal"
+        visible={actionSheet !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActionSheet(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setActionSheet(null)}>
+          <Pressable style={styles.actionSheet}>
+            <View style={styles.emojiRow}>
+              {EMOJI_OPTIONS.map(emoji => {
+                const reactedIds = actionSheet?.reactions?.[emoji] ?? [];
+                const iReacted = user ? reactedIds.includes(user.id) : false;
+                return (
+                  <TouchableOpacity
+                    key={emoji}
+                    testID={`react-emoji-${emoji}`}
+                    style={[styles.emojiBtn, iReacted && styles.emojiBtnActive]}
+                    onPress={() => actionSheet && handleReact(actionSheet, emoji)}
+                  >
+                    <Text style={styles.emojiBtnText}>{emoji}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {actionSheet?.senderId === user?.id && (
+              <>
+                <TouchableOpacity
+                  testID="action-edit-btn"
+                  style={styles.actionBtn}
+                  onPress={() => actionSheet && startEdit(actionSheet)}
+                >
+                  <Ionicons name="pencil" size={18} color={colors.textPrimary} />
+                  <Text style={styles.actionBtnText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID="action-delete-btn"
+                  style={[styles.actionBtn, styles.actionBtnDanger]}
+                  onPress={() => actionSheet && handleDelete(actionSheet)}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                  <Text style={[styles.actionBtnText, styles.actionBtnTextDanger]}>Delete</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -204,8 +352,32 @@ function makeStyles(colors: AppColors) {
   },
   bubbleTheirs: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   bubbleMine: { backgroundColor: colors.primary },
+  bubbleDeleted: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
   bubbleText: { fontSize: 15, color: colors.textPrimary, lineHeight: 21 },
   bubbleTextMine: { color: '#fff' },
+  deletedText: { fontSize: 14, color: colors.textMuted, fontStyle: 'italic' },
+
+  editedLabel: { fontSize: 10, color: colors.textMuted, marginTop: 2, paddingLeft: 4 },
+  editedLabelMine: { textAlign: 'right', paddingLeft: 0, paddingRight: 4 },
+
+  reactionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4, paddingLeft: 4 },
+  reactionRowMine: { justifyContent: 'flex-end', paddingLeft: 0, paddingRight: 4 },
+  reactionPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3,
+  },
+  reactionPillActive: { backgroundColor: '#DBEAFE', borderColor: colors.primary },
+  reactionEmoji: { fontSize: 13 },
+  reactionCount: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
+  reactionCountActive: { color: colors.primary },
+
+  editBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 8,
+    backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border,
+  },
+  editBarLabel: { flex: 1, fontSize: 13, color: colors.primary, fontWeight: '600' },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10 },
   emptyText: { fontSize: 14, color: colors.textMuted },
@@ -224,5 +396,32 @@ function makeStyles(colors: AppColors) {
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   sendBtnDisabled: { backgroundColor: colors.border },
+
+  modalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  actionSheet: {
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingTop: 16, paddingBottom: 32, paddingHorizontal: 16,
+  },
+  emojiRow: {
+    flexDirection: 'row', justifyContent: 'space-around',
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 8,
+  },
+  emojiBtn: {
+    width: 44, height: 44, borderRadius: 22,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background,
+  },
+  emojiBtnActive: { backgroundColor: '#DBEAFE', borderWidth: 2, borderColor: colors.primary },
+  emojiBtnText: { fontSize: 22 },
+  actionBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 14, paddingHorizontal: 4,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  actionBtnDanger: { borderBottomWidth: 0 },
+  actionBtnText: { fontSize: 16, color: colors.textPrimary, fontWeight: '600' },
+  actionBtnTextDanger: { color: '#EF4444' },
   });
 }
