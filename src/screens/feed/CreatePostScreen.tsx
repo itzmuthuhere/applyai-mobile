@@ -5,11 +5,12 @@ import {
   Image, ScrollView, FlatList,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { RootState, AppDispatch } from '../../store';
-import { prependPost } from '../../store/slices/feedSlice';
+import { prependPost, updatePost, FeedPost } from '../../store/slices/feedSlice';
 import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
@@ -27,6 +28,10 @@ interface MentionSuggestion {
   name: string;
   headline?: string;
   profilePicture?: string;
+}
+
+interface RouteParams {
+  editPost?: FeedPost;
 }
 
 function RichText({ content, colors }: { content: string; colors: AppColors }) {
@@ -47,24 +52,32 @@ export default function CreatePostScreen() {
   const colors = useTheme();
   const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
 
-  const [content, setContent] = useState('');
+  const editPost: FeedPost | undefined = route.params?.editPost;
+  const isEditMode = !!editPost;
+
+  const [content, setContent] = useState(editPost?.content ?? '');
   const [posting, setPosting] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [attachment, setAttachment] = useState<Attachment | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(editPost?.imageUrl ?? null);
+  const [attachment, setAttachment] = useState<Attachment | null>(
+    editPost?.attachmentUrl
+      ? { url: editPost.attachmentUrl, type: (editPost.attachmentType ?? 'DOC') as 'IMAGE' | 'PDF' | 'DOC', name: editPost.attachmentName ?? 'attachment', size: 0 }
+      : null
+  );
   const [uploading, setUploading] = useState(false);
   const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [imagePickerVisible, setImagePickerVisible] = useState(false);
   const mentionSearchRef = useRef<string | null>(null);
 
-  const canPost = content.trim().length > 0 && !posting && !uploading;
+  const canPost = content.trim().length > 0 && content.length <= 2000 && !posting && !uploading;
 
   function onContentChange(text: string) {
     setContent(text);
 
-    // Detect @mention typing
     const match = text.match(/@(\w*)$/);
     if (match) {
       const query = match[1];
@@ -89,57 +102,80 @@ export default function CreatePostScreen() {
     } catch {}
   }
 
-  function insertMention(user: MentionSuggestion) {
-    const nameNoSpace = user.name.replace(/\s+/g, '');
+  function insertMention(u: MentionSuggestion) {
+    const nameNoSpace = u.name.replace(/\s+/g, '');
     const newContent = content.replace(/@(\w*)$/, `@${nameNoSpace} `);
     setContent(newContent);
     setMentionSuggestions([]);
     setShowSuggestions(false);
   }
 
-  async function pickMedia(type: 'image' | 'doc') {
-    const mimeTypes = type === 'image'
-      ? ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-      : ['application/pdf', 'application/msword',
-         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-
-    const result = await DocumentPicker.getDocumentAsync({
-      type: mimeTypes,
-      copyToCacheDirectory: true,
+  async function pickFromLibrary() {
+    setImagePickerVisible(false);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.85,
     });
-
     if (result.canceled || !result.assets?.length) return;
     const asset = result.assets[0];
-
-    if (type === 'image' && asset.size && asset.size > 5 * 1024 * 1024) {
+    if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
       Alert.alert('File too large', 'Images must be under 5 MB.');
       return;
     }
-    if (type === 'doc' && asset.size && asset.size > 10 * 1024 * 1024) {
-      Alert.alert('File too large', 'Documents must be under 10 MB.');
+    await uploadImage(asset.uri, asset.fileName ?? 'photo.jpg', asset.mimeType ?? 'image/jpeg');
+  }
+
+  async function pickFromCamera() {
+    setImagePickerVisible(false);
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Camera access is required to take a photo.');
       return;
     }
+    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.85 });
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+    await uploadImage(asset.uri, asset.fileName ?? 'photo.jpg', asset.mimeType ?? 'image/jpeg');
+  }
 
+  async function uploadImage(uri: string, name: string, mimeType: string) {
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append('file', {
-        uri: asset.uri,
-        name: asset.name,
-        type: asset.mimeType ?? 'application/octet-stream',
-      } as any);
-
+      formData.append('file', { uri, name, type: mimeType } as any);
       const { data } = await apiClient.post(API_ENDPOINTS.FEED_MEDIA, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+      setImageUrl(data.url);
+      setAttachment(null);
+    } catch {
+      Alert.alert('Upload failed', 'Could not upload the image. Please try again.');
+    }
+    setUploading(false);
+  }
 
-      if (type === 'image') {
-        setImageUrl(data.url);
-        setAttachment(null);
-      } else {
-        setAttachment({ url: data.url, type: data.type, name: data.name, size: data.size });
-        setImageUrl(null);
-      }
+  async function pickDoc() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+    if (asset.size && asset.size > 10 * 1024 * 1024) {
+      Alert.alert('File too large', 'Documents must be under 10 MB.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', { uri: asset.uri, name: asset.name, type: asset.mimeType ?? 'application/octet-stream' } as any);
+      const { data } = await apiClient.post(API_ENDPOINTS.FEED_MEDIA, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setAttachment({ url: data.url, type: data.type, name: data.name, size: data.size });
+      setImageUrl(null);
     } catch {
       Alert.alert('Upload failed', 'Could not upload the file. Please try again.');
     }
@@ -161,11 +197,17 @@ export default function CreatePostScreen() {
         body.attachmentType = attachment.type;
         body.attachmentName = attachment.name;
       }
-      const { data } = await apiClient.post(API_ENDPOINTS.FEED, body);
-      dispatch(prependPost(data));
+
+      if (isEditMode && editPost) {
+        const { data } = await apiClient.put(`${API_ENDPOINTS.FEED}/${editPost.id}`, body);
+        dispatch(updatePost(data));
+      } else {
+        const { data } = await apiClient.post(API_ENDPOINTS.FEED, body);
+        dispatch(prependPost(data));
+      }
       navigation.goBack();
     } catch {
-      Alert.alert('Error', 'Failed to post. Please try again.');
+      Alert.alert('Error', isEditMode ? 'Failed to update post.' : 'Failed to post. Please try again.');
     } finally {
       setPosting(false);
     }
@@ -179,7 +221,7 @@ export default function CreatePostScreen() {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelBtn}>
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Post</Text>
+          <Text style={styles.headerTitle}>{isEditMode ? 'Edit Post' : 'Create Post'}</Text>
           <TouchableOpacity
             testID="post-submit-btn"
             onPress={handlePost}
@@ -189,7 +231,7 @@ export default function CreatePostScreen() {
             {posting ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.postBtnText}>Post</Text>
+              <Text style={styles.postBtnText}>{isEditMode ? 'Save' : 'Post'}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -257,7 +299,9 @@ export default function CreatePostScreen() {
               />
               <View style={styles.docInfo}>
                 <Text style={styles.docName} numberOfLines={1}>{attachment.name}</Text>
-                <Text style={styles.docSize}>{(attachment.size / 1024).toFixed(0)} KB</Text>
+                {attachment.size > 0 && (
+                  <Text style={styles.docSize}>{(attachment.size / 1024).toFixed(0)} KB</Text>
+                )}
               </View>
               <TouchableOpacity onPress={removeMedia} style={styles.removeDocBtn}>
                 <Ionicons name="close-circle-outline" size={22} color={colors.textMuted} />
@@ -268,7 +312,7 @@ export default function CreatePostScreen() {
 
         {/* Footer toolbar */}
         <View style={styles.footer}>
-          <Text style={[styles.charCount, content.length > 2000 && { color: colors.error }]}>
+          <Text testID="char-count" style={[styles.charCount, content.length > 2000 && { color: colors.error }]}>
             {content.length} / 2000
           </Text>
           <View style={styles.mediaButtons}>
@@ -279,7 +323,7 @@ export default function CreatePostScreen() {
                 {!attachment && (
                   <TouchableOpacity
                     testID="pick-image-btn"
-                    onPress={() => pickMedia('image')}
+                    onPress={() => setImagePickerVisible(true)}
                     style={styles.mediaBtn}
                     disabled={!!attachment}
                   >
@@ -289,7 +333,7 @@ export default function CreatePostScreen() {
                 {!imageUrl && (
                   <TouchableOpacity
                     testID="pick-doc-btn"
-                    onPress={() => pickMedia('doc')}
+                    onPress={pickDoc}
                     style={styles.mediaBtn}
                     disabled={!!imageUrl}
                   >
@@ -300,6 +344,25 @@ export default function CreatePostScreen() {
             )}
           </View>
         </View>
+
+        {/* Image source picker modal */}
+        {imagePickerVisible && (
+          <View testID="image-picker-modal" style={styles.pickerModal}>
+            <View style={styles.pickerSheet}>
+              <TouchableOpacity testID="pick-library-btn" style={styles.pickerOption} onPress={pickFromLibrary}>
+                <Ionicons name="images-outline" size={22} color={colors.primary} />
+                <Text style={styles.pickerOptionText}>Choose from Library</Text>
+              </TouchableOpacity>
+              <TouchableOpacity testID="pick-camera-btn" style={styles.pickerOption} onPress={pickFromCamera}>
+                <Ionicons name="camera-outline" size={22} color={colors.primary} />
+                <Text style={styles.pickerOptionText}>Take a Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity testID="pick-image-cancel-btn" style={[styles.pickerOption, { borderTopWidth: 1, borderTopColor: colors.border }]} onPress={() => setImagePickerVisible(false)}>
+                <Text style={[styles.pickerOptionText, { color: colors.textMuted }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -377,5 +440,18 @@ function makeStyles(colors: AppColors) {
   charCount: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
   mediaButtons: { flexDirection: 'row', gap: 6 },
   mediaBtn: { padding: 6 },
+
+  pickerModal: {
+    position: 'absolute', bottom: 0, left: 0, right: 0, top: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end',
+  },
+  pickerSheet: {
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 32,
+  },
+  pickerOption: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingHorizontal: 20, paddingVertical: 16,
+  },
+  pickerOptionText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
   });
 }

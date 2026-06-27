@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
-  SafeAreaView, RefreshControl, ActivityIndicator, Linking,
+  SafeAreaView, RefreshControl, ActivityIndicator, Linking, Alert,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { RootState, AppDispatch } from '../../store';
-import { setPosts, appendPosts, removePost, setReaction, FeedPost } from '../../store/slices/feedSlice';
+import { setPosts, appendPosts, removePost, setReaction, updatePost, FeedPost } from '../../store/slices/feedSlice';
 import { setUnreadCount } from '../../store/slices/notificationSlice';
 import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
@@ -157,11 +157,28 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
     }
   }
 
-  async function handleDelete() {
-    try {
-      await apiClient.delete(`${API_ENDPOINTS.FEED}/${post.id}`);
-      dispatch(removePost(post.id));
-    } catch {}
+  function handleDelete() {
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiClient.delete(`${API_ENDPOINTS.FEED}/${post.id}`);
+              dispatch(removePost(post.id));
+            } catch {}
+          },
+        },
+      ]
+    );
+  }
+
+  function handleEdit() {
+    navigation.navigate('CreatePost', { editPost: post });
   }
 
   function openReactionPicker() {
@@ -188,9 +205,14 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
           </View>
         </TouchableOpacity>
         {post.author.id === currentUserId && (
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn} activeOpacity={0.7}>
-            <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
+          <View style={styles.ownerActions}>
+            <TouchableOpacity testID={`edit-btn-${post.id}`} onPress={handleEdit} style={styles.deleteBtn} activeOpacity={0.7}>
+              <Ionicons name="pencil-outline" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity testID={`delete-btn-${post.id}`} onPress={handleDelete} style={styles.deleteBtn} activeOpacity={0.7}>
+              <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -421,6 +443,7 @@ function makeStyles(colors: AppColors) {
   authorName: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
   authorHeadline: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
   postTime: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  ownerActions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   deleteBtn: { padding: 6 },
 
   countRow: {

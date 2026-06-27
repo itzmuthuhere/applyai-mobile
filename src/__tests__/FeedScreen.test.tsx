@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import feedReducer, { FeedPost } from '../store/slices/feedSlice';
@@ -127,4 +128,33 @@ it('shows loading indicator initially when no posts', async () => {
   // loading state is visible immediately
   // (after initial render, before API returns)
   await waitFor(() => {}, { timeout: 100 }).catch(() => {});
+});
+
+it('delete button shows confirmation dialog for own posts', async () => {
+  const ownPost: FeedPost = { ...MOCK_POST, id: 2, author: { id: 42, name: 'Bob' } };
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
+    return Promise.resolve({ data: { content: [ownPost] } });
+  });
+  const alertSpy = jest.spyOn(Alert, 'alert');
+  const { getByTestId } = renderScreen([]);
+  await waitFor(() => getByTestId(`delete-btn-2`));
+  fireEvent.press(getByTestId('delete-btn-2'));
+  expect(alertSpy).toHaveBeenCalledWith(
+    'Delete Post',
+    expect.any(String),
+    expect.any(Array)
+  );
+});
+
+it('edit button navigates to CreatePost with editPost param', async () => {
+  const ownPost: FeedPost = { ...MOCK_POST, id: 3, author: { id: 42, name: 'Bob' } };
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
+    return Promise.resolve({ data: { content: [ownPost] } });
+  });
+  const { getByTestId } = renderScreen([]);
+  await waitFor(() => getByTestId(`edit-btn-3`));
+  fireEvent.press(getByTestId('edit-btn-3'));
+  expect(mockNavigate).toHaveBeenCalledWith('CreatePost', { editPost: ownPost });
 });
