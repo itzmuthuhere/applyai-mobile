@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { RootState, AppDispatch } from '../../store';
-import { setPosts, appendPosts, removePost, setReaction, updatePost, FeedPost } from '../../store/slices/feedSlice';
+import { setPosts, appendPosts, prependPost, removePost, setReaction, updatePost, FeedPost } from '../../store/slices/feedSlice';
 import { setUnreadCount } from '../../store/slices/notificationSlice';
 import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
@@ -198,10 +198,13 @@ const PostCard = React.memo(function PostCard({ post, currentUserId }: { post: F
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            dispatch(removePost(post.id));
             try {
               await apiClient.delete(`${API_ENDPOINTS.FEED}/${post.id}`);
-              dispatch(removePost(post.id));
-            } catch {}
+            } catch {
+              dispatch(prependPost(post));
+              Alert.alert('Delete failed', 'Could not delete the post. Please try again.');
+            }
           },
         },
       ]

@@ -220,12 +220,15 @@ export default function PostDetailScreen() {
   // ── Delete comment ───────────────────────────────────────────────────────────
 
   async function deleteComment(commentId: number) {
+    setComments(prev => prev.filter(c => c.id !== commentId));
+    dispatch(decrementComments(postId));
+    setLocalPost(p => p ? { ...p, commentsCount: Math.max(0, (p.commentsCount ?? 1) - 1) } : p);
     try {
       await apiClient.delete(API_ENDPOINTS.FEED_COMMENT_DELETE(postId, commentId));
-      setComments(prev => prev.filter(c => c.id !== commentId));
-      dispatch(decrementComments(postId));
-      setLocalPost(p => p ? { ...p, commentsCount: Math.max(0, (p.commentsCount ?? 1) - 1) } : p);
-    } catch {}
+    } catch {
+      await loadComments(0, true);
+      Alert.alert('Delete failed', 'Could not delete the comment. Please try again.');
+    }
   }
 
   function onLongPressComment(comment: Comment) {

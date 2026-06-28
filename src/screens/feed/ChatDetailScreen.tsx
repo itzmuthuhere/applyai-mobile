@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
   SafeAreaView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Modal, Pressable, Linking,
+  Modal, Pressable, Linking, Alert,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -187,6 +187,25 @@ export default function ChatDetailScreen() {
       setUploading(false);
     }
 
+    const optimisticId = -Date.now();
+    const optimisticMsg: ChatMsg = {
+      id: optimisticId,
+      senderId: user?.id ?? 0,
+      recipientId: partnerId,
+      content: savedText || null,
+      createdAt: new Date().toISOString(),
+      read: false,
+      deleted: false,
+      editedAt: null,
+      reactions: {},
+      attachmentUrl: uploadedAttachment?.url ?? null,
+      attachmentType: uploadedAttachment?.type ?? null,
+      attachmentName: uploadedAttachment?.name ?? null,
+      attachmentSize: uploadedAttachment?.size ?? null,
+    };
+    dispatch(appendMessage({ partnerId, message: optimisticMsg }));
+    setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
+
     try {
       const payload: Record<string, any> = { recipientId: partnerId };
       if (savedText) payload.content = savedText;
@@ -196,11 +215,12 @@ export default function ChatDetailScreen() {
         payload.attachmentName = uploadedAttachment.name;
         payload.attachmentSize = uploadedAttachment.size;
       }
-      const { data } = await apiClient.post(API_ENDPOINTS.CHAT_MESSAGES, payload);
-      dispatch(appendMessage({ partnerId, message: data }));
-      setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
+      await apiClient.post(API_ENDPOINTS.CHAT_MESSAGES, payload);
+      await loadMessages();
     } catch {
+      dispatch(updateMessage({ partnerId, message: { ...optimisticMsg, deleted: true, content: null } }));
       setInputText(savedText);
+      Alert.alert('Message not sent', 'Could not send your message. Please try again.');
     }
     setSending(false);
   }
@@ -363,7 +383,7 @@ export default function ChatDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>

@@ -225,8 +225,19 @@ export default function JobDetailScreen() {
     }
   }
 
+  function alertNoResume() {
+    Alert.alert(
+      'No resume',
+      'Upload and parse a resume to use AI features.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Upload Resume', onPress: () => navigation.getParent()?.navigate('ResumeTab') },
+      ]
+    );
+  }
+
   async function openAtsPanel() {
-    if (!primaryResumeId || !job) { Alert.alert('No resume', 'Upload and parse a resume first.'); return; }
+    if (!primaryResumeId || !job) { alertNoResume(); return; }
     if (atsPanel.data || atsPanel.loading) { setAtsPanel(p => ({ ...p, open: !p.open })); return; }
     setAtsPanel({ open: true, loading: true, data: null, error: null });
     try {
@@ -238,7 +249,7 @@ export default function JobDetailScreen() {
   }
 
   async function openGapPanel() {
-    if (!primaryResumeId || !job) { Alert.alert('No resume', 'Upload and parse a resume first.'); return; }
+    if (!primaryResumeId || !job) { alertNoResume(); return; }
     if (gapPanel.data || gapPanel.loading) { setGapPanel(p => ({ ...p, open: !p.open })); return; }
     setGapPanel({ open: true, loading: true, data: null, error: null });
     try {

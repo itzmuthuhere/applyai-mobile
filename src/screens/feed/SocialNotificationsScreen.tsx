@@ -68,16 +68,16 @@ export default function SocialNotificationsScreen() {
   }
 
   function handleNotifPress(item: SocialNotif) {
-    if (item.postId) {
-      navigation.navigate('PostDetail', { postId: item.postId });
-    } else if (item.actor) {
-      navigation.navigate('PublicProfile', { userId: item.actor.id, userName: item.actor.name });
-    } else if (item.type === 'DM' && item.actor) {
+    if (item.type === 'DM' && item.actor) {
       navigation.navigate('ChatDetail', {
         partnerId: item.actor.id,
         partnerName: item.actor.name,
         partnerPicture: item.actor.profilePicture,
       });
+    } else if (item.postId) {
+      navigation.navigate('PostDetail', { postId: item.postId });
+    } else if (item.actor) {
+      navigation.navigate('PublicProfile', { userId: item.actor.id, userName: item.actor.name });
     }
   }
 

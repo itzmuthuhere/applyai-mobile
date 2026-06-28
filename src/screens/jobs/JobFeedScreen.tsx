@@ -320,7 +320,9 @@ export default function JobFeedScreen() {
     setApplyingId(job.id);
     try {
       await apiClient.post(API_ENDPOINTS.QUICK_APPLY(job.id));
-    } catch { /* silent — navigate to apply full if fails */ }
+    } catch {
+      Alert.alert('Quick Apply failed', 'Could not apply. Open the job to apply manually.');
+    }
     setApplyingId(null);
     navigation.navigate('JobDetail', { jobId: job.id });
   }
@@ -567,6 +569,10 @@ export default function JobFeedScreen() {
           ListFooterComponent={
             isLoadingMore ? (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+            ) : jobs.length > 0 && jobs.length >= total && total > 0 ? (
+              <Text style={{ textAlign: 'center', color: colors.textMuted, fontSize: 13, paddingVertical: 20 }}>
+                You've seen all available jobs
+              </Text>
             ) : null
           }
         />
