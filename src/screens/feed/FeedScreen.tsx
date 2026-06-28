@@ -32,7 +32,7 @@ const SEE_MORE_THRESHOLD = 280;
 function Avatar({ uri, name, size = 40 }: { uri?: string | null; name?: string; size?: number }) {
   const colors = useTheme();
   if (uri) {
-    return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
+    return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} resizeMode="cover" />;
   }
   return (
     <View style={{
@@ -47,7 +47,7 @@ function Avatar({ uri, name, size = 40 }: { uri?: string | null; name?: string; 
 }
 
 function RichContent({ content, colors, navigation }: { content: string; colors: AppColors; navigation: any }) {
-  const parts = content.split(/(#\w+|@\w+)/g);
+  const parts = React.useMemo(() => content.split(/(#\w+|@\w+)/g), [content]);
   return (
     <Text style={{ fontSize: 15, color: colors.textPrimary, lineHeight: 22 }}>
       {parts.map((part, i) => {
@@ -150,7 +150,7 @@ function AttachmentRow({ post, colors }: { post: FeedPost; colors: AppColors }) 
   return null;
 }
 
-function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: number }) {
+const PostCard = React.memo(function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: number }) {
   const colors = useTheme();
   const styles = makeStyles(colors);
   const dispatch = useDispatch<AppDispatch>();
@@ -158,9 +158,13 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
   const [showPicker, setShowPicker] = useState(false);
   const pickerTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => { if (pickerTimeout.current) clearTimeout(pickerTimeout.current); };
+  }, []);
+
   const myReaction = post.myReaction;
 
-  async function handleReact(type: string) {
+  const handleReact = useCallback(async (type: string) => {
     setShowPicker(false);
     if (pickerTimeout.current) clearTimeout(pickerTimeout.current);
     const removing = myReaction === type;
@@ -182,7 +186,7 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
     } catch {
       dispatch(setReaction({ postId: post.id, reaction: prevReaction ?? null, likesCount: prevLikes }));
     }
-  }
+  }, [post.id, post.likesCount, myReaction, dispatch]);
 
   function handleDelete() {
     Alert.alert(
@@ -309,7 +313,12 @@ function PostCard({ post, currentUserId }: { post: FeedPost; currentUserId: numb
       </View>
     </View>
   );
-}
+}, (prev, next) => prev.post.id === next.post.id &&
+   prev.post.likesCount === next.post.likesCount &&
+   prev.post.commentsCount === next.post.commentsCount &&
+   prev.post.myReaction === next.post.myReaction &&
+   prev.post.content === next.post.content &&
+   prev.currentUserId === next.currentUserId);
 
 export default function FeedScreen() {
   const colors = useTheme();
@@ -435,6 +444,9 @@ export default function FeedScreen() {
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.4}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={10}
           ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ padding: 16 }} /> : null}
           ListEmptyComponent={
             <View style={styles.emptyState}>

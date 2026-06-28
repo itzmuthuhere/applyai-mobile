@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, RefreshControl, Animated, Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -221,6 +221,9 @@ export default function ApplicationsListScreen() {
 
   useEffect(() => { loadApplications(); }, []);
 
+  // Refresh on focus so status changes from JobDetailScreen appear immediately
+  useFocusEffect(useCallback(() => { loadApplications(); }, []));
+
   async function loadApplications(isRefresh = false) {
     if (isRefresh) setRefreshing(true);
     else setIsLoading(true);
@@ -304,6 +307,7 @@ export default function ApplicationsListScreen() {
           removeClippedSubviews={Platform.OS === 'android'}
           initialNumToRender={10}
           maxToRenderPerBatch={8}
+          windowSize={8}
           ListEmptyComponent={
             <View testID="apps-empty-state" style={styles.centerState}>
               {applications.length === 0 ? (

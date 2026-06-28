@@ -113,6 +113,11 @@ export default function ChatListScreen() {
           }
           contentContainerStyle={conversations.length === 0 ? { flex: 1 } : {}}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews
+          initialNumToRender={12}
+          maxToRenderPerBatch={10}
+          windowSize={8}
+          getItemLayout={(_data, index) => ({ length: 72, offset: 72 * index, index })}
         />
       )}
     </SafeAreaView>

@@ -67,9 +67,10 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
-  const resumeList = useSelector((s: RootState) => s.resume.list);
-  const applicationList = useSelector((s: RootState) => s.application.list);
-  const interviewHistory = useSelector((s: RootState) => s.interview.history);
+  // Select counts only — avoids re-render on every list item change
+  const resumeCount = useSelector((s: RootState) => s.resume.list.length);
+  const appCount = useSelector((s: RootState) => s.application.list.length);
+  const interviewCount = useSelector((s: RootState) => s.interview.history.length);
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -103,15 +104,15 @@ export default function HomeScreen() {
 
   useEffect(() => { if (!summary) loadDashboard(); }, []);
 
-  const resumeCount = summary?.resumeCount ?? resumeList.length;
-  const appCount = summary?.applicationCount ?? applicationList.length;
-  const interviewCount = summary?.interviewCount ?? interviewHistory.length;
+  const displayResumeCount = summary?.resumeCount ?? resumeCount;
+  const displayAppCount = summary?.applicationCount ?? appCount;
+  const displayInterviewCount = summary?.interviewCount ?? interviewCount;
   const recentApps = summary?.recentApplications ?? [];
 
   const STATS = [
-    { icon: 'document-text' as const, color: '#2563EB', bg: '#EFF6FF', label: 'Resumes',    value: resumeCount },
-    { icon: 'briefcase'     as const, color: '#10B981', bg: '#D1FAE5', label: 'Applied',    value: appCount },
-    { icon: 'mic'           as const, color: '#F59E0B', bg: '#FFFBEB', label: 'Interviews', value: interviewCount },
+    { icon: 'document-text' as const, color: '#2563EB', bg: '#EFF6FF', label: 'Resumes',    value: displayResumeCount },
+    { icon: 'briefcase'     as const, color: '#10B981', bg: '#D1FAE5', label: 'Applied',    value: displayAppCount },
+    { icon: 'mic'           as const, color: '#F59E0B', bg: '#FFFBEB', label: 'Interviews', value: displayInterviewCount },
     ...(summary?.avgMatchScore != null
       ? [{ icon: 'star' as const, color: '#8B5CF6', bg: '#EDE9FE', label: 'Avg Match', value: `${summary.avgMatchScore}%` }]
       : []),
@@ -119,7 +120,7 @@ export default function HomeScreen() {
 
   const QUICK_ACTIONS = [
     { icon: 'cloud-upload-outline' as const, label: 'Upload Resume', sub: 'AI scoring',    color: '#2563EB', onPress: () => navigation.navigate('ResumeTab', { screen: 'ResumeUpload' }) },
-    { icon: 'search-outline'        as const, label: 'Browse Jobs',   sub: `${appCount} applied`, color: '#10B981', onPress: () => navigation.navigate('JobsTab', { screen: 'JobFeed' }) },
+    { icon: 'search-outline'        as const, label: 'Browse Jobs',   sub: `${displayAppCount} applied`, color: '#10B981', onPress: () => navigation.navigate('JobsTab', { screen: 'JobFeed' }) },
     { icon: 'mic-circle-outline'    as const, label: 'Mock Interview', sub: 'AI coaching', color: '#F59E0B', onPress: () => navigation.navigate('InterviewTab', { screen: 'InterviewStart' }) },
     { icon: 'list-circle-outline'   as const, label: 'Applications',  sub: 'Track status', color: '#8B5CF6', onPress: () => navigation.navigate('ApplicationsTab', { screen: 'ApplicationsList' }) },
     ...(isHr ? [{ icon: 'add-circle-outline' as const, label: 'Post a Job', sub: 'HR posting', color: '#059669', onPress: () => navigation.navigate('JobsTab', { screen: 'HrPostJob' }) }] : []),

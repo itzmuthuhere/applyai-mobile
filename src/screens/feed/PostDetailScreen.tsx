@@ -90,6 +90,10 @@ export default function PostDetailScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const pickerTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => { if (pickerTimeout.current) clearTimeout(pickerTimeout.current); };
+  }, []);
+
   // Fetch post from API when not in Redux (e.g. navigated from notification)
   useEffect(() => {
     if (!reduxPost) {

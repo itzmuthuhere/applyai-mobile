@@ -12,6 +12,7 @@ jest.mock('../api/apiClient', () => ({
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: jest.fn(() => ({ navigate: jest.fn() })),
+  useFocusEffect: jest.fn(), // no-op in tests; useEffect already covers initial load
 }));
 
 jest.mock('../constants', () => ({
