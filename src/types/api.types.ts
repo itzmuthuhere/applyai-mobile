@@ -249,6 +249,7 @@ export interface CoverLetterResponse {
 export interface Application {
   id: number;
   status: ApplicationStatus;
+  applicationMethod?: 'IN_APP' | 'QUICK_APPLY' | 'EXTENSION';
   appliedAt: string | null;
   lastUpdated: string | null;
   notes: string | null;
@@ -258,8 +259,8 @@ export interface Application {
   offerSalary: number | null;
   offerDeadline: string | null;
   offerDetails: string | null;
-  job: { id: number; title: string; company: string; location: string };
-  resume: { id: number; versionName: string };
+  job: { id: number | null; title: string; company: string; location: string | null };
+  resume: { id: number; versionName: string } | null;
 }
 
 export interface InterviewQuestion {

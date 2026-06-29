@@ -217,6 +217,9 @@ export default function ProfileSettingsScreen() {
   const [githubUrl, setGithubUrl] = useState('');
   const [portfolioUrl, setPortfolioUrl] = useState('');
   const [twitterUrl, setTwitterUrl] = useState('');
+  // Extension form-fill fields
+  const [currentCompany, setCurrentCompany] = useState('');
+  const [workAuthorization, setWorkAuthorization] = useState('');
 
   // Experience modal
   const [expModalVisible, setExpModalVisible] = useState(false);
@@ -249,6 +252,8 @@ export default function ProfileSettingsScreen() {
       setGithubUrl(data.githubUrl ?? '');
       setPortfolioUrl(data.portfolioUrl ?? '');
       setTwitterUrl(data.twitterUrl ?? '');
+      setCurrentCompany((data as any).currentCompany ?? '');
+      setWorkAuthorization((data as any).workAuthorization ?? '');
     } catch { /* keep form defaults */ }
   }, []);
 
@@ -275,6 +280,8 @@ export default function ProfileSettingsScreen() {
         githubUrl: githubUrl.trim() || undefined,
         portfolioUrl: portfolioUrl.trim() || undefined,
         twitterUrl: twitterUrl.trim() || undefined,
+        currentCompany: currentCompany.trim() || undefined,
+        workAuthorization: workAuthorization.trim() || undefined,
       });
       setProfile(data);
       if (storeJwt) dispatch(setAuth({ jwt: storeJwt, user: data }));
@@ -594,6 +601,58 @@ export default function ProfileSettingsScreen() {
           <FieldInput label="Portfolio URL" value={portfolioUrl} onChange={setPortfolioUrl} placeholder="https://yoursite.com" colors={colors} />
           <FieldInput label="Twitter / X URL" value={twitterUrl} onChange={setTwitterUrl} placeholder="https://twitter.com/yourhandle" colors={colors} />
         </SectionCard>
+
+        {/* Extension Form Fill */}
+        {(() => {
+          const filled = [name, phone, headline, currentCompany, workAuthorization].filter(Boolean).length;
+          const total = 5;
+          const pct = Math.round((filled / total) * 100);
+          const allGood = filled === total;
+          return (
+            <SectionCard title="Extension Auto-Fill" icon="flash-outline" colors={colors}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: allGood ? '#D1FAE5' : '#FEF9C3', borderRadius: 10, padding: 12, marginBottom: 4 }}>
+                <Ionicons name={allGood ? 'checkmark-circle' : 'warning-outline'} size={20} color={allGood ? '#059669' : '#D97706'} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: allGood ? '#065F46' : '#92400E' }}>
+                    {allGood ? 'Ready for auto-fill!' : `${filled}/${total} required fields complete`}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: allGood ? '#065F46' : '#92400E', marginTop: 2 }}>
+                    {allGood ? 'Chrome extension can auto-fill job applications.' : 'Complete all fields so the extension can fill forms for you.'}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: allGood ? '#059669' : '#D97706' }}>{pct}%</Text>
+              </View>
+              {[
+                { label: 'Full Name', ok: !!name, hint: 'Add in Basic Info above' },
+                { label: 'Phone Number', ok: !!phone, hint: 'Add in Basic Info above' },
+                { label: 'Headline / Job Title', ok: !!headline, hint: 'Add in Basic Info above' },
+                { label: 'Current Company', ok: !!currentCompany, hint: 'Fill below' },
+                { label: 'Work Authorization', ok: !!workAuthorization, hint: 'Fill below' },
+              ].map(item => (
+                <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
+                  <Ionicons name={item.ok ? 'checkmark-circle' : 'ellipse-outline'} size={16} color={item.ok ? '#059669' : colors.textMuted} />
+                  <Text style={{ fontSize: 13, color: item.ok ? colors.textPrimary : colors.textMuted, flex: 1 }}>{item.label}</Text>
+                  {!item.ok && <Text style={{ fontSize: 11, color: colors.primary }}>{item.hint}</Text>}
+                </View>
+              ))}
+              <FieldInput label="Current Company" value={currentCompany} onChange={setCurrentCompany} placeholder="Bank of America" colors={colors} />
+              <View>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, marginBottom: 8 }}>Work Authorization</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {['Authorized to work', 'Need sponsorship', 'Citizen', 'PR / Resident'].map(opt => (
+                    <TouchableOpacity
+                      key={opt}
+                      style={[styles.chip, workAuthorization === opt && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                      onPress={() => setWorkAuthorization(workAuthorization === opt ? '' : opt)}
+                    >
+                      <Text style={[styles.chipText, { color: workAuthorization === opt ? '#fff' : colors.textSecondary }]}>{opt}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </SectionCard>
+          );
+        })()}
 
         {/* Account Type */}
         <SectionCard title="Account Type" icon="person-circle-outline" colors={colors}>

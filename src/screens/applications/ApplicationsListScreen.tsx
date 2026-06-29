@@ -178,6 +178,14 @@ function AppCard({ item, onPress }: { item: Application; onPress: () => void }) 
         </View>
       )}
 
+      {/* Extension badge */}
+      {(item as any).applicationMethod === 'EXTENSION' && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingBottom: 8 }}>
+          <Ionicons name="flash" size={11} color="#7C3AED" />
+          <Text style={{ fontSize: 11, fontWeight: '700', color: '#7C3AED' }}>Applied via Chrome Extension</Text>
+        </View>
+      )}
+
       {/* Offer highlight */}
       {item.offerSalary && item.status === 'OFFER' && (
         <View style={styles.offerBanner}>
