@@ -48,6 +48,8 @@
 **Last push:** Jun 24, 2026 (FEAT-UI-001 — centralized theme system: dark mode + 5 accent colors across 41 screens, 328 tests passing)
 **Resume point:** All phases complete. Theme system added. Device-test theme toggle on physical device next.
 
+> **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.
+
 ---
 
 ## SESSION — Jun 24, 2026 — Theme System (FEAT-UI-001)
