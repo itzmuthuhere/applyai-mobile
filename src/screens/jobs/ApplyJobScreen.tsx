@@ -74,8 +74,9 @@ export default function ApplyJobScreen() {
         setSubmitted(true);
       } else if (!e?.response) {
         try {
-          const { data: apps } = await apiClient.get<Application[]>(API_ENDPOINTS.APPLICATIONS);
-          if (apps.some(a => a.job.id === params.jobId)) { setSubmitted(true); return; }
+          const { data: appsData } = await apiClient.get<{ content: Application[] } | Application[]>(API_ENDPOINTS.APPLICATIONS);
+          const appList = Array.isArray(appsData) ? appsData : (appsData.content ?? []);
+          if (appList.some(a => a.job.id === params.jobId)) { setSubmitted(true); return; }
         } catch {}
         setError('Server is warming up — your application may already be submitted. Check the Applications tab or tap Submit again.');
       } else if (serverMsg) {

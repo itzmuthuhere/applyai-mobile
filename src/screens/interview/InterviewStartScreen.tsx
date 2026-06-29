@@ -308,7 +308,7 @@ export default function InterviewStartScreen() {
             <Text style={styles.sheetSub}>
               AI will generate 7 tailored questions based on the job description and your resume.
             </Text>
-            {appsLoading && applications.length === 0 ? (
+            {appsLoading ? (
               <ActivityIndicator color={colors.primary} style={{ marginTop: 40, marginBottom: 40 }} />
             ) : applications.length === 0 ? (
               <View style={styles.emptyState}>

@@ -9,7 +9,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
 dayjs.extend(relativeTime);
+dayjs.extend(utc);
 import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
@@ -134,7 +136,7 @@ function AppCard({ item, onPress }: { item: Application; onPress: () => void }) 
   const cfg = STATUS_CONFIG[item.status];
   const bgColor = companyColor(item.job.company ?? '');
   const initial = item.job.company ? item.job.company[0].toUpperCase() : '?';
-  const appliedAgo = item.appliedAt ? dayjs(item.appliedAt).fromNow() : null;
+  const appliedAgo = item.appliedAt ? dayjs.utc(item.appliedAt).local().fromNow() : null;
 
   return (
     <TouchableOpacity testID={`app-item-${item.id}`} style={styles.card} onPress={onPress} activeOpacity={0.78}>
@@ -171,7 +173,7 @@ function AppCard({ item, onPress }: { item: Application; onPress: () => void }) 
         <View style={styles.interviewBanner}>
           <Ionicons name="calendar-outline" size={13} color="#065F46" />
           <Text style={styles.interviewBannerText}>
-            Interview: {dayjs(item.interviewDate).format('MMM D, YYYY')}
+            Interview: {dayjs.utc(item.interviewDate).local().format('MMM D, YYYY')}
           </Text>
         </View>
       )}
