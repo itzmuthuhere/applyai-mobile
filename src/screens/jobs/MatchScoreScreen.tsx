@@ -71,10 +71,10 @@ export default function MatchScoreScreen() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await apiClient.get<Resume[]>(API_ENDPOINTS.RESUMES);
-        setResumes(res.data);
-        // Auto-select the first parsed resume
-        const firstParsed = res.data.find((r) => r.isParsed);
+        const res = await apiClient.get<{ content: Resume[] } | Resume[]>(API_ENDPOINTS.RESUMES);
+        const list = Array.isArray(res.data) ? res.data : (res.data.content ?? []);
+        setResumes(list);
+        const firstParsed = list.find((r) => r.isParsed);
         if (firstParsed) setSelectedResumeId(firstParsed.id);
       } catch {
         setError('Failed to load your resumes.');

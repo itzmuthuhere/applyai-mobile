@@ -169,8 +169,9 @@ export default function JobDetailScreen() {
   useEffect(() => {
     if (!job) return;
     setSaved(job.saved ?? false);
-    apiClient.get<Resume[]>(API_ENDPOINTS.RESUMES).then(r => {
-      const p = r.data.find(rv => rv.isParsed && rv.isOriginal) ?? r.data[0];
+    apiClient.get<{ content: Resume[] } | Resume[]>(API_ENDPOINTS.RESUMES).then(r => {
+      const list = Array.isArray(r.data) ? r.data : (r.data.content ?? []);
+      const p = list.find(rv => rv.isParsed && rv.isOriginal) ?? list[0];
       if (p) setPrimaryResumeId(p.id);
     }).catch(() => {});
     apiClient.get<Job[]>(API_ENDPOINTS.JOB_SIMILAR(job.id)).then(r => {

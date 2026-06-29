@@ -133,8 +133,9 @@ export default function InterviewStartScreen() {
   async function loadHistory(isRefresh = false) {
     isRefresh ? setRefreshing(true) : setHistoryLoading(true);
     try {
-      const { data } = await apiClient.get<InterviewSession[]>(API_ENDPOINTS.INTERVIEW_HISTORY);
-      dispatch(setHistory(data));
+      const { data } = await apiClient.get<{ content: InterviewSession[] } | InterviewSession[]>(API_ENDPOINTS.INTERVIEW_HISTORY);
+      const sessions = Array.isArray(data) ? data : (data.content ?? []);
+      dispatch(setHistory(sessions));
     } catch {}
     finally {
       setHistoryLoading(false);

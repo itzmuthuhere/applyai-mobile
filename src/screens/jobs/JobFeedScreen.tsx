@@ -338,8 +338,9 @@ export default function JobFeedScreen() {
 
   const enterSelectMode = useCallback(async () => {
     try {
-      const { data } = await apiClient.get<Resume[]>(API_ENDPOINTS.RESUMES);
-      const parsed = data.filter(r => r.isParsed);
+      const { data } = await apiClient.get<{ content: Resume[] } | Resume[]>(API_ENDPOINTS.RESUMES);
+      const list = Array.isArray(data) ? data : (data.content ?? []);
+      const parsed = list.filter(r => r.isParsed);
       setResumes(parsed);
       if (parsed.length > 0) setSelectedResumeId(parsed[0].id);
     } catch { setResumes([]); }

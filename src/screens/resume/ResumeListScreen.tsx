@@ -159,8 +159,9 @@ export default function ResumeListScreen() {
     dispatch(setLoading(true));
     dispatch(clearError());
     try {
-      const res = await apiClient.get<Resume[]>(API_ENDPOINTS.RESUMES);
-      dispatch(setResumes(res.data));
+      const res = await apiClient.get<{ content: Resume[] } | Resume[]>(API_ENDPOINTS.RESUMES);
+      const list = Array.isArray(res.data) ? res.data : (res.data.content ?? []);
+      dispatch(setResumes(list));
     } catch {
       dispatch(setError('Failed to load resumes.'));
     }

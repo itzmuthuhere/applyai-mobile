@@ -56,8 +56,9 @@ export default function TailorResumeScreen() {
   async function loadResumes() {
     setResumesLoading(true);
     try {
-      const { data } = await apiClient.get<Resume[]>(API_ENDPOINTS.RESUMES);
-      dispatch(setResumes(data));
+      const { data } = await apiClient.get<{ content: Resume[] } | Resume[]>(API_ENDPOINTS.RESUMES);
+      const list = Array.isArray(data) ? data : (data.content ?? []);
+      dispatch(setResumes(list));
     } catch {}
     finally { setResumesLoading(false); }
   }

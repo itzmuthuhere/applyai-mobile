@@ -68,7 +68,8 @@ export default function CareerPathScreen() {
     try {
       let resumeId = params?.resumeId;
       if (!resumeId) {
-        const { data: resumes } = await apiClient.get<any[]>(API_ENDPOINTS.RESUMES);
+        const { data: resumeData } = await apiClient.get<{ content: any[] } | any[]>(API_ENDPOINTS.RESUMES);
+        const resumes = Array.isArray(resumeData) ? resumeData : (resumeData.content ?? []);
         const best = resumes.find((r: any) => r.isParsed && r.isOriginal) ?? resumes[0];
         if (!best) {
           setError('Please upload and parse a resume first to generate your career path.');

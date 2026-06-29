@@ -94,9 +94,15 @@ export default function HomeScreen() {
       ]);
       if (summaryRes.status === 'fulfilled') setSummary(summaryRes.value.data);
       else if (summaryRes.status === 'rejected') setDashError(true);
-      if (resumesRes.status === 'fulfilled') dispatch(setResumes(resumesRes.value?.data ?? []));
+      if (resumesRes.status === 'fulfilled') {
+        const d = resumesRes.value?.data;
+        dispatch(setResumes(Array.isArray(d) ? d : (d?.content ?? [])));
+      }
       if (appsRes.status === 'fulfilled') dispatch(setApplications(appsRes.value?.data?.content ?? []));
-      if (interviewsRes.status === 'fulfilled') dispatch(setHistory(interviewsRes.value?.data ?? []));
+      if (interviewsRes.status === 'fulfilled') {
+        const d = interviewsRes.value?.data;
+        dispatch(setHistory(Array.isArray(d) ? d : (d?.content ?? [])));
+      }
     } catch {}
     setInitialLoading(false);
     if (isRefresh) setIsRefreshing(false);

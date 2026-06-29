@@ -49,6 +49,16 @@ const DASHBOARD_DATA = {
   ],
 };
 
+// HomeScreen makes 4 parallel calls: summary, resumes, applications, interview history.
+// Resumes + interview history are now paginated (return { content: [] }).
+function mockDashboardCalls() {
+  mockGet
+    .mockResolvedValueOnce({ data: DASHBOARD_DATA })       // summary
+    .mockResolvedValueOnce({ data: { content: [] } })      // resumes (paginated)
+    .mockResolvedValueOnce({ data: { content: [], totalElements: 0 } }) // applications
+    .mockResolvedValueOnce({ data: { content: [] } });     // interview history (paginated)
+}
+
 function makeStore(plan = 'FREE') {
   return configureStore({
     reducer: {
@@ -89,17 +99,17 @@ describe('HomeScreen', () => {
   });
 
   it('renders summary stats after load', async () => {
-    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    mockDashboardCalls();
     renderScreen();
 
     await waitFor(() => {
       expect(screen.getByText('15')).toBeTruthy();
-      expect(screen.getByText('3')).toBeTruthy();
+      expect(screen.getAllByText('3').length).toBeGreaterThan(0);
     });
   });
 
   it('shows avg match score', async () => {
-    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    mockDashboardCalls();
     renderScreen();
 
     await waitFor(() => {
@@ -108,7 +118,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows recent applications section', async () => {
-    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    mockDashboardCalls();
     renderScreen();
 
     await waitFor(() => {
@@ -118,7 +128,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows FREE plan badge for free users', async () => {
-    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    mockDashboardCalls();
     renderScreen('FREE');
 
     await waitFor(() => {
@@ -127,7 +137,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows PRO plan badge for pro users', async () => {
-    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    mockDashboardCalls();
     renderScreen('PRO');
 
     await waitFor(() => {
@@ -145,7 +155,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows application status breakdown', async () => {
-    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    mockDashboardCalls();
     renderScreen();
 
     await waitFor(() => {
@@ -154,7 +164,7 @@ describe('HomeScreen', () => {
   });
 
   it('shows user greeting with name', async () => {
-    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    mockDashboardCalls();
     renderScreen();
 
     await waitFor(() => {
@@ -163,7 +173,7 @@ describe('HomeScreen', () => {
   });
 
   it('renders all quick action chip labels', async () => {
-    mockGet.mockResolvedValue({ data: DASHBOARD_DATA });
+    mockDashboardCalls();
     renderScreen();
 
     await waitFor(() => {
