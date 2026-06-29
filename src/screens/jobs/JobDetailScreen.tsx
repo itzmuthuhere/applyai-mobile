@@ -140,6 +140,8 @@ export default function JobDetailScreen() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [queuing, setQueuing] = useState(false);
+  const [queued, setQueued] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [primaryResumeId, setPrimaryResumeId] = useState<number | null>(null);
   const [atsPanel, setAtsPanel] = useState<AiPanel>(emptyPanel());
@@ -223,6 +225,27 @@ export default function JobDetailScreen() {
       }
     } finally {
       setApplying(false);
+    }
+  }
+
+  async function handleAutoQueue() {
+    if (!job) return;
+    setQueuing(true);
+    try {
+      await apiClient.post(API_ENDPOINTS.AUTO_APPLY_QUEUE, {
+        jobIds: [job.id],
+        resumeId: primaryResumeId ?? undefined,
+      });
+      setQueued(true);
+      Alert.alert(
+        'Added to Queue',
+        'Open ApplyAI in Chrome on your desktop — the extension will auto-fill and apply.',
+        [{ text: 'OK' }],
+      );
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.message ?? 'Could not add to queue. Try again.');
+    } finally {
+      setQueuing(false);
     }
   }
 
@@ -345,7 +368,7 @@ export default function JobDetailScreen() {
         <View style={styles.tagsRow}>
           {job.isRemote && <View style={styles.tagGreen}><Text style={styles.tagGreenText}>Remote</Text></View>}
           {job.category && <View style={styles.tagNeutral}><Text style={styles.tagNeutralText}>{job.category}</Text></View>}
-          {job.source && <View style={styles.tagNeutral}><Text style={styles.tagNeutralText}>{job.source}</Text></View>}
+          {job.source && <View style={styles.tagSource}><Ionicons name="flash-outline" size={11} color="#2563EB" /><Text style={styles.tagSourceText}>{job.source} · Auto-Apply Ready</Text></View>}
           {job.deadline && (
             <View style={styles.tagRed}>
               <Ionicons name="alert-circle-outline" size={11} color={colors.error} />
@@ -523,7 +546,8 @@ export default function JobDetailScreen() {
               { icon: 'color-wand-outline' as const, label: 'Tailor Resume', onPress: () => navigation.navigate('TailorResume', { jobId: job.id }) },
               { icon: 'document-text-outline' as const, label: 'Cover Letter', onPress: () => navigation.navigate('CoverLetter', { jobId: job.id }) },
               { icon: 'business-outline' as const, label: 'Company Intel', onPress: () => navigation.navigate('CompanyIntel', { companyName: job.company ?? '', jobTitle: job.title }) },
-              { icon: 'send-outline' as const, label: 'Full Apply', onPress: () => navigation.navigate('ApplyJob', { jobId: job.id }) },
+              { icon: 'send-outline' as const, label: 'Manual Apply', onPress: () => navigation.navigate('ApplyJob', { jobId: job.id }) },
+              ...(job.sourceUrl ? [{ icon: 'open-outline' as const, label: 'Open Job', onPress: () => Linking.openURL(job.sourceUrl!) }] : []),
             ].map(({ icon, label, onPress }) => (
               <TouchableOpacity key={label} style={styles.actionTile} onPress={onPress} activeOpacity={0.75}>
                 <Ionicons name={icon} size={20} color={colors.primary} />
@@ -611,12 +635,18 @@ export default function JobDetailScreen() {
           <Text style={styles.stickyQuickText}>Easy Apply</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.stickyFullApply}
-          onPress={() => navigation.navigate('ApplyJob', { jobId: job.id })}
+          style={[styles.stickyAutoQueue, (queuing || queued) && { opacity: 0.75 }]}
+          onPress={handleAutoQueue}
+          disabled={queuing || queued}
           activeOpacity={0.85}
         >
-          <Text style={styles.stickyFullText}>Full Apply</Text>
-          <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+          {queuing
+            ? <ActivityIndicator size="small" color={colors.primary} />
+            : <Ionicons name={queued ? 'checkmark-circle' : 'desktop-outline'} size={16} color={queued ? '#059669' : colors.primary} />
+          }
+          <Text style={[styles.stickyAutoText, queued && { color: '#059669' }]}>
+            {queued ? 'Queued' : 'Auto Queue'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -666,6 +696,8 @@ function makeStyles(colors: AppColors) {
   tagNeutralText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
   tagRed: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FEF2F2', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
   tagRedText: { fontSize: 12, fontWeight: '600', color: colors.error },
+  tagSource: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EFF6FF', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1, borderColor: '#BFDBFE' },
+  tagSourceText: { fontSize: 12, fontWeight: '700', color: '#2563EB' },
 
   // Highlights
   highlights: { flexDirection: 'row', gap: 8 },
@@ -749,11 +781,11 @@ function makeStyles(colors: AppColors) {
     backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14,
   },
   stickyQuickText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  stickyFullApply: {
+  stickyAutoQueue: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: colors.primaryLight, borderRadius: 14, paddingVertical: 14,
     borderWidth: 1.5, borderColor: colors.primary,
   },
-  stickyFullText: { fontSize: 15, fontWeight: '800', color: colors.primary },
+  stickyAutoText: { fontSize: 14, fontWeight: '800', color: colors.primary },
   });
 }

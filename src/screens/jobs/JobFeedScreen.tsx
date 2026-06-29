@@ -132,6 +132,12 @@ const JobCard = memo(function JobCard({
             <Text style={styles.tagNeutralText} numberOfLines={1}>{item.category}</Text>
           </View>
         )}
+        {item.source && (
+          <View style={styles.tagSource}>
+            <Ionicons name="flash-outline" size={10} color="#2563EB" />
+            <Text style={styles.tagSourceText}>{item.source}</Text>
+          </View>
+        )}
         {postedAgo && (
           <Text style={styles.postedAgo}>{postedAgo}</Text>
         )}
@@ -792,6 +798,12 @@ function makeStyles(colors: AppColors) {
     backgroundColor: '#D1FAE5', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
   },
   tagRemoteText: { fontSize: 12, fontWeight: '700', color: '#065F46' },
+  tagSource: {
+    flexDirection: 'row' as const, alignItems: 'center' as const, gap: 3,
+    backgroundColor: '#EFF6FF', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 4,
+    borderWidth: 1, borderColor: '#BFDBFE',
+  },
+  tagSourceText: { fontSize: 11, fontWeight: '700' as const, color: '#2563EB' },
   tagNeutral: {
     backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
   },
