@@ -10,23 +10,16 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { RootState, AppDispatch } from '../../store';
 import {
-  setNotifications, appendNotifications, setUnreadCount, markAllRead,
+  setNotifications, appendNotifications, setUnreadCount, markAllRead, markOneRead,
   SocialNotif,
 } from '../../store/slices/notificationSlice';
 import { API_ENDPOINTS } from '../../constants';
+import { NOTIFICATION_ICON, DEFAULT_NOTIFICATION_ICON } from '../../constants/notificationIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 
 dayjs.extend(relativeTime);
-
-const TYPE_ICON: Record<string, { icon: React.ComponentProps<typeof Ionicons>['name']; color: string }> = {
-  FOLLOW:       { icon: 'person-add-outline', color: '#2563EB' },
-  POST_LIKE:    { icon: 'heart-outline',       color: '#EF4444' },
-  POST_COMMENT: { icon: 'chatbubble-outline',  color: '#10B981' },
-  MENTION:      { icon: 'at-outline',          color: '#8B5CF6' },
-  DM:           { icon: 'mail-outline',        color: '#F59E0B' },
-};
 
 export default function SocialNotificationsScreen() {
   const colors = useTheme();
@@ -68,6 +61,10 @@ export default function SocialNotificationsScreen() {
   }
 
   function handleNotifPress(item: SocialNotif) {
+    if (!item.read) {
+      apiClient.patch(API_ENDPOINTS.SOCIAL_NOTIFICATION_READ(item.id)).catch(() => {});
+      dispatch(markOneRead(item.id));
+    }
     if (item.type === 'DM' && item.actor) {
       navigation.navigate('ChatDetail', {
         partnerId: item.actor.id,
@@ -82,7 +79,7 @@ export default function SocialNotificationsScreen() {
   }
 
   function renderItem({ item }: { item: SocialNotif }) {
-    const { icon, color } = TYPE_ICON[item.type] ?? { icon: 'notifications-outline', color: colors.primary };
+    const { icon, color } = NOTIFICATION_ICON[item.type] ?? DEFAULT_NOTIFICATION_ICON;
     return (
       <TouchableOpacity
         testID={`notif-item-${item.id}`}

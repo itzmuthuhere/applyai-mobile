@@ -1,9 +1,12 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react-native';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import socialNotificationReducer from '../store/slices/notificationSlice';
 
-jest.mock('../api/apiClient', () => ({
-  __esModule: true,
-  default: { get: jest.fn() },
+const mockNavigate = jest.fn();
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ navigate: mockNavigate }),
 }));
 
 jest.mock('../constants', () => ({
@@ -15,13 +18,25 @@ jest.mock('../constants', () => ({
   },
   API_ENDPOINTS: {
     JOB_ALERTS: '/api/alerts',
+    SOCIAL_NOTIFICATIONS: '/api/notifications/social',
+    SOCIAL_NOTIFICATIONS_READ_ALL: '/api/notifications/social/read-all',
+    SOCIAL_NOTIFICATION_READ: (id: number) => `/api/notifications/social/${id}/read`,
   },
 }));
 
-import apiClient from '../api/apiClient';
-import NotificationsScreen from '../screens/common/NotificationsScreen';
+const mockGet = jest.fn();
+const mockPost = jest.fn();
+const mockPatch = jest.fn();
+jest.mock('../api/apiClient', () => ({
+  __esModule: true,
+  default: {
+    get: (...a: any[]) => mockGet(...a),
+    post: (...a: any[]) => mockPost(...a),
+    patch: (...a: any[]) => mockPatch(...a),
+  },
+}));
 
-const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
+import NotificationsScreen from '../screens/common/NotificationsScreen';
 
 const ALERTS = [
   {
@@ -34,71 +49,128 @@ const ALERTS = [
   },
 ];
 
+const NOTIF = {
+  id: 10,
+  type: 'POST_LIKE',
+  message: 'Alice liked your post',
+  read: false,
+  createdAt: '2026-06-24T10:00:00',
+  actor: { id: 99, name: 'Alice', profilePicture: null },
+  postId: 5,
+};
+
+function makeStore(preloaded?: any) {
+  return configureStore({
+    reducer: { socialNotifications: socialNotificationReducer },
+    preloadedState: {
+      socialNotifications: { notifications: [], unreadCount: 0, hasMore: true, page: 0, ...preloaded },
+    } as any,
+  });
+}
+
+function renderScreen(store = makeStore()) {
+  return render(
+    <Provider store={store}>
+      <NotificationsScreen />
+    </Provider>
+  );
+}
+
 describe('NotificationsScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGet.mockResolvedValue({ data: ALERTS });
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/alerts') return Promise.resolve({ data: ALERTS });
+      return Promise.resolve({ data: { content: [NOTIF], last: true } });
+    });
+    mockPost.mockResolvedValue({ data: {} });
+    mockPatch.mockResolvedValue({ data: {} });
   });
 
-  it('shows alert-derived notifications after load', async () => {
-    render(<NotificationsScreen />);
-
+  it('shows alert-derived rows after load', async () => {
+    renderScreen();
     await waitFor(() => {
       expect(screen.getByText(/Job Alert: Java Developer/i)).toBeTruthy();
       expect(screen.getByText(/Job Alert: Product Manager/i)).toBeTruthy();
     });
   });
 
-  it('shows static tip notifications', async () => {
-    mockGet.mockResolvedValueOnce({ data: [] });
-    render(<NotificationsScreen />);
-
+  it('shows real dynamic notifications from the backend, not static tips', async () => {
+    renderScreen();
     await waitFor(() => {
-      expect(screen.getByText('Complete your profile')).toBeTruthy();
+      expect(screen.getByText('Alice liked your post')).toBeTruthy();
     });
+    expect(screen.queryByText('Complete your profile')).toBeNull();
+    expect(screen.queryByText('Tailor your resume')).toBeNull();
+    expect(screen.queryByText('Practice mock interviews')).toBeNull();
+    expect(screen.queryByText('Check your ATS score')).toBeNull();
   });
 
-  it('shows salary filter in notification body', async () => {
-    render(<NotificationsScreen />);
-
+  it('shows salary filter in alert body', async () => {
+    renderScreen();
     await waitFor(() => {
       expect(screen.getByText(/Min ₹12L/i)).toBeTruthy();
     });
   });
 
   it('shows Remote only label for remote alerts', async () => {
-    render(<NotificationsScreen />);
-
+    renderScreen();
     await waitFor(() => {
       expect(screen.getByText(/Remote only/i)).toBeTruthy();
     });
   });
 
-  it('renders empty state gracefully when no alerts and no tips shown', async () => {
-    mockGet.mockResolvedValueOnce({ data: [] });
-    render(<NotificationsScreen />);
-
+  it('shows empty state when there are no alerts and no notifications', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/alerts') return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: { content: [], last: true } });
+    });
+    renderScreen();
     await waitFor(() => {
-      // Tips are always shown even without alerts
-      expect(screen.getByText('Complete your profile')).toBeTruthy();
+      expect(screen.getByText('All caught up!')).toBeTruthy();
     });
   });
 
-  it('calls JOB_ALERTS endpoint on mount', async () => {
-    render(<NotificationsScreen />);
-
+  it('calls both the alerts and social notifications endpoints on mount', async () => {
+    renderScreen();
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith('/api/alerts');
+      expect(mockGet).toHaveBeenCalledWith('/api/notifications/social', { params: { page: 0, size: 20 } });
     });
   });
 
-  it('renders gracefully on load error', async () => {
-    mockGet.mockRejectedValueOnce(new Error('Network error'));
-    render(<NotificationsScreen />);
+  it('renders gracefully when both endpoints fail', async () => {
+    mockGet.mockRejectedValue(new Error('Network error'));
+    renderScreen();
+    await waitFor(() => {
+      expect(screen.getByText('All caught up!')).toBeTruthy();
+    });
+  });
+
+  it('marks a notification read and navigates on tap', async () => {
+    const store = makeStore();
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/alerts') return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: { content: [NOTIF], last: true } });
+    });
+    renderScreen(store);
+
+    await waitFor(() => expect(screen.getByTestId('notif-item-10')).toBeTruthy());
+    fireEvent.press(screen.getByTestId('notif-item-10'));
 
     await waitFor(() => {
-      // Shows static tips even when API fails
-      expect(screen.getByText('Complete your profile')).toBeTruthy();
+      expect(mockPatch).toHaveBeenCalledWith('/api/notifications/social/10/read');
+      expect(mockNavigate).toHaveBeenCalledWith('PostDetail', { postId: 5 });
     });
+  });
+
+  it('calls mark-all-read API when pressed', async () => {
+    const store = makeStore({ notifications: [NOTIF], unreadCount: 1 });
+    renderScreen(store);
+
+    await waitFor(() => expect(screen.getByText('Mark all read')).toBeTruthy());
+    fireEvent.press(screen.getByText('Mark all read'));
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/notifications/social/read-all'));
   });
 });

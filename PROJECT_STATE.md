@@ -227,6 +227,31 @@ tests green.
 ```
 
 ```
+[BUG-MOB-004] | Notifications | FIXED | Opened Jul 10, 2026 — Fixed Jul 10, 2026
+Symptom: Notifications screen (Home tab, reached via Profile → Notifications)
+always showed the same 4 hardcoded "tip" strings ("Complete your profile",
+"Tailor your resume", "Practice mock interviews", "Check your ATS score")
+with fake static timestamps ("1h ago", "3h ago"...) that never changed,
+alongside real Job Alerts. A separate, fully dynamic notifications screen
+(SocialNotificationsScreen, reached via the Feed tab's bell icon) already
+existed backed by the real `/api/notifications/social` endpoint — this screen
+just never got wired to it.
+Screen/File: NotificationsScreen.tsx (common/)
+Reproduced: yes — every load showed identical content regardless of real
+account activity
+Fix applied: Removed the hardcoded `tips` array entirely. NotificationsScreen
+now shares the same Redux notificationSlice + `/api/notifications/social`
+endpoint as SocialNotificationsScreen (setNotifications/appendNotifications/
+markAllRead/markOneRead), with pagination and tap-to-navigate (DM → chat,
+post → PostDetail, actor → PublicProfile). Job Alerts (already real) kept as
+their own header section. Also: SocialNotification.Type only had 5 of the
+backend's 14 real types mapped to icons — extracted a shared
+notificationIcons.ts covering all 14, used by both screens now. 3 new tests
+added to NotificationsScreen.test.tsx + SocialNotificationsScreen.test.tsx;
+stale assertions about static tips removed. 465 mobile tests green.
+```
+
+```
 [BUG-MOB-003] | Chat | FIXED | Opened Jul 10, 2026 — Fixed Jul 10, 2026
 Symptom: Console error on opening a chat conversation from a profile's
 "Message" button — "Encountered two children with the same key" (7 sequential

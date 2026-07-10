@@ -14,11 +14,13 @@ jest.mock('@react-navigation/native', () => ({
 
 const mockGet = jest.fn();
 const mockPost = jest.fn();
+const mockPatch = jest.fn();
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
   default: {
     get: (...a: any[]) => mockGet(...a),
     post: (...a: any[]) => mockPost(...a),
+    patch: (...a: any[]) => mockPatch(...a),
   },
 }));
 
@@ -48,6 +50,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockGet.mockResolvedValue({ data: { content: [MOCK_NOTIF], last: true } });
   mockPost.mockResolvedValue({ data: {} });
+  mockPatch.mockResolvedValue({ data: {} });
 });
 
 it('loads and shows notification', async () => {
@@ -78,4 +81,19 @@ it('calls mark-all-read API when button pressed', async () => {
   await waitFor(() => expect(getByText('Mark all read')).toBeTruthy());
   fireEvent.press(getByText('Mark all read'));
   await waitFor(() => expect(mockPost).toHaveBeenCalled());
+});
+
+it('marks an unread notification read and navigates on tap', async () => {
+  const { getByTestId } = render(
+    <Provider store={makeStore()}>
+      <SocialNotificationsScreen />
+    </Provider>
+  );
+  await waitFor(() => expect(getByTestId('notif-item-10')).toBeTruthy());
+  fireEvent.press(getByTestId('notif-item-10'));
+
+  await waitFor(() => {
+    expect(mockPatch).toHaveBeenCalledWith('/api/notifications/social/10/read');
+    expect(mockNavigate).toHaveBeenCalledWith('PostDetail', { postId: 5 });
+  });
 });

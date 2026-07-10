@@ -1,16 +1,24 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  Animated, RefreshControl, SafeAreaView,
+  Animated, RefreshControl, SafeAreaView, Image, ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
 import { API_ENDPOINTS } from '../../constants';
+import { NOTIFICATION_ICON, DEFAULT_NOTIFICATION_ICON } from '../../constants/notificationIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
+import { RootState, AppDispatch } from '../../store';
+import {
+  setNotifications, appendNotifications, setUnreadCount, markAllRead, markOneRead,
+  SocialNotif,
+} from '../../store/slices/notificationSlice';
 
 interface JobAlert {
   id: number;
@@ -22,89 +30,12 @@ interface JobAlert {
   createdAt: string;
 }
 
-interface NotifItem {
-  id: string;
-  type: 'alert' | 'tip' | 'status';
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  iconColor: string;
-  iconBg: string;
-  title: string;
-  body: string;
-  time: string;
-  read: boolean;
-}
-
-// Build notifications from job alerts + static tips
-function buildNotifications(alerts: JobAlert[]): NotifItem[] {
-  const items: NotifItem[] = [];
-
-  alerts.forEach(alert => {
-    items.push({
-      id: `alert-${alert.id}`,
-      type: 'alert',
-      icon: 'notifications-outline',
-      iconColor: '#2563EB',
-      iconBg: '#DBEAFE',
-      title: `Job Alert: ${alert.keywords}`,
-      body: [
-        alert.remote && 'Remote only',
-        alert.minSalary && `Min ₹${Math.round(alert.minSalary / 100_000)}L`,
-        alert.category && alert.category,
-      ].filter(Boolean).join(' · ') || 'All matching jobs',
-      time: dayjs(alert.createdAt).fromNow(),
-      read: false,
-    });
-  });
-
-  // Static motivational/tip notifications
-  const tips: NotifItem[] = [
-    {
-      id: 'tip-profile',
-      type: 'tip',
-      icon: 'person-circle-outline',
-      iconColor: '#7C3AED',
-      iconBg: '#F3E8FF',
-      title: 'Complete your profile',
-      body: 'A complete profile increases your match accuracy by up to 3x.',
-      time: '1h ago',
-      read: true,
-    },
-    {
-      id: 'tip-resume',
-      type: 'tip',
-      icon: 'document-text-outline',
-      iconColor: '#059669',
-      iconBg: '#D1FAE5',
-      title: 'Tailor your resume',
-      body: 'Use "Tailor Resume" on each job to boost your ATS score.',
-      time: '3h ago',
-      read: true,
-    },
-    {
-      id: 'tip-interview',
-      type: 'tip',
-      icon: 'mic-outline',
-      iconColor: '#D97706',
-      iconBg: '#FEF3C7',
-      title: 'Practice mock interviews',
-      body: 'Regular practice improves interview confidence. Try a 5-question session today.',
-      time: 'Yesterday',
-      read: true,
-    },
-    {
-      id: 'tip-ats',
-      type: 'tip',
-      icon: 'shield-checkmark-outline',
-      iconColor: '#2563EB',
-      iconBg: '#DBEAFE',
-      title: 'Check your ATS score',
-      body: '80% of resumes are filtered by ATS before a human sees them. Check yours.',
-      time: '2 days ago',
-      read: true,
-    },
-  ];
-
-  return [...items, ...tips];
+function alertBody(alert: JobAlert): string {
+  return [
+    alert.remote && 'Remote only',
+    alert.minSalary && `Min ₹${Math.round(alert.minSalary / 100_000)}L`,
+    alert.category && alert.category,
+  ].filter(Boolean).join(' · ') || 'All matching jobs';
 }
 
 function SkeletonNotif() {
@@ -135,61 +66,140 @@ function SkeletonNotif() {
 export default function NotificationsScreen() {
   const colors = useTheme();
   const styles = makeStyles(colors);
+  const navigation = useNavigation<any>();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const notifications = useSelector((s: RootState) => s.socialNotifications.notifications);
+  const unreadCount = useSelector((s: RootState) => s.socialNotifications.unreadCount);
+  const hasMore = useSelector((s: RootState) => s.socialNotifications.hasMore);
+  const page = useSelector((s: RootState) => s.socialNotifications.page);
+
   const [alerts, setAlerts] = useState<JobAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [readSet, setReadSet] = useState<Set<string>>(new Set());
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const load = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
+  const loadAlerts = useCallback(async () => {
     try {
       const { data } = await apiClient.get<JobAlert[]>(API_ENDPOINTS.JOB_ALERTS);
       setAlerts(data.filter(a => a.active));
     } catch {
-      // Silently degrade — show tips even without alerts
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      // Silently degrade — real notifications can still show without alerts
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const loadNotifications = useCallback(async (reset = false) => {
+    try {
+      const p = reset ? 0 : page;
+      const { data } = await apiClient.get(API_ENDPOINTS.SOCIAL_NOTIFICATIONS, { params: { page: p, size: 20 } });
+      const items = data.content ?? [];
+      if (reset) dispatch(setNotifications(items));
+      else dispatch(appendNotifications(items));
+    } catch {
+      // Silently degrade — alerts can still show without notifications
+    }
+  }, [page, dispatch]);
 
-  const notifs = buildNotifications(alerts);
-  const unreadCount = notifs.filter(n => !n.read && !readSet.has(n.id)).length;
+  useEffect(() => {
+    (async () => {
+      await Promise.all([loadAlerts(), loadNotifications(true)]);
+      setLoading(false);
+    })();
+  }, []);
 
-  function markRead(id: string) {
-    setReadSet(prev => new Set([...prev, id]));
+  async function onRefresh() {
+    setRefreshing(true);
+    await Promise.all([loadAlerts(), loadNotifications(true)]);
+    setRefreshing(false);
   }
 
-  function markAllRead() {
-    setReadSet(new Set(notifs.map(n => n.id)));
+  async function onEndReached() {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    await loadNotifications(false);
+    setLoadingMore(false);
   }
 
-  const renderItem = ({ item }: { item: NotifItem }) => {
-    const isRead = item.read || readSet.has(item.id);
+  async function handleMarkAllRead() {
+    try {
+      await apiClient.post(API_ENDPOINTS.SOCIAL_NOTIFICATIONS_READ_ALL);
+      dispatch(markAllRead());
+      dispatch(setUnreadCount(0));
+    } catch {}
+  }
+
+  function handleNotifPress(item: SocialNotif) {
+    if (!item.read) {
+      apiClient.patch(API_ENDPOINTS.SOCIAL_NOTIFICATION_READ(item.id)).catch(() => {});
+      dispatch(markOneRead(item.id));
+    }
+    if (item.type === 'DM' && item.actor) {
+      navigation.navigate('ChatDetail', {
+        partnerId: item.actor.id,
+        partnerName: item.actor.name,
+        partnerPicture: item.actor.profilePicture,
+      });
+    } else if (item.postId) {
+      navigation.navigate('PostDetail', { postId: item.postId });
+    } else if (item.actor) {
+      navigation.navigate('PublicProfile', { userId: item.actor.id, userName: item.actor.name });
+    }
+  }
+
+  const renderItem = ({ item }: { item: SocialNotif }) => {
+    const { icon, color } = NOTIFICATION_ICON[item.type] ?? DEFAULT_NOTIFICATION_ICON;
     return (
       <TouchableOpacity
-        style={[styles.item, !isRead && styles.itemUnread]}
-        onPress={() => markRead(item.id)}
+        testID={`notif-item-${item.id}`}
+        style={[styles.item, !item.read && styles.itemUnread]}
+        onPress={() => handleNotifPress(item)}
         activeOpacity={0.75}
       >
-        <View style={[styles.iconWrap, { backgroundColor: item.iconBg }]}>
-          <Ionicons name={item.icon} size={22} color={item.iconColor} />
+        <View style={[styles.iconWrap, { backgroundColor: color + '20' }]}>
+          {item.actor?.profilePicture ? (
+            <Image source={{ uri: item.actor.profilePicture }} style={styles.actorAvatar} />
+          ) : (
+            <Ionicons name={icon} size={22} color={color} />
+          )}
         </View>
         <View style={styles.itemBody}>
           <View style={styles.itemTitleRow}>
-            <Text style={[styles.itemTitle, !isRead && styles.itemTitleUnread]} numberOfLines={1}>
-              {item.title}
-            </Text>
-            {!isRead && <View style={styles.unreadDot} />}
+            <Text style={styles.itemBodyText} numberOfLines={2}>{item.message}</Text>
+            {!item.read && <View style={styles.unreadDot} />}
           </View>
-          <Text style={styles.itemBodyText} numberOfLines={2}>{item.body}</Text>
-          <Text style={styles.itemTime}>{item.time}</Text>
+          <Text style={styles.itemTime}>{dayjs(item.createdAt).fromNow()}</Text>
         </View>
       </TouchableOpacity>
     );
   };
+
+  const listHeader = (
+    <>
+      {alerts.length > 0 && (
+        <>
+          <View style={styles.sectionLabel}>
+            <Text style={styles.sectionLabelText}>JOB ALERTS ({alerts.length} active)</Text>
+          </View>
+          {alerts.map(alert => (
+            <View key={`alert-${alert.id}`} style={styles.item}>
+              <View style={[styles.iconWrap, { backgroundColor: '#DBEAFE' }]}>
+                <Ionicons name="notifications-outline" size={22} color="#2563EB" />
+              </View>
+              <View style={styles.itemBody}>
+                <Text style={styles.itemTitle} numberOfLines={1}>{`Job Alert: ${alert.keywords}`}</Text>
+                <Text style={styles.itemBodyText} numberOfLines={2}>{alertBody(alert)}</Text>
+              </View>
+            </View>
+          ))}
+        </>
+      )}
+      {notifications.length > 0 && (
+        <View style={styles.sectionLabel}>
+          <Text style={styles.sectionLabelText}>NOTIFICATIONS</Text>
+        </View>
+      )}
+    </>
+  );
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -202,7 +212,7 @@ export default function NotificationsScreen() {
           )}
         </View>
         {unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
+          <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllBtn}>
             <Text style={styles.markAllText}>Mark all read</Text>
           </TouchableOpacity>
         )}
@@ -214,31 +224,31 @@ export default function NotificationsScreen() {
         </View>
       ) : (
         <FlatList
-          data={notifs}
-          keyExtractor={item => item.id}
+          testID="notifications-list"
+          data={notifications}
+          keyExtractor={item => String(item.id)}
           renderItem={renderItem}
-          contentContainerStyle={[styles.listContent, notifs.length === 0 && { flex: 1 }]}
+          contentContainerStyle={[styles.listContent, notifications.length === 0 && alerts.length === 0 && { flex: 1 }]}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ItemSeparatorComponent={() => <View style={styles.sep} />}
-          ListHeaderComponent={
-            alerts.length > 0 ? (
-              <View style={styles.sectionLabel}>
-                <Text style={styles.sectionLabelText}>JOB ALERTS ({alerts.length} active)</Text>
+          ListHeaderComponent={listHeader}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ padding: 16 }} /> : null}
+          ListEmptyComponent={
+            alerts.length === 0 ? (
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIcon}>
+                  <Ionicons name="notifications-outline" size={40} color={colors.primary} />
+                </View>
+                <Text style={styles.emptyTitle}>All caught up!</Text>
+                <Text style={styles.emptySubtitle}>
+                  Set up job alerts on the Jobs tab to get notified when new matching jobs appear.
+                </Text>
               </View>
             ) : null
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}>
-                <Ionicons name="notifications-outline" size={40} color={colors.primary} />
-              </View>
-              <Text style={styles.emptyTitle}>All caught up!</Text>
-              <Text style={styles.emptySubtitle}>
-                Set up job alerts on the Jobs tab to get notified when new matching jobs appear.
-              </Text>
-            </View>
           }
         />
       )}
@@ -274,12 +284,12 @@ function makeStyles(colors: AppColors) {
   },
   itemUnread: { backgroundColor: '#F0F7FF' },
   iconWrap: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  actorAvatar: { width: 44, height: 44, borderRadius: 22 },
   itemBody: { flex: 1 },
-  itemTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
-  itemTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textSecondary },
-  itemTitleUnread: { fontWeight: '800', color: colors.textPrimary },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary, flexShrink: 0 },
-  itemBodyText: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: 4 },
+  itemTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  itemTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 3 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary, flexShrink: 0, marginTop: 5 },
+  itemBodyText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: 4 },
   itemTime: { fontSize: 11, color: colors.textMuted, fontWeight: '500' },
   sep: { height: 1, backgroundColor: colors.border, marginHorizontal: 20 },
 

@@ -1,8 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+export type SocialNotifType =
+  | 'FOLLOW' | 'POST_LIKE' | 'POST_COMMENT' | 'MENTION' | 'DM'
+  | 'COMMENT_REPLY'
+  | 'APPLICATION_STATUS_CHANGE' | 'INTERVIEW_SCHEDULED' | 'OFFER_RECEIVED' | 'QUICK_APPLY_SUBMITTED'
+  | 'JOB_ALERT_MATCH' | 'FOLLOW_UP_REMINDER'
+  | 'CONNECTION_REQUEST' | 'CONNECTION_ACCEPTED';
+
 export interface SocialNotif {
   id: number;
-  type: 'FOLLOW' | 'POST_LIKE' | 'POST_COMMENT' | 'MENTION' | 'DM';
+  type: SocialNotifType;
   actor?: { id: number; name: string; profilePicture?: string } | null;
   postId?: number | null;
   commentId?: number | null;

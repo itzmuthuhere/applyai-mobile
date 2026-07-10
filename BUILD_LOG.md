@@ -39,6 +39,7 @@
 | BUG-MOB-001 | Apply screen: Railway free-tier cold start (~20-30s) caused axios 30s timeout to fire before response arrived → "Connection error". On retry, 409 was returned but shown as error instead of success. Also: resume filename displayed as URL-encoded (Muthu%20raja%20CV.pdf). | ApplyJobScreen, ResumeDropdown | Jun 16, 2026 | ✅ FIXED Jun 16, 2026 — see session below |
 | BUG-MOB-002 | React Navigation warning: TailorResume + CoverLetter registered in both JobsStack and ResumeStack — "Found screens with the same name nested inside one another" | MainNavigator | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — removed dead ResumeStack copies (unreachable; only JobsStack's are ever navigated to) |
 | BUG-MOB-003 | "Encountered two children with the same key" — duplicate message ids in chat FlatList after opening a conversation from a profile | ChatDetailScreen, chatSlice | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — setMessages reducer now dedupes by id |
+| BUG-MOB-004 | Home-tab Notifications screen showed 4 hardcoded static "tip" strings with fake never-changing timestamps instead of real activity | NotificationsScreen | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — wired to the same real /api/notifications/social endpoint + Redux slice already used by SocialNotificationsScreen; extracted shared notificationIcons.ts covering all 14 backend notification types |
 
 ---
 
@@ -47,8 +48,8 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** BUG-MOB-002 + BUG-MOB-003 fixes, pending commit this session.
-**Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed two bugs (nav duplicate screen names, chat duplicate keys).
+**Last push:** BUG-MOB-002/003/004 fixes, pending commit this session.
+**Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed three bugs (nav duplicate screen names, chat duplicate keys, static fake notifications).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.
 
@@ -95,8 +96,33 @@ Opening a chat from a profile's "Message" button logged "Encountered two childre
 - `src/store/slices/chatSlice.ts`
 - `src/__tests__/chatSlice.test.ts` (new — 10 tests)
 
-**Tests:** 462 mobile tests green (452 + 10 new). `tsc --noEmit` clean on all non-test-config-related output.
+**Tests:** 462 mobile tests green (452 + 10 new) after BUG-MOB-002/003. `tsc --noEmit` clean on all non-test-config-related output.
 **Verified live:** Rebuilt and reinstalled on the physical device (`npx expo run:android`); Metro confirmed connected.
+
+**BUG-MOB-004 — static fake notifications (found after user screenshot):**
+User pointed out the Home-tab Notifications screen always showed the same 4 tip
+strings. Traced it to `NotificationsScreen.tsx`'s `buildNotifications()` —
+entirely hardcoded, never fetched real data. Found a second, fully dynamic
+notifications screen (`SocialNotificationsScreen.tsx`, Feed tab bell icon)
+already wired to the real backend `GET /api/notifications/social` endpoint
+(14 real event types in `SocialNotification.Type` on the backend) — this
+screen just never got the same treatment. Rewired `NotificationsScreen.tsx`
+to share the same Redux `notificationSlice` + endpoint, keeping the
+already-real Job Alerts section. Widened `SocialNotif['type']` from 5 to all
+14 backend types and extracted a shared `notificationIcons.ts` (both screens
+were previously missing icons for 9 types, silently falling back to a generic
+bell). Added mark-as-read-on-tap + navigation to both screens.
+
+**Files changed:**
+- `src/screens/common/NotificationsScreen.tsx` (full rewrite)
+- `src/screens/feed/SocialNotificationsScreen.tsx` (shared icon map, mark-on-tap)
+- `src/store/slices/notificationSlice.ts` (widened `SocialNotifType` union)
+- `src/constants/notificationIcons.ts` (new — shared icon/color map)
+- `src/__tests__/NotificationsScreen.test.tsx` (rewritten — stale static-tip assertions removed)
+- `src/__tests__/SocialNotificationsScreen.test.tsx` (added mark-on-tap test)
+
+**Tests:** 465 mobile tests green (462 + 3 net new). `tsc --noEmit` clean.
+**Verified live:** App force-restarted on device to pick up the fresh Metro bundle.
 
 ---
 
