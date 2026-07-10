@@ -38,8 +38,6 @@ export type ResumeStackParamList = {
   ResumeList: undefined;
   ResumeUpload: undefined;
   ResumeDetail: { resumeId: number };
-  TailorResume: { jobId: number; resumeId?: number };
-  CoverLetter: { jobId: number; resumeId?: number };
 };
 
 export type ApplicationsStackParamList = {

@@ -37,6 +37,8 @@
 |----|-------------|--------|--------|--------|
 | BUG-001 | Render crash on login: "No Firebase App '[DEFAULT]' has been created" — native android/ project was generated before Firebase was added, so google-services wiring was missing; `messaging()` in useFcmDeepLink also threw synchronously instead of degrading | AppNavigator (useFcmDeepLink) | Jun 11, 2026 | ✅ FIXED Jun 11, 2026 — wired google-services plugin into android/, hardened hook with try/catch, committed google-services.json for EAS |
 | BUG-MOB-001 | Apply screen: Railway free-tier cold start (~20-30s) caused axios 30s timeout to fire before response arrived → "Connection error". On retry, 409 was returned but shown as error instead of success. Also: resume filename displayed as URL-encoded (Muthu%20raja%20CV.pdf). | ApplyJobScreen, ResumeDropdown | Jun 16, 2026 | ✅ FIXED Jun 16, 2026 — see session below |
+| BUG-MOB-002 | React Navigation warning: TailorResume + CoverLetter registered in both JobsStack and ResumeStack — "Found screens with the same name nested inside one another" | MainNavigator | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — removed dead ResumeStack copies (unreachable; only JobsStack's are ever navigated to) |
+| BUG-MOB-003 | "Encountered two children with the same key" — duplicate message ids in chat FlatList after opening a conversation from a profile | ChatDetailScreen, chatSlice | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — setMessages reducer now dedupes by id |
 
 ---
 
@@ -45,8 +47,8 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** Jun 24, 2026 (FEAT-UI-001 — centralized theme system: dark mode + 5 accent colors across 41 screens, 328 tests passing)
-**Resume point:** All phases complete. Theme system added. Device-test theme toggle on physical device next.
+**Last push:** BUG-MOB-002 + BUG-MOB-003 fixes, pending commit this session.
+**Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed two bugs (nav duplicate screen names, chat duplicate keys).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.
 
@@ -72,6 +74,31 @@
 ---
 
 ## SESSION LOGS
+
+---
+
+### SESSION — Jul 10, 2026 — First physical-device build/run + BUG-MOB-002/003
+
+**Type:** Scenario F + G (Bug Found + Fixed, two bugs, same session)
+
+**Context:** First time running the app on a physical Android device via `npx expo run:android` (`D:\tmp_sock\wepoll-patch.jar` + Gradle init script fixes from the earlier Windows build session were still valid — build succeeded first try). Two real bugs surfaced from the console during normal use, not from a targeted code review.
+
+**BUG-MOB-002 — duplicate screen names:**
+Console showed React Navigation's "Found screens with the same name nested inside one another" warning on launch. `TailorResume` and `CoverLetter` were registered in both `JobsStack` and `ResumeStack` (`MainNavigator.tsx`). Traced every `navigate('TailorResume'|'CoverLetter', ...)` call site — only `ApplyJobScreen` and `JobDetailScreen` (both `JobsStack` members) ever call it; the `ResumeStack` copies were dead code. Removed them from `MainNavigator.tsx` and `ResumeStackParamList` (navigation/types.ts); retyped `TailorResumeScreen.tsx`/`CoverLetterScreen.tsx` against `JobsStackParamList`.
+
+**BUG-MOB-003 — duplicate chat message keys:**
+Opening a chat from a profile's "Message" button logged "Encountered two children with the same key" for 7 sequential message ids. Traced the full data path (`setMessages`/`appendMessage` reducers, backend `findConversation` query, `ChatService.getMessages` reaction batch-loading) — all structurally sound, no obvious duplication source. Since `ChatDetailScreen` polls `loadMessages()` every 5s and always fully replaces the array, added a defensive dedupe-by-id in the `setMessages` reducer (mirrors the existing `appendMessage` guard and the precedent set by `feedSlice`'s `appendPosts` dedup in FEAT-011).
+
+**Files changed:**
+- `src/navigation/MainNavigator.tsx`, `src/navigation/types.ts`
+- `src/screens/resume/TailorResumeScreen.tsx`, `src/screens/resume/CoverLetterScreen.tsx`
+- `src/store/slices/chatSlice.ts`
+- `src/__tests__/chatSlice.test.ts` (new — 10 tests)
+
+**Tests:** 462 mobile tests green (452 + 10 new). `tsc --noEmit` clean on all non-test-config-related output.
+**Verified live:** Rebuilt and reinstalled on the physical device (`npx expo run:android`); Metro confirmed connected.
+
+---
 
 ---
 

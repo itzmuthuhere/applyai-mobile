@@ -44,7 +44,17 @@ const chatSlice = createSlice({
       state.conversations = action.payload;
     },
     setMessages(state, action: PayloadAction<{ partnerId: number; messages: ChatMsg[] }>) {
-      state.messages[action.payload.partnerId] = action.payload.messages;
+      // Dedupe by id — the 5s poll in ChatDetailScreen re-dispatches this on every tick,
+      // and FlatList's keyExtractor (String(item.id)) warns loudly if two entries collide.
+      const seen = new Set<number>();
+      const deduped: ChatMsg[] = [];
+      for (const m of action.payload.messages) {
+        if (!seen.has(m.id)) {
+          seen.add(m.id);
+          deduped.push(m);
+        }
+      }
+      state.messages[action.payload.partnerId] = deduped;
     },
     appendMessage(state, action: PayloadAction<{ partnerId: number; message: ChatMsg }>) {
       const { partnerId, message } = action.payload;

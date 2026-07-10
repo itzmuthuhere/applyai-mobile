@@ -141,13 +141,13 @@ Root Stack
     ├── Tab: Jobs
     │   ├── JobFeedScreen
     │   ├── JobDetailScreen
-    │   └── MatchScoreScreen
+    │   ├── MatchScoreScreen
+    │   ├── TailorResumeScreen
+    │   └── CoverLetterScreen
     ├── Tab: Resume
     │   ├── ResumeListScreen
     │   ├── ResumeUploadScreen
-    │   ├── ResumeDetailScreen
-    │   ├── TailorResumeScreen
-    │   └── CoverLetterScreen
+    │   └── ResumeDetailScreen
     ├── Tab: Applications
     │   ├── ApplicationsListScreen
     │   └── ApplicationDetailScreen
@@ -206,6 +206,41 @@ native Firebase degrades to no-FCM instead of crashing the render tree.
 (3) Committed google-services.json (un-gitignored) so EAS cloud prebuild gets
 Firebase wiring. NOTE: avoid `expo prebuild --clean` — it wipes the wepoll
 org.gradle.jvmargs patch in android/gradle.properties.
+```
+
+```
+[BUG-MOB-002] | Navigation | FIXED | Opened Jul 10, 2026 — Fixed Jul 10, 2026
+Symptom: React Navigation warning on app start — "Found screens with the same
+name nested inside one another... This can cause confusing behavior during
+navigation." Console also showed unrelated "duplicate key" warnings while
+investigating (see BUG-MOB-003).
+Screen/File: MainNavigator.tsx — TailorResume + CoverLetter were registered in
+BOTH JobsStack and ResumeStack simultaneously.
+Reproduced: yes (physical device, dev build) — confirmed via console warning
+Fix applied: Removed the dead ResumeStack registrations (nothing anywhere
+navigated to them via that stack — only ApplyJobScreen/JobDetailScreen, both
+JobsStack members, ever call navigate('TailorResume'/'CoverLetter')). Retyped
+TailorResumeScreen.tsx/CoverLetterScreen.tsx route props against
+JobsStackParamList instead of ResumeStackParamList. Removed both keys from
+ResumeStackParamList in navigation/types.ts. tsc --noEmit clean, 462 mobile
+tests green.
+```
+
+```
+[BUG-MOB-003] | Chat | FIXED | Opened Jul 10, 2026 — Fixed Jul 10, 2026
+Symptom: Console error on opening a chat conversation from a profile's
+"Message" button — "Encountered two children with the same key" (7 sequential
+message ids). FlatList keyExtractor is String(item.id); a duplicate id in the
+`messages` array triggers this.
+Screen/File: ChatDetailScreen.tsx (FlatList) / chatSlice.ts (setMessages
+reducer)
+Reproduced: yes, on first navigation to a chat from a profile (not a Fast
+Refresh artifact)
+Fix applied: setMessages reducer now dedupes the incoming page by id before
+storing (chatSlice.ts) — the 5s poll in ChatDetailScreen re-dispatches
+setMessages on every tick and this closes the gap regardless of exact race
+cause. appendMessage already had an equivalent guard. Added chatSlice.test.ts
+(10 new tests). 462 mobile tests green.
 ```
 
 Format when adding:

@@ -129,8 +129,6 @@ function ResumeNavigator() {
       <ResumeStack.Screen name="ResumeList" component={ResumeListScreen} options={{ title: 'My Resumes' }} />
       <ResumeStack.Screen name="ResumeUpload" component={ResumeUploadScreen} options={{ title: 'Upload Resume' }} />
       <ResumeStack.Screen name="ResumeDetail" component={ResumeDetailScreen} options={{ title: 'Resume' }} />
-      <ResumeStack.Screen name="TailorResume" component={TailorResumeScreen} options={{ title: 'Tailor Resume' }} />
-      <ResumeStack.Screen name="CoverLetter" component={CoverLetterScreen} options={{ title: 'Cover Letter' }} />
     </ResumeStack.Navigator>
   );
 }

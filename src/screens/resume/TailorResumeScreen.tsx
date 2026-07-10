@@ -11,14 +11,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
-import { ResumeStackParamList } from '../../navigation/types';
+import { JobsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { addResume, setResumes } from '../../store/slices/resumeSlice';
 import { Resume, TailoredResumeResponse } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 
-type RouteProps = RouteProp<ResumeStackParamList, 'TailorResume'>;
-type Nav = NativeStackNavigationProp<ResumeStackParamList, 'TailorResume'>;
+type RouteProps = RouteProp<JobsStackParamList, 'TailorResume'>;
+type Nav = NativeStackNavigationProp<JobsStackParamList, 'TailorResume'>;
 
 const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
 const companyColor = (name: string) =>
