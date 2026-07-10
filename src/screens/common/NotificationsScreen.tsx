@@ -70,7 +70,6 @@ export default function NotificationsScreen() {
   const dispatch = useDispatch<AppDispatch>();
 
   const notifications = useSelector((s: RootState) => s.socialNotifications.notifications);
-  const unreadCount = useSelector((s: RootState) => s.socialNotifications.unreadCount);
   const hasMore = useSelector((s: RootState) => s.socialNotifications.hasMore);
   const page = useSelector((s: RootState) => s.socialNotifications.page);
 
@@ -104,6 +103,9 @@ export default function NotificationsScreen() {
     (async () => {
       await Promise.all([loadAlerts(), loadNotifications(true)]);
       setLoading(false);
+      // Opening this screen is itself the "seen it" signal — clear the bell dot
+      // without requiring a separate "Mark all read" tap.
+      handleMarkAllRead();
     })();
   }, []);
 
@@ -207,15 +209,7 @@ export default function NotificationsScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Notifications</Text>
-          {unreadCount > 0 && (
-            <Text style={styles.headerSub}>{unreadCount} unread</Text>
-          )}
         </View>
-        {unreadCount > 0 && (
-          <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllBtn}>
-            <Text style={styles.markAllText}>Mark all read</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {loading ? (
@@ -266,9 +260,6 @@ function makeStyles(colors: AppColors) {
     backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   headerTitle: { fontSize: 24, fontWeight: '900', color: colors.textPrimary },
-  headerSub: { fontSize: 13, color: colors.textMuted, fontWeight: '500', marginTop: 2 },
-  markAllBtn: { paddingHorizontal: 14, paddingVertical: 7, backgroundColor: colors.primaryLight, borderRadius: 20 },
-  markAllText: { fontSize: 13, fontWeight: '700', color: colors.primary },
 
   listContent: { paddingBottom: 40 },
   sectionLabel: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },

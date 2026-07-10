@@ -14,20 +14,42 @@ jest.mock('../constants', () => ({
   },
 }));
 
+let mockState: any = {
+  auth: { user: { name: 'Muthu', profilePicture: null } },
+  socialNotifications: { unreadCount: 0 },
+};
 jest.mock('react-redux', () => ({
-  useSelector: jest.fn(() => ({ name: 'Muthu', profilePicture: null })),
+  useSelector: jest.fn((selector: any) => selector(mockState)),
 }));
 
 import GlobalSearchBar from '../components/GlobalSearchBar';
 
 describe('GlobalSearchBar', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockState = {
+      auth: { user: { name: 'Muthu', profilePicture: null } },
+      socialNotifications: { unreadCount: 0 },
+    };
+  });
 
   it('renders avatar initial, search pill, chat icon, and bell', () => {
     render(<GlobalSearchBar topInset={44} />);
     expect(screen.getByText('M')).toBeTruthy();
     expect(screen.getByTestId('global-search-bar')).toBeTruthy();
     expect(screen.getByTestId('global-chat-btn')).toBeTruthy();
+  });
+
+  it('does not show the unread dot when unreadCount is 0', () => {
+    mockState.socialNotifications.unreadCount = 0;
+    render(<GlobalSearchBar topInset={44} />);
+    expect(screen.queryByTestId('global-bell-dot')).toBeNull();
+  });
+
+  it('shows the unread dot when unreadCount is greater than 0', () => {
+    mockState.socialNotifications.unreadCount = 3;
+    render(<GlobalSearchBar topInset={44} />);
+    expect(screen.getByTestId('global-bell-dot')).toBeTruthy();
   });
 
   it('navigates to ChatList when chat icon is tapped', () => {

@@ -148,6 +148,9 @@ describe('NotificationsScreen', () => {
   });
 
   it('marks a notification read and navigates on tap', async () => {
+    // Auto-mark-all-read fires on load; make it fail here so this item stays
+    // unread and the individual tap-to-read fallback path is actually exercised.
+    mockPost.mockRejectedValueOnce(new Error('network error'));
     const store = makeStore();
     mockGet.mockImplementation((url: string) => {
       if (url === '/api/alerts') return Promise.resolve({ data: [] });
@@ -164,12 +167,9 @@ describe('NotificationsScreen', () => {
     });
   });
 
-  it('calls mark-all-read API when pressed', async () => {
+  it('automatically marks all read once the list loads (opening the screen is the "seen it" signal)', async () => {
     const store = makeStore({ notifications: [NOTIF], unreadCount: 1 });
     renderScreen(store);
-
-    await waitFor(() => expect(screen.getByText('Mark all read')).toBeTruthy());
-    fireEvent.press(screen.getByText('Mark all read'));
 
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/notifications/social/read-all'));
   });

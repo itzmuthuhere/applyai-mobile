@@ -50,7 +50,14 @@ export default function SocialNotificationsScreen() {
     setLoadingMore(false);
   }, [page]);
 
-  useEffect(() => { loadNotifications(true); }, []);
+  useEffect(() => {
+    (async () => {
+      await loadNotifications(true);
+      // Opening this screen is itself the "seen it" signal — clear the bell dot
+      // without requiring a separate "Mark all read" tap.
+      handleMarkAllRead();
+    })();
+  }, []);
 
   async function handleMarkAllRead() {
     try {
@@ -110,9 +117,7 @@ export default function SocialNotificationsScreen() {
           <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <TouchableOpacity onPress={handleMarkAllRead} style={styles.readAllBtn}>
-          <Text style={styles.readAllText}>Mark all read</Text>
-        </TouchableOpacity>
+        <View style={{ width: 22 }} />
       </View>
 
       {initialLoading ? (
@@ -159,8 +164,6 @@ function makeStyles(colors: AppColors) {
   },
   backBtn: { padding: 4 },
   headerTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
-  readAllBtn: { padding: 4 },
-  readAllText: { fontSize: 13, fontWeight: '600', color: colors.primary },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 60 },
   emptyText: { fontSize: 15, color: colors.textMuted, fontWeight: '600' },

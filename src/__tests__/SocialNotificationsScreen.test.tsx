@@ -72,18 +72,19 @@ it('shows empty state when no notifications', async () => {
   await waitFor(() => expect(getByText('No notifications yet')).toBeTruthy());
 });
 
-it('calls mark-all-read API when button pressed', async () => {
-  const { getByText } = render(
+it('automatically marks all read once the notification list loads (opening the screen is the "seen it" signal)', async () => {
+  render(
     <Provider store={makeStore()}>
       <SocialNotificationsScreen />
     </Provider>
   );
-  await waitFor(() => expect(getByText('Mark all read')).toBeTruthy());
-  fireEvent.press(getByText('Mark all read'));
-  await waitFor(() => expect(mockPost).toHaveBeenCalled());
+  await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/notifications/social/read-all'));
 });
 
 it('marks an unread notification read and navigates on tap', async () => {
+  // Auto-mark-all-read fires on load; make it fail here so this item stays
+  // unread and the individual tap-to-read fallback path is actually exercised.
+  mockPost.mockRejectedValueOnce(new Error('network error'));
   const { getByTestId } = render(
     <Provider store={makeStore()}>
       <SocialNotificationsScreen />

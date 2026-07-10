@@ -227,7 +227,27 @@ tests green.
 ```
 
 ```
-[BUG-MOB-007] | Resume | FIXED | Opened Jul 11, 2026 — Fixed Jul 11, 2026
+[BUG-MOB-008] | Notifications | FIXED | Opened Jul 11, 2026 — Fixed Jul 11, 2026
+Symptom: User-reported screenshot showed the global bell icon's red unread
+dot still visible even while looking directly at an empty "All caught up!"
+Notifications screen. Request: dot should only show for genuinely new
+notifications, and should clear once the user has opened/viewed them.
+Screen/File: GlobalSearchBar.tsx, NotificationsScreen.tsx,
+SocialNotificationsScreen.tsx
+Root cause: GlobalSearchBar's red dot was rendered completely
+unconditionally — it had zero connection to unreadCount or any Redux state
+at all, so it was permanently visible regardless of actual notification
+status.
+Fix: (1) GlobalSearchBar now reads `s.socialNotifications.unreadCount` and
+only renders the dot when > 0. (2) Both notification screens now
+automatically call the mark-all-read endpoint right after their initial
+load completes — opening the screen is itself the "seen it" signal, so the
+dot clears without a separate tap. (3) Removed the now-redundant explicit
+"Mark all read" button/header-count from both screens (auto-mark-on-open
+supersedes it) — SocialNotificationsScreen's header now just shows back +
+title with a balancing spacer. 2 new tests (GlobalSearchBar conditional
+dot), 3 existing tests rewritten to assert the auto-mark behavior instead of
+button-press. 482 mobile tests green.
 Symptom: User asked "why is this option here?" after tapping "Tailor for a
 Job" quick action on ResumeDetailScreen — it only showed an Alert saying "Go
 to the Jobs tab, open a job, and tap 'Tailor Resume' from there," a dead-end

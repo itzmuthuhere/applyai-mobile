@@ -13,6 +13,7 @@ interface Props {
 export default function GlobalSearchBar({ topInset }: Props) {
   const navigation = useNavigation<any>();
   const user = useSelector((s: RootState) => s.auth.user);
+  const unreadCount = useSelector((s: RootState) => s.socialNotifications.unreadCount);
   const initial = (user?.name?.trim().charAt(0) ?? '?').toUpperCase();
 
   const openSearch = () => {
@@ -80,7 +81,7 @@ export default function GlobalSearchBar({ topInset }: Props) {
         {/* Notifications bell */}
         <TouchableOpacity onPress={openNotifications} activeOpacity={0.8} style={styles.bellBtn} testID="global-bell-btn">
           <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
-          <View style={styles.bellDot} />
+          {unreadCount > 0 && <View testID="global-bell-dot" style={styles.bellDot} />}
         </TouchableOpacity>
       </View>
     </View>
