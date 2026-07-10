@@ -227,6 +227,24 @@ tests green.
 ```
 
 ```
+[BUG-MOB-006] | Feed | FIXED | Opened Jul 11, 2026 — Fixed Jul 11, 2026
+Symptom: User-reported screenshot showed bell + chat icons appearing twice on
+the Feed screen — once in the global top bar (GlobalSearchBar, rendered once
+above the whole Tab.Navigator), once again in FeedScreen's own local header.
+Screen/File: FeedScreen.tsx
+Cause: FeedScreen's header re-implemented its own notifications/chat buttons
+(navigate to SocialNotifications/ChatList) independently of GlobalSearchBar,
+which already provides the same actions on every tab.
+Fix: Removed the duplicate bell + chat buttons and the now-unused
+`unreadCount` selector/badge styles from FeedScreen's header — kept only the
+"+ Post" create button (genuinely screen-specific, not duplicated elsewhere).
+Also redesigned the "Nothing here yet" empty state to match the app's
+established pattern (circular icon badge, bolder copy, shadowed primary
+button) and added a secondary "Find people to follow" action linking to
+Search. 3 new tests, 478 mobile tests green.
+```
+
+```
 [FEAT-MOB] | Resume Delete | Complete | Jul 10, 2026
 Context: no delete-resume capability existed anywhere — direct follow-on from
 BUG-MOB-005's caveat (broken resume needs deleting + re-uploading to get a

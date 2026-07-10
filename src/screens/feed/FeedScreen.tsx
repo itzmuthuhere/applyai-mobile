@@ -332,7 +332,6 @@ export default function FeedScreen() {
   const posts = useSelector((s: RootState) => s.feed.posts);
   const hasMore = useSelector((s: RootState) => s.feed.hasMore);
   const page = useSelector((s: RootState) => s.feed.page);
-  const unreadCount = useSelector((s: RootState) => s.socialNotifications.unreadCount);
 
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -412,25 +411,17 @@ export default function FeedScreen() {
           </View>
           <Text style={styles.headerTitle}>Feed</Text>
         </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('SocialNotifications')}
-            style={styles.headerBtn}
-          >
-            <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
-            {unreadCount > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : String(unreadCount)}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('ChatList')} style={styles.headerBtn}>
-            <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('CreatePost')} style={styles.createBtn}>
-            <Ionicons name="add" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        {/* Notifications + chat already live in the global top bar (GlobalSearchBar) —
+            only the create-post action is specific to this screen. */}
+        <TouchableOpacity
+          testID="feed-create-post-btn"
+          onPress={() => navigation.navigate('CreatePost')}
+          style={styles.createBtn}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="add" size={20} color="#fff" />
+          <Text style={styles.createBtnText}>Post</Text>
+        </TouchableOpacity>
       </View>
 
       {initialLoading ? (
@@ -453,11 +444,23 @@ export default function FeedScreen() {
           ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ padding: 16 }} /> : null}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="newspaper-outline" size={52} color={colors.border} />
+              <View style={styles.emptyIcon}>
+                <Ionicons name="newspaper-outline" size={40} color={colors.primary} />
+              </View>
               <Text style={styles.emptyTitle}>Nothing here yet</Text>
-              <Text style={styles.emptySub}>Follow people or be the first to post!</Text>
-              <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('CreatePost')}>
+              <Text style={styles.emptySub}>
+                Your feed fills up as you follow people and share updates — search for people to follow, or be the first to post.
+              </Text>
+              <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('CreatePost')} activeOpacity={0.85}>
+                <Ionicons name="add" size={18} color="#fff" />
                 <Text style={styles.emptyBtnText}>Create a post</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.emptySecondaryBtn}
+                onPress={() => navigation.navigate('Search', { initialQuery: '' })}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.emptySecondaryBtnText}>Find people to follow</Text>
               </TouchableOpacity>
             </View>
           }
@@ -486,18 +489,12 @@ function makeStyles(colors: AppColors) {
   },
   headerLogoText: { color: '#fff', fontWeight: '900', fontSize: 18 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerBtn: { padding: 6, position: 'relative' },
-  badge: {
-    position: 'absolute', top: 2, right: 2,
-    backgroundColor: colors.error, borderRadius: 9, minWidth: 18, height: 18,
-    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
-  },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   createBtn: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    height: 36, borderRadius: 18, backgroundColor: colors.primary,
+    paddingHorizontal: 14,
   },
+  createBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
   loadingCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
@@ -534,10 +531,23 @@ function makeStyles(colors: AppColors) {
   actionEmoji: { fontSize: 18 },
   actionLabel: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
 
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
-  emptySub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-  emptyBtn: { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
-  emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, gap: 10 },
+  emptyIcon: {
+    width: 84, height: 84, borderRadius: 28,
+    backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: colors.border, marginBottom: 6,
+  },
+  emptyTitle: { fontSize: 19, fontWeight: '800', color: colors.textPrimary },
+  emptySub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  emptyBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: colors.primary, borderRadius: 14,
+    paddingHorizontal: 26, paddingVertical: 13, marginTop: 10,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+  },
+  emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  emptySecondaryBtn: { marginTop: 4, padding: 6 },
+  emptySecondaryBtnText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
   });
 }

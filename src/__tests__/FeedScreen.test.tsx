@@ -75,6 +75,27 @@ it('shows empty state when API returns empty', async () => {
   await waitFor(() => expect(getByText('Nothing here yet')).toBeTruthy());
 });
 
+it('header no longer duplicates the bell/chat icons already shown by the global top bar', async () => {
+  const { getByTestId, UNSAFE_queryAllByProps } = renderScreen([]);
+  await waitFor(() => expect(getByTestId('feed-create-post-btn')).toBeTruthy());
+  expect(UNSAFE_queryAllByProps({ name: 'notifications-outline' })).toHaveLength(0);
+  expect(UNSAFE_queryAllByProps({ name: 'chatbubbles-outline' })).toHaveLength(0);
+});
+
+it('tapping the header create-post button navigates to CreatePost', async () => {
+  const { getByTestId } = renderScreen([]);
+  await waitFor(() => expect(getByTestId('feed-create-post-btn')).toBeTruthy());
+  fireEvent.press(getByTestId('feed-create-post-btn'));
+  expect(mockNavigate).toHaveBeenCalledWith('CreatePost');
+});
+
+it('empty state "Find people to follow" navigates to Search', async () => {
+  const { getByText } = renderScreen([]);
+  await waitFor(() => expect(getByText('Find people to follow')).toBeTruthy());
+  fireEvent.press(getByText('Find people to follow'));
+  expect(mockNavigate).toHaveBeenCalledWith('Search', { initialQuery: '' });
+});
+
 it('renders posts returned by API', async () => {
   mockGet.mockImplementation((url: string) => {
     if (url.includes('unread-count')) return Promise.resolve({ data: { count: 0 } });
