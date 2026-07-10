@@ -43,6 +43,7 @@
 | BUG-MOB-005 | Resume filename shown raw percent-encoded ("Muthu%20raja%20CV.pdf") on ResumeDetailScreen, ResumeListScreen, ApplicationDetailScreen, JobFeedScreen — BUG-MOB-001 (Jun 16) only ever patched ResumeDropdown.tsx | ResumeDetailScreen +3 others | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — backend now decodes at upload time (applyai-backend BUG-057); shared decodeFileName.ts applied at display time everywhere versionName is shown |
 | FEAT-MOB | No delete-resume capability existed anywhere — needed to let users remove resumes broken by the pre-BUG-058 upload path | ResumeListScreen | Jul 10, 2026 | ✅ Complete Jul 10, 2026 — long-press → confirmation Alert → DELETE /api/resumes/{id} (applyai-backend) → removeResume Redux action |
 | BUG-MOB-006 | Bell + chat icons appeared twice on Feed screen — FeedScreen's own header duplicated GlobalSearchBar's global top-bar buttons | FeedScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — removed the duplicate buttons + unused unreadCount selector; redesigned empty state with icon badge + secondary "Find people to follow" action |
+| BUG-MOB-007 | "Tailor for a Job" quick action was a dead end — just showed an Alert describing steps to take manually instead of navigating anywhere | ResumeDetailScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — now navigates directly to JobsTab → JobFeed; added first-ever test file for this screen (2 tests) |
 
 ---
 
@@ -51,7 +52,7 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** Jul 11, 2026 — Feed header/empty-state fix (BUG-MOB-006), pending commit this session.
+**Last push:** Jul 11, 2026 — "Tailor for a Job" dead-end fix (BUG-MOB-007), pending commit this session.
 **Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed four bugs (nav duplicate screen names, chat duplicate keys, static fake notifications, percent-encoded resume filenames) plus added resume delete (previously missing entirely).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.

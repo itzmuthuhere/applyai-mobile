@@ -388,16 +388,17 @@ export default function ResumeDetailScreen() {
         <View style={styles.actionSection}>
           <Text style={styles.actionSectionTitle}>Quick Actions</Text>
           <TouchableOpacity
+            testID="tailor-for-job-btn"
             style={[styles.actionBtn, styles.actionBtnPrimary]}
             onPress={() => {
               if (!resume.isParsed) {
                 Alert.alert('Analyze First', 'Please analyze this resume before tailoring it.');
                 return;
               }
-              Alert.alert(
-                'Select a Job',
-                'Go to the Jobs tab, open a job, and tap "Tailor Resume" from there.',
-              );
+              // Tailoring needs a specific job's description to tailor against, which this
+              // screen doesn't have — jump to the Jobs tab so the user can pick one, rather
+              // than showing an alert that just describes the steps without doing them.
+              (navigation as any).navigate('JobsTab', { screen: 'JobFeed' });
             }}
           >
             <View style={styles.actionBtnIcon}>

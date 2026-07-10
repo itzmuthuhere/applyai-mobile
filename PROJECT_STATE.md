@@ -227,6 +227,20 @@ tests green.
 ```
 
 ```
+[BUG-MOB-007] | Resume | FIXED | Opened Jul 11, 2026 — Fixed Jul 11, 2026
+Symptom: User asked "why is this option here?" after tapping "Tailor for a
+Job" quick action on ResumeDetailScreen — it only showed an Alert saying "Go
+to the Jobs tab, open a job, and tap 'Tailor Resume' from there," a dead-end
+that describes the steps instead of doing them.
+Screen/File: ResumeDetailScreen.tsx
+Fix: Button now navigates directly to JobsTab → JobFeed instead of showing
+the alert (Analyze-first guard alert unchanged). No test file existed for
+this screen at all — added ResumeDetailScreen.test.tsx (2 tests) covering
+both the parsed (navigates) and unparsed (shows Analyze First alert) paths.
+480 mobile tests green.
+```
+
+```
 [BUG-MOB-006] | Feed | FIXED | Opened Jul 11, 2026 — Fixed Jul 11, 2026
 Symptom: User-reported screenshot showed bell + chat icons appearing twice on
 the Feed screen — once in the global top bar (GlobalSearchBar, rendered once
