@@ -18,6 +18,7 @@ import { JobsStackParamList } from '../../navigation/types';
 import { Job, JobFeedResponse, Resume } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { RootState } from '../../store';
+import { decodeFileName } from '../../utils/decodeFileName';
 
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'JobFeed'>;
 type SortBy = 'match' | 'recent';
@@ -608,7 +609,7 @@ export default function JobFeedScreen() {
                     style={[styles.resumeChipText, selectedResumeId === r.id && styles.resumeChipTextActive]}
                     numberOfLines={1}
                   >
-                    {r.versionName}
+                    {decodeFileName(r.versionName)}
                   </Text>
                 </TouchableOpacity>
               ))}

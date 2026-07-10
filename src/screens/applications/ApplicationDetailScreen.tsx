@@ -18,6 +18,7 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { ApplicationsStackParamList } from '../../navigation/types';
+import { decodeFileName } from '../../utils/decodeFileName';
 import { RootState } from '../../store';
 import {
   setSelectedApplication,
@@ -326,7 +327,7 @@ export default function ApplicationDetailScreen() {
         )}
         <View style={styles.metaRow}>
           <Text style={styles.metaLabel}>Resume sent</Text>
-          <Text style={styles.metaValue}>{application.resume.versionName}</Text>
+          <Text style={styles.metaValue}>{decodeFileName(application.resume.versionName)}</Text>
         </View>
         <View style={styles.metaRow}>
           <Text style={styles.metaLabel}>Current status</Text>

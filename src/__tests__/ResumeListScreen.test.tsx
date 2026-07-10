@@ -88,6 +88,18 @@ describe('ResumeListScreen', () => {
     });
   });
 
+  it('decodes a percent-encoded versionName (BUG-051 regression)', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: [{ ...RESUME_PARSED, versionName: 'Muthu%20raja%20CV.pdf' }],
+    });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Muthu raja CV.pdf')).toBeTruthy();
+      expect(screen.queryByText('Muthu%20raja%20CV.pdf')).toBeNull();
+    });
+  });
+
   it('shows AI score for parsed resumes', async () => {
     mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED] });
     renderScreen();

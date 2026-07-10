@@ -40,6 +40,7 @@
 | BUG-MOB-002 | React Navigation warning: TailorResume + CoverLetter registered in both JobsStack and ResumeStack — "Found screens with the same name nested inside one another" | MainNavigator | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — removed dead ResumeStack copies (unreachable; only JobsStack's are ever navigated to) |
 | BUG-MOB-003 | "Encountered two children with the same key" — duplicate message ids in chat FlatList after opening a conversation from a profile | ChatDetailScreen, chatSlice | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — setMessages reducer now dedupes by id |
 | BUG-MOB-004 | Home-tab Notifications screen showed 4 hardcoded static "tip" strings with fake never-changing timestamps instead of real activity | NotificationsScreen | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — wired to the same real /api/notifications/social endpoint + Redux slice already used by SocialNotificationsScreen; extracted shared notificationIcons.ts covering all 14 backend notification types |
+| BUG-MOB-005 | Resume filename shown raw percent-encoded ("Muthu%20raja%20CV.pdf") on ResumeDetailScreen, ResumeListScreen, ApplicationDetailScreen, JobFeedScreen — BUG-MOB-001 (Jun 16) only ever patched ResumeDropdown.tsx | ResumeDetailScreen +3 others | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — backend now decodes at upload time (applyai-backend BUG-057); shared decodeFileName.ts applied at display time everywhere versionName is shown |
 
 ---
 
@@ -48,8 +49,8 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** BUG-MOB-002/003/004 fixes, pending commit this session.
-**Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed three bugs (nav duplicate screen names, chat duplicate keys, static fake notifications).
+**Last push:** BUG-MOB-002/003/004/005 fixes, pending commit this session.
+**Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed four bugs (nav duplicate screen names, chat duplicate keys, static fake notifications, percent-encoded resume filenames).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.
 
@@ -123,6 +124,32 @@ bell). Added mark-as-read-on-tap + navigation to both screens.
 
 **Tests:** 465 mobile tests green (462 + 3 net new). `tsc --noEmit` clean.
 **Verified live:** App force-restarted on device to pick up the fresh Metro bundle.
+
+**Interview picker fix (separately found pending, pre-session, uncommitted work):** reviewed and kept `InterviewStartScreen.tsx` changes already sitting uncommitted before this session started — confirmed real: backend `GET /api/applications` defaults to `size=20`, so the mock-interview picker was silently missing any applications past the first 20. Added `?page=0&size=100`. Also relaxed the picker to include `REJECTED` applications (still useful interview practice) and only show the loading spinner when Redux has no cached data yet. Reverted an unrelated, unused `expo-splash-screen` dependency addition found in the same uncommitted diff — never imported anywhere. 3 new tests, 468 mobile tests green.
+
+**BUG-MOB-005 — resume filename percent-encoding (found after user screenshot):**
+User pointed out `ResumeDetailScreen` showing "Muthu%20raja%20C./pdf" instead
+of the real filename. BUG-MOB-001 (Jun 16) had only ever patched
+`ResumeDropdown.tsx` to decode this — `ResumeListScreen.tsx`,
+`ApplicationDetailScreen.tsx`, and `JobFeedScreen.tsx` all still displayed the
+raw undecoded `versionName`. Root cause traced to the backend
+(`applyai-backend` BUG-057): React Native's multipart encoder percent-encodes
+filenames with spaces; `ResumeService.resolveVersionName()` stored that raw
+header value verbatim. Backend now decodes at upload time. Extracted a shared
+`src/utils/decodeFileName.ts` and applied it at display time in all 4 mobile
+screens, replacing `ResumeDropdown.tsx`'s inline duplicate — this also fixes
+the already-broken existing DB row without needing a data migration.
+
+**Files changed (BUG-MOB-005):**
+- `src/utils/decodeFileName.ts` (new)
+- `src/screens/resume/ResumeDetailScreen.tsx`, `ResumeListScreen.tsx`
+- `src/screens/applications/ApplicationDetailScreen.tsx`
+- `src/screens/jobs/JobFeedScreen.tsx`
+- `src/components/common/ResumeDropdown.tsx`
+- `src/__tests__/decodeFileName.test.ts` (new), `ResumeListScreen.test.tsx`, `ApplicationDetailScreen.test.tsx`
+
+**Tests:** 472 mobile tests green (468 + 4 new). `tsc --noEmit` clean (one pre-existing unrelated nullability note in ApplicationDetailScreen.tsx, not introduced here).
+**Verified live:** App force-restarted on device to pick up the fresh Metro bundle; already-broken existing resume now renders decoded immediately without waiting on the backend redeploy.
 
 ---
 

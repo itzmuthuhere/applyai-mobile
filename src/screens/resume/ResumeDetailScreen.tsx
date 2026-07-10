@@ -24,6 +24,7 @@ import { RootState } from '../../store';
 import { setSelectedResume, updateResumeScore, updateResumeParsed } from '../../store/slices/resumeSlice';
 import { ParsedResume, ResumeScore } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import { decodeFileName } from '../../utils/decodeFileName';
 
 type RouteProps = RouteProp<ResumeStackParamList, 'ResumeDetail'>;
 type Nav = NativeStackNavigationProp<ResumeStackParamList, 'ResumeDetail'>;
@@ -153,7 +154,7 @@ export default function ResumeDetailScreen() {
               <Ionicons name="document-text" size={30} color={colors.primary} />
             </View>
             <View style={styles.heroInfo}>
-              <Text style={styles.heroName} numberOfLines={2}>{resume.versionName}</Text>
+              <Text style={styles.heroName} numberOfLines={2}>{decodeFileName(resume.versionName)}</Text>
               <Text style={styles.heroDate}>Uploaded {dayjs(resume.createdAt).format('MMM D, YYYY')}</Text>
               <View style={styles.heroBadgeRow}>
                 {resume.isOriginal && (

@@ -16,6 +16,7 @@ import { RootState } from '../../store';
 import { setResumes, setLoading, setError, clearError } from '../../store/slices/resumeSlice';
 import { Resume } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import { decodeFileName } from '../../utils/decodeFileName';
 
 type Nav = NativeStackNavigationProp<ResumeStackParamList, 'ResumeList'>;
 
@@ -102,7 +103,7 @@ function ResumeCard({ item, onPress }: { item: Resume; onPress: () => void }) {
         {/* Info */}
         <View style={styles.cardInfo}>
           <View style={styles.titleRow}>
-            <Text style={styles.versionName} numberOfLines={1}>{item.versionName}</Text>
+            <Text style={styles.versionName} numberOfLines={1}>{decodeFileName(item.versionName)}</Text>
             {item.isOriginal && (
               <View style={styles.originalBadge}>
                 <Text style={styles.originalText}>Original</Text>

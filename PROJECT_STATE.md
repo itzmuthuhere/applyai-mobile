@@ -227,6 +227,26 @@ tests green.
 ```
 
 ```
+[BUG-MOB-005] | Resume | FIXED | Opened Jul 10, 2026 — Fixed Jul 10, 2026
+Symptom: Resume filename shown as raw percent-encoding — "Muthu%20raja%20CV.pdf"
+instead of "Muthu raja CV.pdf" — on ResumeDetailScreen (user-reported via
+screenshot), and the same undecoded pattern also present in ResumeListScreen,
+ApplicationDetailScreen, and JobFeedScreen. BUG-MOB-001 (Jun 16) had only ever
+patched ResumeDropdown.tsx, so the artifact kept resurfacing everywhere else.
+Screen/File: ResumeDetailScreen.tsx, ResumeListScreen.tsx,
+ApplicationDetailScreen.tsx, JobFeedScreen.tsx
+Reproduced: yes — live on device, screenshot evidence
+Root cause: backend (applyai-backend BUG-057) — React Native's multipart
+encoder percent-encodes filenames with spaces; the backend stored that raw
+header value verbatim as the resume's display name.
+Fix applied: Backend now decodes at upload time (fixes future uploads).
+Extracted a shared `src/utils/decodeFileName.ts` and applied it at display
+time in all 4 screens + refactored ResumeDropdown.tsx's inline duplicate to
+use it — this also fixes the already-broken existing DB row without a data
+migration. 4 new tests. 472 mobile tests green.
+```
+
+```
 [BUG-MOB-004] | Notifications | FIXED | Opened Jul 10, 2026 — Fixed Jul 10, 2026
 Symptom: Notifications screen (Home tab, reached via Profile → Notifications)
 always showed the same 4 hardcoded "tip" strings ("Complete your profile",

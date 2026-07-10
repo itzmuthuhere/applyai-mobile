@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
 import { Resume } from '../../types/api.types';
+import { decodeFileName } from '../../utils/decodeFileName';
 
 interface Props {
   resumes: Resume[];
@@ -33,14 +34,10 @@ export default function ResumeDropdown({
 
   const selected = resumes.find((r) => r.id === selectedId);
 
-  const decodeName = (name: string) => {
-    try { return decodeURIComponent(name); } catch { return name; }
-  };
-
   const filtered = useMemo(() => {
     if (!query.trim()) return resumes;
     const q = query.toLowerCase();
-    return resumes.filter((r) => decodeName(r.versionName).toLowerCase().includes(q));
+    return resumes.filter((r) => decodeFileName(r.versionName).toLowerCase().includes(q));
   }, [resumes, query]);
 
   const scoreColor = (score: number | null) => {
@@ -84,7 +81,7 @@ export default function ResumeDropdown({
           {selected ? (
             <>
               <Text style={styles.triggerSelected} numberOfLines={1}>
-                {decodeName(selected.versionName)}
+                {decodeFileName(selected.versionName)}
               </Text>
               {selected.aiScore !== null && (
                 <View style={[styles.scorePill, { backgroundColor: scoreBg(selected.aiScore) }]}>
@@ -160,7 +157,7 @@ export default function ResumeDropdown({
                       style={[styles.itemName, isSelected && styles.itemNameSelected]}
                       numberOfLines={2}
                     >
-                      {decodeName(item.versionName)}
+                      {decodeFileName(item.versionName)}
                     </Text>
                     <View style={styles.itemMeta}>
                       <View style={styles.typeBadge}>

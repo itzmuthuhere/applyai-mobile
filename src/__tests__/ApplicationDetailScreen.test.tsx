@@ -45,7 +45,7 @@ const APPLICATION = {
     location: 'Chennai', description: 'Build awesome stuff', isRemote: false,
     salaryMin: 1200000, salaryMax: 1800000, category: 'Technology',
   },
-  resume: { id: 5, versionName: 'My CV', fileUrl: 'https://cdn.com/r.pdf' },
+  resume: { id: 5, versionName: 'My%20CV.pdf', fileUrl: 'https://cdn.com/r.pdf' },
 };
 
 function makeStore() {
@@ -110,11 +110,11 @@ describe('ApplicationDetailScreen', () => {
     });
   });
 
-  it('shows resume version name', async () => {
+  it('shows resume version name, decoded (BUG-051 regression)', async () => {
     renderScreen();
 
     await waitFor(() => {
-      expect(screen.getByText('My CV')).toBeTruthy();
+      expect(screen.getByText('My CV.pdf')).toBeTruthy();
     });
   });
 
