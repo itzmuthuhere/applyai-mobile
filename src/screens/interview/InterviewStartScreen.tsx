@@ -146,15 +146,17 @@ export default function InterviewStartScreen() {
   useFocusEffect(useCallback(() => { loadHistory(); }, []));
 
   async function openPicker() {
-    // Pre-populate from Redux so the user sees their applications immediately
-    const filtered = allApplications.filter(a => a.status !== 'WITHDRAWN' && a.status !== 'REJECTED');
-    setApplications(filtered);
+    // Pre-populate from Redux immediately so the user sees something right away
+    const reduxFiltered = allApplications.filter(a => a.status !== 'WITHDRAWN');
+    setApplications(reduxFiltered);
     setPickerVisible(true);
-    setAppsLoading(true);
+    setAppsLoading(reduxFiltered.length === 0); // only show spinner if Redux is empty
     try {
-      const { data } = await apiClient.get<{ content: Application[] }>(API_ENDPOINTS.APPLICATIONS);
+      const { data } = await apiClient.get<{ content: Application[] }>(
+        `${API_ENDPOINTS.APPLICATIONS}?page=0&size=100`
+      );
       const list = Array.isArray(data) ? data : (data.content ?? []);
-      setApplications(list.filter(a => a.status !== 'WITHDRAWN' && a.status !== 'REJECTED'));
+      setApplications(list.filter(a => a.status !== 'WITHDRAWN'));
     } catch {
       // API failed — keep Redux data already shown, do not clear to empty
     } finally {

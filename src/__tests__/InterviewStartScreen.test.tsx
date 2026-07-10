@@ -209,4 +209,47 @@ describe('InterviewStartScreen', () => {
       expect(screen.getByText(/No active applications found/i)).toBeTruthy();
     });
   });
+
+  it('includes REJECTED applications in the picker (still useful interview practice)', async () => {
+    const rejectedApp = { ...APP_ITEM, id: 43, status: 'REJECTED' };
+    mockGet
+      .mockResolvedValueOnce({ data: [] }) // history call
+      .mockResolvedValueOnce({ data: { content: [rejectedApp] } }); // applications call
+
+    renderScreen([], []);
+
+    await waitFor(() => expect(screen.getByText('Start Mock Interview')).toBeTruthy());
+    fireEvent.press(screen.getByText('Start Mock Interview'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Frontend Dev')).toBeTruthy();
+    });
+  });
+
+  it('excludes WITHDRAWN applications from the picker', async () => {
+    const withdrawnApp = { ...APP_ITEM, id: 44, status: 'WITHDRAWN' };
+    mockGet
+      .mockResolvedValueOnce({ data: [] }) // history call
+      .mockResolvedValueOnce({ data: { content: [withdrawnApp] } }); // applications call
+
+    renderScreen([], []);
+
+    await waitFor(() => expect(screen.getByText('Start Mock Interview')).toBeTruthy());
+    fireEvent.press(screen.getByText('Start Mock Interview'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/No active applications found/i)).toBeTruthy();
+    });
+  });
+
+  it('requests a large page size so applications beyond the backend default (20) are not silently dropped', async () => {
+    renderScreen([], []);
+
+    await waitFor(() => expect(screen.getByText('Start Mock Interview')).toBeTruthy());
+    fireEvent.press(screen.getByText('Start Mock Interview'));
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith('/api/applications?page=0&size=100');
+    });
+  });
 });
