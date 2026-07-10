@@ -41,6 +41,7 @@
 | BUG-MOB-003 | "Encountered two children with the same key" — duplicate message ids in chat FlatList after opening a conversation from a profile | ChatDetailScreen, chatSlice | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — setMessages reducer now dedupes by id |
 | BUG-MOB-004 | Home-tab Notifications screen showed 4 hardcoded static "tip" strings with fake never-changing timestamps instead of real activity | NotificationsScreen | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — wired to the same real /api/notifications/social endpoint + Redux slice already used by SocialNotificationsScreen; extracted shared notificationIcons.ts covering all 14 backend notification types |
 | BUG-MOB-005 | Resume filename shown raw percent-encoded ("Muthu%20raja%20CV.pdf") on ResumeDetailScreen, ResumeListScreen, ApplicationDetailScreen, JobFeedScreen — BUG-MOB-001 (Jun 16) only ever patched ResumeDropdown.tsx | ResumeDetailScreen +3 others | Jul 10, 2026 | ✅ FIXED Jul 10, 2026 — backend now decodes at upload time (applyai-backend BUG-057); shared decodeFileName.ts applied at display time everywhere versionName is shown |
+| FEAT-MOB | No delete-resume capability existed anywhere — needed to let users remove resumes broken by the pre-BUG-058 upload path | ResumeListScreen | Jul 10, 2026 | ✅ Complete Jul 10, 2026 — long-press → confirmation Alert → DELETE /api/resumes/{id} (applyai-backend) → removeResume Redux action |
 
 ---
 
@@ -49,8 +50,8 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** BUG-MOB-002/003/004/005 fixes, pending commit this session.
-**Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed four bugs (nav duplicate screen names, chat duplicate keys, static fake notifications, percent-encoded resume filenames).
+**Last push:** BUG-MOB-002/003/004/005 fixes + resume delete feature, pending commit this session.
+**Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed four bugs (nav duplicate screen names, chat duplicate keys, static fake notifications, percent-encoded resume filenames) plus added resume delete (previously missing entirely).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.
 
@@ -150,6 +151,17 @@ the already-broken existing DB row without needing a data migration.
 
 **Tests:** 472 mobile tests green (468 + 4 new). `tsc --noEmit` clean (one pre-existing unrelated nullability note in ApplicationDetailScreen.tsx, not introduced here).
 **Verified live:** App force-restarted on device to pick up the fresh Metro bundle; already-broken existing resume now renders decoded immediately without waiting on the backend redeploy.
+
+**FEAT-MOB — resume delete (direct follow-on):** Tapping "View" on the same resume then showed a Chrome "Download file again?" prompt for an unnamed file — a separate bug (applyai-backend BUG-058, Cloudinary uploads had no file extension in the public_id). That fix only applies going forward; the existing broken resume needed to be deleted and re-uploaded. No delete-resume capability existed anywhere, so added one: long-press a resume card in `ResumeListScreen.tsx` → confirmation `Alert` → `DELETE /api/resumes/{id}` → dispatch `removeResume`. Shows the backend's 409 message directly if the resume is in use by an application.
+
+**Files changed (FEAT-MOB):**
+- `src/store/slices/resumeSlice.ts` (`removeResume` reducer)
+- `src/screens/resume/ResumeListScreen.tsx`
+- `src/constants/index.ts` (`RESUME_BY_ID`)
+- `src/__tests__/ResumeListScreen.test.tsx` (+3 tests)
+
+**Tests:** 475 mobile tests green (472 + 3 new). `tsc --noEmit` clean.
+**Verified live:** Phone disconnected from adb mid-session — this is a JS-only change, applies via Fast Refresh once reconnected or on next launch.
 
 ---
 

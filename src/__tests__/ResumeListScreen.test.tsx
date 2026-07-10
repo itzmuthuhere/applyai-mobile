@@ -1,11 +1,12 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
-  default: { get: jest.fn() },
+  default: { get: jest.fn(), delete: jest.fn() },
 }));
 
 jest.mock('@react-navigation/native', () => ({
@@ -19,7 +20,7 @@ jest.mock('../constants', () => ({
     textSecondary: '#64748B', textMuted: '#94A3B8', border: '#E2E8F0',
     error: '#EF4444', warning: '#F59E0B', success: '#10B981',
   },
-  API_ENDPOINTS: { RESUMES: '/api/resumes' },
+  API_ENDPOINTS: { RESUMES: '/api/resumes', RESUME_BY_ID: (id: number) => `/api/resumes/${id}` },
   ROUTES: { RESUME_DETAIL: 'ResumeDetail', RESUME_UPLOAD: 'ResumeUpload' },
 }));
 
@@ -28,6 +29,16 @@ import resumeReducer from '../store/slices/resumeSlice';
 import ResumeListScreen from '../screens/resume/ResumeListScreen';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
+const mockDelete = apiClient.delete as jest.MockedFunction<typeof apiClient.delete>;
+
+// Simulates the user tapping the given button label in the confirmation Alert
+async function confirmAlertButton(label: string) {
+  const call = (Alert.alert as jest.Mock).mock.calls.at(-1);
+  const buttons = call?.[2] as { text: string; onPress?: () => void }[];
+  await act(async () => {
+    buttons.find(b => b.text === label)?.onPress?.();
+  });
+}
 
 const RESUME_PARSED = {
   id: 1,
@@ -69,6 +80,7 @@ function renderScreen(preloaded?: Partial<{ isLoading: boolean; list: any[] }>) 
 describe('ResumeListScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   });
 
   it('shows loading indicator on initial load', async () => {
@@ -167,5 +179,56 @@ describe('ResumeListScreen', () => {
     fireEvent.press(screen.getByTestId('resume-card-1'));
 
     expect(navigate).toHaveBeenCalledWith('ResumeDetail', { resumeId: 1 });
+  });
+
+  it('long-press shows a delete confirmation dialog', async () => {
+    mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED] });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('resume-card-1'));
+    fireEvent(screen.getByTestId('resume-card-1'), 'longPress');
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Delete resume?',
+      expect.stringContaining('My Resume v1'),
+      expect.any(Array)
+    );
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+
+  it('confirming delete calls the API and removes the resume from the list', async () => {
+    mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED, RESUME_UNPARSED] });
+    mockDelete.mockResolvedValueOnce({ data: {} });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('resume-card-1'));
+    fireEvent(screen.getByTestId('resume-card-1'), 'longPress');
+    await confirmAlertButton('Delete');
+
+    await waitFor(() => {
+      expect(mockDelete).toHaveBeenCalledWith('/api/resumes/1');
+      expect(screen.queryByTestId('resume-card-1')).toBeNull();
+    });
+    expect(screen.getByTestId('resume-card-2')).toBeTruthy();
+  });
+
+  it('shows an error alert when delete fails and keeps the resume in the list', async () => {
+    mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED] });
+    mockDelete.mockRejectedValueOnce({
+      response: { data: { error: "This resume has been used in an application and can't be deleted" } },
+    });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('resume-card-1'));
+    fireEvent(screen.getByTestId('resume-card-1'), 'longPress');
+    await confirmAlertButton('Delete');
+
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Delete failed',
+        "This resume has been used in an application and can't be deleted"
+      );
+    });
+    expect(screen.getByTestId('resume-card-1')).toBeTruthy();
   });
 });

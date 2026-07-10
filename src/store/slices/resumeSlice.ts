@@ -65,6 +65,12 @@ const resumeSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    removeResume(state, action: PayloadAction<number>) {
+      state.list = state.list.filter((r) => r.id !== action.payload);
+      if (state.selected?.id === action.payload) {
+        state.selected = null;
+      }
+    },
   },
 });
 
@@ -79,5 +85,6 @@ export const {
   updateResumeScore,
   updateResumeParsed,
   clearError,
+  removeResume,
 } = resumeSlice.actions;
 export default resumeSlice.reducer;

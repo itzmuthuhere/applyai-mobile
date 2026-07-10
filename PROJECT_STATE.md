@@ -227,6 +227,17 @@ tests green.
 ```
 
 ```
+[FEAT-MOB] | Resume Delete | Complete | Jul 10, 2026
+Context: no delete-resume capability existed anywhere — direct follow-on from
+BUG-MOB-005's caveat (broken resume needs deleting + re-uploading to get a
+working link).
+Screen/File: ResumeListScreen.tsx — long-press a resume card → confirmation
+Alert → DELETE /api/resumes/{id} → dispatch removeResume. Shows the backend's
+409 message directly ("used in an application") if blocked.
+Files: resumeSlice.ts (removeResume reducer), constants/index.ts
+(RESUME_BY_ID), ResumeListScreen.test.tsx (+3 tests).
+Tests: 475 mobile tests green (472 + 3 new).
+
 [BUG-MOB-005] | Resume | FIXED | Opened Jul 10, 2026 — Fixed Jul 10, 2026
 Symptom: Resume filename shown as raw percent-encoding — "Muthu%20raja%20CV.pdf"
 instead of "Muthu raja CV.pdf" — on ResumeDetailScreen (user-reported via

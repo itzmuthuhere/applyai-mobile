@@ -1,7 +1,7 @@
-﻿import React, { useCallback, useEffect, useRef } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  Animated, Platform,
+  Animated, Platform, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,7 +13,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { ResumeStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
-import { setResumes, setLoading, setError, clearError } from '../../store/slices/resumeSlice';
+import { setResumes, setLoading, setError, clearError, removeResume } from '../../store/slices/resumeSlice';
 import { Resume } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { decodeFileName } from '../../utils/decodeFileName';
@@ -84,12 +84,22 @@ function SkeletonCard() {
 
 // ─── Resume card ──────────────────────────────────────────────────────────────
 
-function ResumeCard({ item, onPress }: { item: Resume; onPress: () => void }) {
+function ResumeCard({ item, onPress, onLongPress, deleting }: {
+  item: Resume; onPress: () => void; onLongPress: () => void; deleting: boolean;
+}) {
   const colors = useTheme();
   const styles = makeStyles(colors);
   const g = scoreGrade(item.aiScore, colors);
   return (
-    <TouchableOpacity testID={`resume-card-${item.id}`} style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      testID={`resume-card-${item.id}`}
+      style={[styles.card, deleting && { opacity: 0.5 }]}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      disabled={deleting}
+      delayLongPress={350}
+      activeOpacity={0.8}
+    >
       <View style={styles.cardRow}>
         {/* Icon */}
         <View style={[styles.fileIcon, { backgroundColor: item.isOriginal ? colors.primaryLight : '#F3E8FF' }]}>
@@ -155,6 +165,7 @@ export default function ResumeListScreen() {
   const navigation = useNavigation<Nav>();
   const dispatch = useDispatch();
   const { list, isLoading, error } = useSelector((s: RootState) => s.resume);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadResumes = useCallback(async () => {
     dispatch(setLoading(true));
@@ -170,12 +181,38 @@ export default function ResumeListScreen() {
 
   useEffect(() => { loadResumes(); }, [loadResumes]);
 
+  const deleteResume = useCallback(async (resume: Resume) => {
+    setDeletingId(resume.id);
+    try {
+      await apiClient.delete(API_ENDPOINTS.RESUME_BY_ID(resume.id));
+      dispatch(removeResume(resume.id));
+    } catch (e: any) {
+      const message = e?.response?.data?.error ?? 'Could not delete this resume. Please try again.';
+      Alert.alert('Delete failed', message);
+    } finally {
+      setDeletingId(null);
+    }
+  }, [dispatch]);
+
+  const confirmDelete = useCallback((resume: Resume) => {
+    Alert.alert(
+      'Delete resume?',
+      `"${decodeFileName(resume.versionName)}" will be permanently deleted.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteResume(resume) },
+      ]
+    );
+  }, [deleteResume]);
+
   const renderItem = useCallback(({ item }: { item: Resume }) => (
     <ResumeCard
       item={item}
       onPress={() => navigation.navigate(ROUTES.RESUME_DETAIL as 'ResumeDetail', { resumeId: item.id })}
+      onLongPress={() => confirmDelete(item)}
+      deleting={deletingId === item.id}
     />
-  ), [navigation]);
+  ), [navigation, confirmDelete, deletingId]);
 
   const keyExtractor = useCallback((item: Resume) => String(item.id), []);
 
