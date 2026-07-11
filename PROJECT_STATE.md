@@ -26,7 +26,7 @@
 **Phase:** 1 — Core Screens (Days 1–12) + Theming
 **Active Day:** Phase 1 complete — theming layer added Jun 24, 2026
 **Last Session:** Jul 11, 2026
-**Overall Status:** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. 482 mobile tests passing.
+**Overall Status:** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. BUG-MOB-010 fixed — profile avatar now opens the read-only view screen (with Edit button) instead of jumping straight into the edit form. 482 mobile tests passing.
 
 ---
 
@@ -368,6 +368,24 @@ serializes every LocalDateTime with a trailing 'Z'; once deployed, existing
 mobile dayjs calls resolve correctly with zero mobile-side changes needed.
 While in this screen, also redesigned it (see BUILD_LOG.md FEAT-UI-002) —
 card shadows, avatar color-hash rings, skeleton loaders, pill stat badges.
+```
+
+```
+[BUG-MOB-010] | Navigation (Profile) | FIXED | Opened Jul 11, 2026 — Fixed Jul 11, 2026
+Symptom: Tapping the header profile avatar opened the full edit form
+(ProfileSettingsScreen) directly instead of a read-only LinkedIn-style
+profile view with an Edit button.
+Screen/File: navigation/MainNavigator.tsx, navigation/types.ts,
+screens/home/HomeScreen.tsx
+Reproduced: yes
+Fix applied: The read-only view screen (ProfileScreen.tsx — hero card,
+Profile Strength, Experience/Education/Certifications as read-only cards,
+Edit Profile button) already existed but was never registered in any
+navigator; HomeStackParamList's "Profile" route pointed straight at
+ProfileSettingsScreen instead. Split into two routes: Profile → ProfileScreen
+(view), new ProfileSettings → ProfileSettingsScreen (edit). HomeScreen's
+"Complete your profile" banner updated to target ProfileSettings directly.
+482 mobile tests green, tsc --noEmit clean of new errors.
 ```
 
 Format when adding:

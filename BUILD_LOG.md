@@ -47,6 +47,7 @@
 | BUG-MOB-007 | "Tailor for a Job" quick action was a dead end — just showed an Alert describing steps to take manually instead of navigating anywhere | ResumeDetailScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — now navigates directly to JobsTab → JobFeed; added first-ever test file for this screen (2 tests) |
 | BUG-MOB-008 | Global bell icon's red unread dot showed permanently regardless of actual unread state — rendered unconditionally with zero connection to Redux | GlobalSearchBar, NotificationsScreen, SocialNotificationsScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — dot now conditioned on unreadCount > 0; both notification screens auto-mark-all-read on open instead of requiring a separate button tap; removed the now-redundant "Mark all read" button/header count |
 | BUG-MOB-009 | PostDetailScreen: a comment posted seconds ago showed "6 hours ago" instead of "just now" (systemic — affects every timestamp app-wide, not just comments) | PostDetailScreen (root cause is backend-wide) | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — no mobile code change; backend serialized LocalDateTime with no timezone marker, dayjs parsed it as device-local instead of UTC. Backend added a global Jackson UTC 'Z' serializer (applyai-backend BUG-059, config/JacksonConfig.java) |
+| BUG-MOB-010 | Tapping the header profile avatar went straight into edit mode (ProfileSettingsScreen — "Edit Profile", Save button, editable fields) instead of showing a read-only LinkedIn-style profile view first | MainNavigator, GlobalSearchBar | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — `HomeStackParamList`'s `"Profile"` route was wired directly to `ProfileSettingsScreen`; the fully-built read-only `ProfileScreen.tsx` (hero card, Profile Strength, Experience/Education/Certifications sections, "Edit Profile" button) was imported but never registered in any navigator. Split into two routes: `Profile` → `ProfileScreen` (view), new `ProfileSettings` → `ProfileSettingsScreen` (edit). HomeScreen's "Complete your profile" banner now targets `ProfileSettings` directly (unchanged UX intent — jump straight to editing). |
 
 ---
 
@@ -55,7 +56,7 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** Jul 11, 2026 — bell dot always-on fix (BUG-MOB-008), pending commit this session. BUG-MOB-009 + FEAT-UI-002 (PostDetailScreen redesign) also pending commit — held for explicit user confirmation before push since the paired backend change auto-deploys to production on push to main.
+**Last push:** Jul 11, 2026 — `166e0c3` (BUG-MOB-009 log + FEAT-UI-002 PostDetailScreen redesign). BUG-MOB-010 (Profile route wiring — avatar tap opened edit mode instead of view) pending commit this session.
 **Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed four bugs (nav duplicate screen names, chat duplicate keys, static fake notifications, percent-encoded resume filenames) plus added resume delete (previously missing entirely).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.
@@ -82,6 +83,31 @@
 ---
 
 ## SESSION LOGS
+
+---
+
+### SESSION — Jul 11, 2026 — BUG-MOB-010: Profile route wiring (view vs edit)
+
+**Type:** Scenario F + G (Bug Found + Fixed, same session)
+
+**Context:** User tapped the header profile avatar expecting a read-only, LinkedIn/Naukri-style profile view with an Edit button, and section-by-section editing (Education, Experience, Certifications). Instead it opened straight into the full edit form (ProfileSettingsScreen — "Edit Profile" header, Save button, editable Basic Info fields).
+
+**Root cause:** Nothing was missing — `ProfileScreen.tsx` already existed as a complete read-only view (hero card, Profile Strength card, Experience/Education/Certifications sections rendered as read-only cards, "Edit Profile" button). It was imported in `MainNavigator.tsx` but never registered on any navigator; `HomeStackParamList`'s `"Profile"` route pointed directly at `ProfileSettingsScreen` instead. `ProfileScreen`'s own `goToSettings()` handler already called `navigation.navigate('ProfileSettings')`, a route that didn't exist yet either — so even reaching the view screen, its own Edit button was dead.
+
+**Fix:**
+- `navigation/types.ts` — added `ProfileSettings: undefined;` to `HomeStackParamList`
+- `navigation/MainNavigator.tsx` — `"Profile"` now renders `ProfileScreen` (view); added new `"ProfileSettings"` route rendering `ProfileSettingsScreen` (edit)
+- `screens/home/HomeScreen.tsx` — "Complete your profile" banner now navigates to `'ProfileSettings'` directly (preserves its original UX intent of jumping straight to editing, since `'Profile'` now means view-only)
+- `components/GlobalSearchBar.tsx` unchanged — its `navigate('Profile')` call was already correct in intent, just resolved to the wrong screen before this fix
+
+**Files changed:**
+- `src/navigation/types.ts`
+- `src/navigation/MainNavigator.tsx`
+- `src/screens/home/HomeScreen.tsx`
+
+**Tests:** 482 mobile tests green (no test changes needed — navigation is mocked generically in existing tests). `tsc --noEmit` — zero new errors (pre-existing unrelated errors in `useFcmDeepLink.test.ts`, `AppNavigator.tsx`, `ApplicationDetailScreen.tsx`, `ChatDetailScreen.tsx`, `SearchScreen.tsx`, `ProfileSettingsScreen.tsx` were already present before this change).
+
+**Note:** Per-section editing (Education/Experience/Certifications) already existed as modals within `ProfileSettingsScreen` — this fix makes them reachable via the intended view→edit flow, it didn't need to build that capability.
 
 ---
 

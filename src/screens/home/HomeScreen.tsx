@@ -201,7 +201,7 @@ export default function HomeScreen() {
 
         {/* ── Profile Completeness ────────────────────────────── */}
         {score < 80 && (
-          <TouchableOpacity style={styles.completeCard} onPress={() => navigation.navigate('Profile')} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.completeCard} onPress={() => navigation.navigate('ProfileSettings')} activeOpacity={0.85}>
             <View style={[styles.completeDot, { backgroundColor: score === 0 ? '#EF4444' : score < 50 ? '#F59E0B' : '#10B981' }]} />
             <View style={{ flex: 1 }}>
               <View style={styles.completeHeader}>

@@ -9,6 +9,7 @@ export type AuthStackParamList = {
 export type HomeStackParamList = {
   Home: undefined;
   Profile: undefined;
+  ProfileSettings: undefined;
   Analytics: undefined;
   SalaryIntel: undefined;
   NegotiationCoach: undefined;

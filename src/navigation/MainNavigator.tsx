@@ -91,7 +91,8 @@ function HomeNavigator() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home" component={HomeScreen} />
-      <HomeStack.Screen name="Profile" component={ProfileSettingsScreen} />
+      <HomeStack.Screen name="Profile" component={ProfileScreen} />
+      <HomeStack.Screen name="ProfileSettings" component={ProfileSettingsScreen} />
       <HomeStack.Screen name="Analytics" component={AnalyticsScreen} options={{ headerShown: true, title: 'Analytics' }} />
       <HomeStack.Screen name="SalaryIntel" component={SalaryIntelScreen} options={{ headerShown: true, title: 'Salary Intelligence' }} />
       <HomeStack.Screen name="NegotiationCoach" component={NegotiationCoachScreen} options={{ headerShown: true, title: 'Negotiation Coach' }} />
