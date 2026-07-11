@@ -239,8 +239,37 @@ describe('JobFeedScreen', () => {
     fireEvent.press(screen.getByTestId('auto-apply-submit-btn'));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith('/api/auto-apply/queue', { jobIds: [10], resumeId: 5 });
+      expect(mockPost).toHaveBeenCalledWith('/api/auto-apply/queue', {
+        jobIds: [10], resumeId: 5, tailorResume: true, generateCoverLetter: false,
+      });
       expect(navigate).toHaveBeenCalledWith('AutoApplyQueue');
+    });
+  });
+
+  it('respects tailor-resume and cover-letter toggles when queuing', async () => {
+    mockGet
+      .mockResolvedValueOnce({ data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 } })
+      .mockResolvedValueOnce({ data: [RESUME] });
+    mockPost.mockResolvedValueOnce({ data: [{ id: 1, status: 'PENDING' }] });
+
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('select-btn'));
+    fireEvent.press(screen.getByTestId('select-btn'));
+
+    await waitFor(() => screen.getByTestId('job-card-10'));
+    fireEvent.press(screen.getByTestId('job-card-10'));
+
+    await waitFor(() => screen.getByTestId('toggle-tailor-resume'));
+    fireEvent.press(screen.getByTestId('toggle-tailor-resume')); // off
+    fireEvent.press(screen.getByTestId('toggle-cover-letter'));  // on
+
+    fireEvent.press(screen.getByTestId('auto-apply-submit-btn'));
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith('/api/auto-apply/queue', {
+        jobIds: [10], resumeId: 5, tailorResume: false, generateCoverLetter: true,
+      });
     });
   });
 

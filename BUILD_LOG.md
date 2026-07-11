@@ -29,6 +29,7 @@
 |----|-------------|-----|------|--------|
 | FEAT-UI-001 | Centralized theme system — dark mode + 5 accent colors, single-place change propagates to all 41 screens | — | Jun 24, 2026 | ✅ Complete |
 | FEAT-UI-002 | PostDetailScreen LinkedIn-grade redesign — card shadows, per-person color-hash avatar rings (post author + every commenter), skeleton shimmer loaders (post header + comments) replacing spinners, pill-style like/comment stat badges, highlighted active-reaction button, own-comment tint + indicator dot, CTA-shadow send button. No functional change — all testIDs and handlers preserved. Bundled with BUG-MOB-009 (backend-side timestamp fix). 482 mobile tests green | — | Jul 11, 2026 | ✅ Complete |
+| FEAT-019 | Bulk auto-apply pipeline (mobile side of applyai-backend FEAT-018) — JobFeedScreen select-mode queue bar gets two toggle chips ("Tailor resume for all" default-on, "Cover letter for all" default-off) wired into the POST /api/auto-apply/queue body; AutoApplyQueueScreen gets a full select-mode (in-body Select/Cancel row, per-card checkboxes disabled on non-removable statuses APPLYING/APPLIED, Select All, bulk-remove bottom bar hitting new DELETE /api/auto-apply/queue/batch); AutoApplyQueueItem type + queue cards gain a "Cover letter ready" badge alongside the existing "Resume tailored" one. Jobs tab itself needed no change — the default feed personalization (targetRole) is entirely backend-side since the screen already omits `q` when its search box is empty. 493 mobile tests green (482 + 11 new: JobFeedScreen toggle test, AutoApplyQueueScreen ×7 select-mode/bulk tests, cover-letter badge test) | — | Jul 11, 2026 | ✅ Complete |
 
 ---
 
@@ -57,7 +58,7 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** Jul 11, 2026 — `e31aa9a` (BUG-MOB-010, Profile route wiring). BUG-MOB-011 (Quick Apply never synced Redux — Mock Interview picker empty) pending commit this session.
+**Last push:** Jul 11, 2026 — `f05f2e6` (BUG-MOB-011, Quick Apply Redux sync). FEAT-019 (bulk auto-apply pipeline UI) pending commit this session.
 **Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed four bugs (nav duplicate screen names, chat duplicate keys, static fake notifications, percent-encoded resume filenames) plus added resume delete (previously missing entirely).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.

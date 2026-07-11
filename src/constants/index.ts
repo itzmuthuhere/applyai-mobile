@@ -128,6 +128,7 @@ export const API_ENDPOINTS = {
   AUTO_APPLY_QUEUE_PENDING: '/api/auto-apply/queue/pending',
   AUTO_APPLY_STATUS: (id: number) => `/api/auto-apply/${id}/status`,
   AUTO_APPLY_DELETE: (id: number) => `/api/auto-apply/${id}`,
+  AUTO_APPLY_DELETE_BATCH: '/api/auto-apply/queue/batch',
   AUTO_APPLY_COUNT: '/api/auto-apply/count',
   // Social Feed
   FEED: '/api/feed',

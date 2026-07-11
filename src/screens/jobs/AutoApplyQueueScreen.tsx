@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, Alert, ActivityIndicator,
@@ -22,6 +22,10 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; l
   SKIPPED:  { color: '#475569', bg: '#F1F5F9', icon: 'arrow-forward-circle-outline', label: 'Skipped' },
 };
 
+function isRemovable(status: string) {
+  return status === 'PENDING' || status === 'FAILED' || status === 'SKIPPED';
+}
+
 function StatusBadge({ status }: { status: string }) {
   const colors = useTheme();
   const styles = makeStyles(colors);
@@ -35,15 +39,32 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function QueueCard({
-  item, onRemove,
-}: { item: AutoApplyQueueItem; onRemove: (id: number) => void }) {
+  item, onRemove, selectMode, selected, onToggleSelect,
+}: {
+  item: AutoApplyQueueItem;
+  onRemove: (id: number) => void;
+  selectMode: boolean;
+  selected: boolean;
+  onToggleSelect: (id: number) => void;
+}) {
   const colors = useTheme();
   const styles = makeStyles(colors);
   const initial = item.company ? item.company[0].toUpperCase() : '?';
-  const canRemove = item.status === 'PENDING' || item.status === 'FAILED' || item.status === 'SKIPPED';
+  const canRemove = isRemovable(item.status);
 
-  return (
-    <View style={styles.card}>
+  const body = (
+    <>
+      {selectMode && (
+        <View style={styles.checkWrap}>
+          <View style={[
+            styles.checkCircle,
+            selected && styles.checkCircleActive,
+            !canRemove && styles.checkCircleDisabled,
+          ]}>
+            {selected && <Ionicons name="checkmark" size={13} color="#fff" />}
+          </View>
+        </View>
+      )}
       <View style={styles.cardLeft}>
         <View style={styles.logoCircle}>
           <Text style={styles.logoInitial}>{initial}</Text>
@@ -63,17 +84,25 @@ function QueueCard({
           )}
           <Text style={styles.queuedAt}>{dayjs(item.queuedAt).fromNow()}</Text>
         </View>
-        {item.tailoredResumeText && (
-          <View style={styles.tailoredBadge}>
-            <Ionicons name="sparkles" size={11} color={colors.primary} />
-            <Text style={styles.tailoredText}>Resume tailored</Text>
-          </View>
-        )}
+        <View style={styles.tagRow}>
+          {item.tailoredResumeText && (
+            <View style={styles.tailoredBadge}>
+              <Ionicons name="sparkles" size={11} color={colors.primary} />
+              <Text style={styles.tailoredText}>Resume tailored</Text>
+            </View>
+          )}
+          {item.tailoredCoverLetterText && (
+            <View style={styles.tailoredBadge}>
+              <Ionicons name="document-text" size={11} color={colors.primary} />
+              <Text style={styles.tailoredText}>Cover letter ready</Text>
+            </View>
+          )}
+        </View>
         {item.appliedAt && (
           <Text style={styles.appliedAt}>Applied {dayjs(item.appliedAt).fromNow()}</Text>
         )}
       </View>
-      {canRemove && (
+      {!selectMode && canRemove && (
         <TouchableOpacity
           testID={`remove-btn-${item.id}`}
           style={styles.removeBtn}
@@ -83,18 +112,36 @@ function QueueCard({
           <Ionicons name="trash-outline" size={18} color={colors.error} />
         </TouchableOpacity>
       )}
-    </View>
+    </>
   );
+
+  if (selectMode) {
+    return (
+      <TouchableOpacity
+        testID={`queue-card-${item.id}`}
+        style={styles.card}
+        activeOpacity={canRemove ? 0.7 : 1}
+        disabled={!canRemove}
+        onPress={() => onToggleSelect(item.id)}
+      >
+        {body}
+      </TouchableOpacity>
+    );
+  }
+  return <View style={styles.card}>{body}</View>;
 }
 
 export default function AutoApplyQueueScreen() {
   const colors = useTheme();
   const styles = makeStyles(colors);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [items, setItems] = useState<AutoApplyQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
 
   const load = useCallback(async (refresh = false) => {
     if (!refresh) setIsLoading(true);
@@ -111,6 +158,11 @@ export default function AutoApplyQueueScreen() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const exitSelectMode = useCallback(() => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }, []);
 
   const handleRemove = useCallback(async (id: number) => {
     Alert.alert('Remove Job', 'Remove this job from your auto-apply queue?', [
@@ -129,21 +181,85 @@ export default function AutoApplyQueueScreen() {
     ]);
   }, []);
 
+  const handleToggleSelect = useCallback((id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(new Set(items.filter(i => isRemovable(i.status)).map(i => i.id)));
+  }, [items]);
+
+  const handleBulkRemove = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    Alert.alert(
+      'Remove Jobs',
+      `Remove ${selectedIds.size} job${selectedIds.size === 1 ? '' : 's'} from your auto-apply queue?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove', style: 'destructive',
+          onPress: async () => {
+            setIsBulkRemoving(true);
+            const ids = Array.from(selectedIds);
+            try {
+              await apiClient.delete(API_ENDPOINTS.AUTO_APPLY_DELETE_BATCH, { data: { ids } });
+              setItems(prev => prev.filter(i => !selectedIds.has(i.id)));
+              exitSelectMode();
+            } catch {
+              Alert.alert('Error', 'Could not remove these jobs. Please try again.');
+            } finally {
+              setIsBulkRemoving(false);
+            }
+          },
+        },
+      ],
+    );
+  }, [selectedIds, exitSelectMode]);
+
   const counts = items.reduce<Record<string, number>>((acc, i) => {
     acc[i.status] = (acc[i.status] ?? 0) + 1;
     return acc;
   }, {});
 
   const renderItem = useCallback(({ item }: { item: AutoApplyQueueItem }) => (
-    <QueueCard item={item} onRemove={handleRemove} />
-  ), [handleRemove]);
+    <QueueCard
+      item={item}
+      onRemove={handleRemove}
+      selectMode={selectMode}
+      selected={selectedIds.has(item.id)}
+      onToggleSelect={handleToggleSelect}
+    />
+  ), [handleRemove, selectMode, selectedIds, handleToggleSelect]);
 
   const keyExtractor = useCallback((item: AutoApplyQueueItem) => String(item.id), []);
 
   return (
     <View style={styles.screen}>
-      {/* Summary bar */}
+      {/* Select toggle row */}
       {items.length > 0 && (
+        <View testID="queue-select-row" style={styles.selectRow}>
+          <Text style={styles.selectRowTitle}>
+            {selectMode ? `${selectedIds.size} selected` : `${items.length} job${items.length === 1 ? '' : 's'}`}
+          </Text>
+          {!selectMode ? (
+            <TouchableOpacity testID="queue-select-toggle" onPress={() => setSelectMode(true)} style={styles.selectToggleBtn}>
+              <Text style={styles.selectToggleText}>Select</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity testID="queue-cancel-select-btn" onPress={exitSelectMode} style={styles.selectToggleBtn}>
+              <Text style={styles.selectToggleText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Summary bar */}
+      {items.length > 0 && !selectMode && (
         <View testID="queue-summary-bar" style={styles.summaryBar}>
           {Object.entries(counts).map(([status, count]) => {
             const cfg = STATUS_CONFIG[status];
@@ -159,12 +275,14 @@ export default function AutoApplyQueueScreen() {
       )}
 
       {/* Extension hint banner */}
-      <View testID="extension-hint-banner" style={styles.hintBanner}>
-        <Ionicons name="extension-puzzle-outline" size={15} color={colors.primary} />
-        <Text style={styles.hintText}>
-          Install the ApplyAI Chrome extension — it picks up queued jobs and auto-fills applications on Naukri, LinkedIn & Indeed.
-        </Text>
-      </View>
+      {!selectMode && (
+        <View testID="extension-hint-banner" style={styles.hintBanner}>
+          <Ionicons name="extension-puzzle-outline" size={15} color={colors.primary} />
+          <Text style={styles.hintText}>
+            Install the ApplyAI Chrome extension — it picks up queued jobs and auto-fills applications on Naukri, LinkedIn & Indeed.
+          </Text>
+        </View>
+      )}
 
       {isLoading ? (
         <View testID="queue-loading"><ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} /></View>
@@ -181,7 +299,7 @@ export default function AutoApplyQueueScreen() {
           data={items}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={[styles.listContent, items.length === 0 && { flex: 1 }]}
+          contentContainerStyle={[styles.listContent, items.length === 0 && { flex: 1 }, selectMode && { paddingBottom: 90 }]}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -206,6 +324,32 @@ export default function AutoApplyQueueScreen() {
           }
         />
       )}
+
+      {/* Bulk action bar */}
+      {selectMode && (
+        <View testID="queue-bulk-bar" style={styles.bulkBar}>
+          <TouchableOpacity testID="queue-select-all-btn" onPress={handleSelectAll} style={styles.bulkSecondaryBtn}>
+            <Text style={styles.bulkSecondaryText}>Select All</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="queue-bulk-remove-btn"
+            style={[styles.bulkRemoveBtn, (selectedIds.size === 0 || isBulkRemoving) && styles.bulkRemoveBtnDisabled]}
+            onPress={handleBulkRemove}
+            disabled={selectedIds.size === 0 || isBulkRemoving}
+          >
+            {isBulkRemoving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={16} color="#fff" />
+                <Text style={styles.bulkRemoveText}>
+                  Remove{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -213,6 +357,15 @@ export default function AutoApplyQueueScreen() {
 function makeStyles(colors: AppColors) {
   return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+
+  selectRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  selectRowTitle: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+  selectToggleBtn: { padding: 4 },
+  selectToggleText: { color: colors.primary, fontWeight: '700', fontSize: 14 },
 
   summaryBar: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
@@ -242,6 +395,14 @@ function makeStyles(colors: AppColors) {
     borderRadius: 12, padding: 14,
     borderWidth: 1, borderColor: colors.border,
   },
+  checkWrap: { paddingTop: 2 },
+  checkCircle: {
+    width: 22, height: 22, borderRadius: 11,
+    borderWidth: 2, borderColor: colors.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  checkCircleActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  checkCircleDisabled: { opacity: 0.35 },
   cardLeft: { paddingTop: 2 },
   logoCircle: {
     width: 38, height: 38, borderRadius: 19,
@@ -267,6 +428,7 @@ function makeStyles(colors: AppColors) {
   scoreText: { fontSize: 11, color: colors.textSecondary, fontWeight: '500' },
   queuedAt: { fontSize: 11, color: colors.textMuted },
 
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tailoredBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2,
   },
@@ -292,5 +454,27 @@ function makeStyles(colors: AppColors) {
     paddingHorizontal: 24, paddingVertical: 11, borderRadius: 8,
   },
   goToJobsText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+
+  bulkBar: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    flexDirection: 'row', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1, borderTopColor: colors.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08, shadowRadius: 6, elevation: 8,
+  },
+  bulkSecondaryBtn: {
+    paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10,
+    borderWidth: 1, borderColor: colors.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  bulkSecondaryText: { color: colors.textSecondary, fontWeight: '600', fontSize: 14 },
+  bulkRemoveBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: colors.error, borderRadius: 10, paddingVertical: 12,
+  },
+  bulkRemoveBtnDisabled: { opacity: 0.5 },
+  bulkRemoveText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   });
 }

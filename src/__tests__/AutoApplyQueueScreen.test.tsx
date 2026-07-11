@@ -11,7 +11,7 @@ jest.mock('../api/apiClient', () => ({
 }));
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: jest.fn(() => ({ goBack: jest.fn() })),
+  useNavigation: jest.fn(() => ({ goBack: jest.fn(), setOptions: jest.fn() })),
 }));
 
 jest.mock('../constants', () => ({
@@ -24,6 +24,7 @@ jest.mock('../constants', () => ({
   API_ENDPOINTS: {
     AUTO_APPLY_QUEUE: '/api/auto-apply/queue',
     AUTO_APPLY_DELETE: (id: number) => `/api/auto-apply/${id}`,
+    AUTO_APPLY_DELETE_BATCH: '/api/auto-apply/queue/batch',
   },
 }));
 
@@ -179,5 +180,97 @@ describe('AutoApplyQueueScreen', () => {
     await waitFor(() => {
       expect(screen.getByTestId('extension-hint-banner')).toBeTruthy();
     });
+  });
+
+  it('shows "Cover letter ready" badge when tailoredCoverLetterText is present', async () => {
+    mockGet.mockResolvedValueOnce({ data: [{ ...PENDING_ITEM, tailoredCoverLetterText: 'Dear Hiring Manager...' }] });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Cover letter ready')).toBeTruthy();
+    });
+  });
+
+  it('enters select mode and shows selected count', async () => {
+    mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM, { ...PENDING_ITEM, id: 3 }] });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('queue-select-toggle'));
+    fireEvent.press(screen.getByTestId('queue-select-toggle'));
+
+    await waitFor(() => screen.getByTestId('queue-card-1'));
+    fireEvent.press(screen.getByTestId('queue-card-1'));
+
+    expect(screen.getByText('1 selected')).toBeTruthy();
+  });
+
+  it('select all selects every removable item', async () => {
+    mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM, APPLIED_ITEM] });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('queue-select-toggle'));
+    fireEvent.press(screen.getByTestId('queue-select-toggle'));
+
+    await waitFor(() => screen.getByTestId('queue-select-all-btn'));
+    fireEvent.press(screen.getByTestId('queue-select-all-btn'));
+
+    // APPLIED_ITEM is not removable, so only PENDING_ITEM (id 1) gets selected
+    expect(screen.getByText('1 selected')).toBeTruthy();
+  });
+
+  it('cancel exits select mode and clears selection', async () => {
+    mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM] });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('queue-select-toggle'));
+    fireEvent.press(screen.getByTestId('queue-select-toggle'));
+
+    await waitFor(() => screen.getByTestId('queue-card-1'));
+    fireEvent.press(screen.getByTestId('queue-card-1'));
+    expect(screen.getByText('1 selected')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('queue-cancel-select-btn'));
+
+    expect(screen.queryByTestId('queue-bulk-bar')).toBeNull();
+  });
+
+  it('bulk removes selected items after confirmation', async () => {
+    mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM, { ...PENDING_ITEM, id: 3, jobTitle: 'Other Job' }] });
+    mockDelete.mockResolvedValueOnce({ data: {} });
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+      const confirm = buttons?.find((b: any) => b.style !== 'cancel');
+      confirm?.onPress?.();
+    });
+
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('queue-select-toggle'));
+    fireEvent.press(screen.getByTestId('queue-select-toggle'));
+
+    await waitFor(() => screen.getByTestId('queue-card-1'));
+    fireEvent.press(screen.getByTestId('queue-card-1'));
+
+    fireEvent.press(screen.getByTestId('queue-bulk-remove-btn'));
+
+    await waitFor(() => {
+      expect(mockDelete).toHaveBeenCalledWith('/api/auto-apply/queue/batch', { data: { ids: [1] } });
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('Senior Engineer')).toBeNull();
+      expect(screen.getByText('Other Job')).toBeTruthy();
+    });
+  });
+
+  it('non-removable items cannot be selected', async () => {
+    mockGet.mockResolvedValueOnce({ data: [APPLIED_ITEM] });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('queue-select-toggle'));
+    fireEvent.press(screen.getByTestId('queue-select-toggle'));
+
+    await waitFor(() => screen.getByTestId('queue-card-2'));
+    fireEvent.press(screen.getByTestId('queue-card-2'));
+
+    expect(screen.getByText('0 selected')).toBeTruthy();
   });
 });

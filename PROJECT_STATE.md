@@ -26,7 +26,7 @@
 **Phase:** 1 — Core Screens (Days 1–12) + Theming
 **Active Day:** Phase 1 complete — theming layer added Jun 24, 2026
 **Last Session:** Jul 11, 2026
-**Overall Status:** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. BUG-MOB-010 fixed — profile avatar now opens the read-only view screen (with Edit button) instead of jumping straight into the edit form. BUG-MOB-011 fixed — all 3 Quick Apply entry points (JobDetailScreen, JobFeedScreen, SavedJobsScreen) now sync Redux so the Mock Interview job picker sees new applications immediately. 486 mobile tests passing.
+**Overall Status:** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. BUG-MOB-010 fixed — profile avatar now opens the read-only view screen (with Edit button) instead of jumping straight into the edit form. BUG-MOB-011 fixed — all 3 Quick Apply entry points (JobDetailScreen, JobFeedScreen, SavedJobsScreen) now sync Redux so the Mock Interview job picker sees new applications immediately. FEAT-019 — JobFeedScreen bulk-queue bar gets tailor/cover-letter toggle chips; AutoApplyQueueScreen gets full select-mode + bulk remove (applyai-backend FEAT-018). 493 mobile tests passing.
 
 ---
 

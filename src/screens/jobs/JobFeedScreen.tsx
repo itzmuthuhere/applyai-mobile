@@ -252,6 +252,8 @@ export default function JobFeedScreen() {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<number | null>(null);
   const [isQueuing, setIsQueuing] = useState(false);
+  const [tailorResume, setTailorResume] = useState(true);
+  const [generateCoverLetter, setGenerateCoverLetter] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList>(null);
@@ -381,6 +383,8 @@ export default function JobFeedScreen() {
       await apiClient.post(API_ENDPOINTS.AUTO_APPLY_QUEUE, {
         jobIds: Array.from(selectedJobs),
         resumeId: selectedResumeId,
+        tailorResume,
+        generateCoverLetter,
       });
       exitSelectMode();
       (navigation as any).navigate('AutoApplyQueue');
@@ -390,7 +394,7 @@ export default function JobFeedScreen() {
     } finally {
       setIsQueuing(false);
     }
-  }, [selectedJobs, selectedResumeId, resumes, exitSelectMode, navigation]);
+  }, [selectedJobs, selectedResumeId, resumes, exitSelectMode, navigation, tailorResume, generateCoverLetter]);
 
   const hasFilters = !!debouncedQuery.trim() || filterSalary > 0 || activeTab !== 'all';
   const filterCount = (filterSalary > 0 ? 1 : 0) + (!!debouncedQuery.trim() ? 1 : 0);
@@ -621,6 +625,38 @@ export default function JobFeedScreen() {
           {resumes.length === 0 && (
             <Text style={styles.noResumeHint}>No parsed resume found. Parse a resume first.</Text>
           )}
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              testID="toggle-tailor-resume"
+              style={[styles.toggleChip, tailorResume && styles.toggleChipActive]}
+              onPress={() => setTailorResume(v => !v)}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={tailorResume ? 'checkbox' : 'square-outline'}
+                size={14}
+                color={tailorResume ? colors.primary : colors.textSecondary}
+              />
+              <Text style={[styles.toggleChipText, tailorResume && styles.toggleChipTextActive]}>
+                Tailor resume for all
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="toggle-cover-letter"
+              style={[styles.toggleChip, generateCoverLetter && styles.toggleChipActive]}
+              onPress={() => setGenerateCoverLetter(v => !v)}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={generateCoverLetter ? 'checkbox' : 'square-outline'}
+                size={14}
+                color={generateCoverLetter ? colors.primary : colors.textSecondary}
+              />
+              <Text style={[styles.toggleChipText, generateCoverLetter && styles.toggleChipTextActive]}>
+                Cover letter for all
+              </Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             testID="auto-apply-submit-btn"
             style={[styles.autoApplyBtn, (selectedJobs.size === 0 || isQueuing) && styles.autoApplyBtnDisabled]}
@@ -747,6 +783,15 @@ function makeStyles(colors: AppColors) {
   resumeChipText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500', flexShrink: 1 },
   resumeChipTextActive: { color: colors.primary, fontWeight: '600' },
   noResumeHint: { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginVertical: 4 },
+  toggleRow: { flexDirection: 'row', gap: 8 },
+  toggleChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
+    borderWidth: 1, borderColor: colors.border, backgroundColor: '#F8FAFC', flex: 1,
+  },
+  toggleChipActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+  toggleChipText: { fontSize: 11, color: colors.textSecondary, fontWeight: '500', flexShrink: 1 },
+  toggleChipTextActive: { color: colors.primary, fontWeight: '700' },
   autoApplyBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: colors.primary, borderRadius: 12,
