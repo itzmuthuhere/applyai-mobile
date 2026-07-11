@@ -26,7 +26,7 @@
 **Phase:** 1 — Core Screens (Days 1–12) + Theming
 **Active Day:** Phase 1 complete — theming layer added Jun 24, 2026
 **Last Session:** Jul 11, 2026
-**Overall Status:** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. BUG-MOB-010 fixed — profile avatar now opens the read-only view screen (with Edit button) instead of jumping straight into the edit form. 482 mobile tests passing.
+**Overall Status:** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. BUG-MOB-010 fixed — profile avatar now opens the read-only view screen (with Edit button) instead of jumping straight into the edit form. BUG-MOB-011 fixed — all 3 Quick Apply entry points (JobDetailScreen, JobFeedScreen, SavedJobsScreen) now sync Redux so the Mock Interview job picker sees new applications immediately. 486 mobile tests passing.
 
 ---
 
@@ -386,6 +386,31 @@ ProfileSettingsScreen instead. Split into two routes: Profile → ProfileScreen
 (view), new ProfileSettings → ProfileSettingsScreen (edit). HomeScreen's
 "Complete your profile" banner updated to target ProfileSettings directly.
 482 mobile tests green, tsc --noEmit clean of new errors.
+```
+
+```
+[BUG-MOB-011] | Interview (Mock Interview picker) | FIXED | Opened Jul 11, 2026 — Fixed Jul 11, 2026
+Symptom: "Choose a Job Application" modal in Mock Interview showed no
+applications despite the user having applied to 1 job. Recurring class of
+bug — previously fixed as BUG-018 (Jun 24, 2026).
+Screen/File: InterviewStartScreen.tsx's picker was NOT the bug this time —
+root cause was upstream in screens/jobs/JobDetailScreen.tsx,
+JobFeedScreen.tsx, SavedJobsScreen.tsx
+Reproduced: yes
+Fix applied: All 3 "Quick Apply" entry points POST to
+/api/applications/quick-apply/{jobId} and get back the created
+ApplicationResponse, but discarded it instead of dispatching addApplication
+to Redux — only the original ApplyJobScreen flow did this correctly. When a
+user's first application came through any Quick Apply button, Redux stayed
+empty; the picker's live GET fetch was the only recovery path, and per
+BUG-018's design, a slow/failed fetch (Railway cold start) silently falls
+back to the stale empty Redux data. All 3 call sites now capture the
+response and dispatch(addApplication(data)). Added JobDetailScreen.test.tsx
+(new — screen had no tests before) + regression tests in JobFeedScreen.test.tsx
+and SavedJobsScreen.test.tsx. 486 mobile tests green.
+Note: this is a recurring pattern — every new "apply" entry point added
+since BUG-018 forgot the Redux-sync step. Watch for this if a 4th apply
+surface is ever added.
 ```
 
 Format when adding:

@@ -21,6 +21,7 @@ jest.mock('../constants', () => ({
     JOBS: '/api/jobs',
     RESUMES: '/api/resumes',
     AUTO_APPLY_QUEUE: '/api/auto-apply/queue',
+    QUICK_APPLY: (id: number) => `/api/applications/quick-apply/${id}`,
   },
 }));
 
@@ -29,6 +30,7 @@ import JobFeedScreen from '../screens/jobs/JobFeedScreen';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../store/slices/authSlice';
+import applicationReducer from '../store/slices/applicationSlice';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
 const mockPost = apiClient.post as jest.MockedFunction<typeof apiClient.post>;
@@ -64,7 +66,7 @@ const RESUME = {
 
 function makeStore(role = 'JOBSEEKER') {
   return configureStore({
-    reducer: { auth: authReducer },
+    reducer: { auth: authReducer, application: applicationReducer },
     preloadedState: {
       auth: {
         jwt: 'test-token',
@@ -77,11 +79,12 @@ function makeStore(role = 'JOBSEEKER') {
 }
 
 function renderScreen(role = 'JOBSEEKER') {
-  return render(
-    <Provider store={makeStore(role)}>
+  const store = makeStore(role);
+  return { store, ...render(
+    <Provider store={store}>
       <JobFeedScreen />
     </Provider>
-  );
+  ) };
 }
 
 describe('JobFeedScreen', () => {
@@ -247,6 +250,30 @@ describe('JobFeedScreen', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('jobs-empty-state')).toBeTruthy();
+    });
+  });
+
+  // Regression test for BUG-MOB-011: Easy Apply from this screen never
+  // dispatched the new application to Redux, so it went missing from the
+  // Mock Interview job picker (which reads state.application.list) until
+  // the next app restart repopulated it.
+  it('dispatches the new application to Redux on Easy Apply', async () => {
+    mockGet.mockResolvedValueOnce({ data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 } });
+    const newApplication = { id: 42, job: JOB, status: 'APPLIED', appliedAt: '2026-07-11T10:00:00.000Z' };
+    mockPost.mockResolvedValueOnce({ data: newApplication });
+    const { store } = renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Senior Engineer')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Easy Apply'));
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith('/api/applications/quick-apply/10');
+    });
+    await waitFor(() => {
+      expect(store.getState().application.list).toContainEqual(newApplication);
     });
   });
 });

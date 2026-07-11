@@ -1,9 +1,12 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import applicationReducer from '../store/slices/applicationSlice';
 
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
-  default: { get: jest.fn(), delete: jest.fn() },
+  default: { get: jest.fn(), delete: jest.fn(), post: jest.fn() },
 }));
 
 jest.mock('@react-navigation/native', () => ({
@@ -20,6 +23,7 @@ jest.mock('../constants', () => ({
   API_ENDPOINTS: {
     SAVED_JOBS: '/api/jobs/saved',
     SAVE_JOB: (id: number) => `/api/jobs/${id}/save`,
+    QUICK_APPLY: (id: number) => `/api/applications/quick-apply/${id}`,
   },
 }));
 
@@ -28,6 +32,15 @@ import SavedJobsScreen from '../screens/jobs/SavedJobsScreen';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
 const mockDelete = apiClient.delete as jest.MockedFunction<typeof apiClient.delete>;
+const mockPost = apiClient.post as jest.MockedFunction<typeof apiClient.post>;
+
+function makeStore() {
+  return configureStore({ reducer: { application: applicationReducer } });
+}
+
+function renderScreen(store = makeStore()) {
+  return { store, ...render(<Provider store={store}><SavedJobsScreen /></Provider>) };
+}
 
 const SAVED_JOBS = [
   {
@@ -49,7 +62,7 @@ describe('SavedJobsScreen', () => {
   });
 
   it('loads and shows saved jobs', async () => {
-    render(<SavedJobsScreen />);
+    renderScreen();
 
     await waitFor(() => {
       expect(screen.getByText('Backend Developer')).toBeTruthy();
@@ -58,7 +71,7 @@ describe('SavedJobsScreen', () => {
   });
 
   it('shows company name for each job', async () => {
-    render(<SavedJobsScreen />);
+    renderScreen();
 
     await waitFor(() => {
       expect(screen.getByText('Acme Corp')).toBeTruthy();
@@ -67,7 +80,7 @@ describe('SavedJobsScreen', () => {
   });
 
   it('shows salary when available', async () => {
-    render(<SavedJobsScreen />);
+    renderScreen();
 
     await waitFor(() => {
       expect(screen.getByText(/₹12L/i)).toBeTruthy();
@@ -75,7 +88,7 @@ describe('SavedJobsScreen', () => {
   });
 
   it('shows Remote badge for remote jobs', async () => {
-    render(<SavedJobsScreen />);
+    renderScreen();
 
     await waitFor(() => {
       expect(screen.getByText('Remote')).toBeTruthy();
@@ -84,7 +97,7 @@ describe('SavedJobsScreen', () => {
 
   it('shows empty state when no saved jobs', async () => {
     mockGet.mockResolvedValueOnce({ data: [] });
-    render(<SavedJobsScreen />);
+    renderScreen();
 
     await waitFor(() => {
       expect(screen.getByText(/No saved jobs/i)).toBeTruthy();
@@ -93,7 +106,7 @@ describe('SavedJobsScreen', () => {
 
   it('shows empty state on load failure (silently degrades)', async () => {
     mockGet.mockRejectedValueOnce(new Error('Network error'));
-    render(<SavedJobsScreen />);
+    renderScreen();
 
     await waitFor(() => {
       // Component silently catches and sets jobs=[] → shows empty state
@@ -103,7 +116,7 @@ describe('SavedJobsScreen', () => {
 
   it('calls unsave endpoint when bookmark tapped', async () => {
     mockDelete.mockResolvedValueOnce({ data: {} });
-    render(<SavedJobsScreen />);
+    renderScreen();
 
     await waitFor(() => {
       expect(screen.getByText('Backend Developer')).toBeTruthy();
@@ -113,6 +126,29 @@ describe('SavedJobsScreen', () => {
 
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith('/api/jobs/1/save');
+    });
+  });
+
+  // Regression test for BUG-MOB-011: Easy Apply from this screen never
+  // dispatched the new application to Redux, so it went missing from the
+  // Mock Interview job picker (which reads state.application.list) until
+  // the next app restart repopulated it.
+  it('dispatches the new application to Redux on Easy Apply', async () => {
+    const newApplication = { id: 42, job: SAVED_JOBS[0], status: 'APPLIED', appliedAt: '2026-07-11T10:00:00.000Z' };
+    mockPost.mockResolvedValueOnce({ data: newApplication });
+    const { store } = renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Backend Developer')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getAllByText('Easy Apply')[0]);
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith('/api/applications/quick-apply/1', {});
+    });
+    await waitFor(() => {
+      expect(store.getState().application.list).toContainEqual(newApplication);
     });
   });
 });

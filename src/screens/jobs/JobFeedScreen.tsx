@@ -5,7 +5,7 @@ import {
   Keyboard, Animated, Platform, Alert, Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
@@ -15,9 +15,10 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
-import { Job, JobFeedResponse, Resume } from '../../types/api.types';
+import { Job, JobFeedResponse, Resume, Application } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
-import { RootState } from '../../store';
+import { RootState, AppDispatch } from '../../store';
+import { addApplication } from '../../store/slices/applicationSlice';
 import { decodeFileName } from '../../utils/decodeFileName';
 
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'JobFeed'>;
@@ -224,6 +225,7 @@ export default function JobFeedScreen() {
   const colors = useTheme();
   const styles = makeStyles(colors);
   const navigation = useNavigation<Nav>();
+  const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
   const isHr = user?.role === 'HR';
 
@@ -326,7 +328,8 @@ export default function JobFeedScreen() {
     if (applyingId) return;
     setApplyingId(job.id);
     try {
-      await apiClient.post(API_ENDPOINTS.QUICK_APPLY(job.id));
+      const { data } = await apiClient.post<Application>(API_ENDPOINTS.QUICK_APPLY(job.id));
+      dispatch(addApplication(data));
     } catch {
       Alert.alert('Quick Apply failed', 'Could not apply. Open the job to apply manually.');
     }

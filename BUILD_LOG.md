@@ -48,6 +48,7 @@
 | BUG-MOB-008 | Global bell icon's red unread dot showed permanently regardless of actual unread state — rendered unconditionally with zero connection to Redux | GlobalSearchBar, NotificationsScreen, SocialNotificationsScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — dot now conditioned on unreadCount > 0; both notification screens auto-mark-all-read on open instead of requiring a separate button tap; removed the now-redundant "Mark all read" button/header count |
 | BUG-MOB-009 | PostDetailScreen: a comment posted seconds ago showed "6 hours ago" instead of "just now" (systemic — affects every timestamp app-wide, not just comments) | PostDetailScreen (root cause is backend-wide) | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — no mobile code change; backend serialized LocalDateTime with no timezone marker, dayjs parsed it as device-local instead of UTC. Backend added a global Jackson UTC 'Z' serializer (applyai-backend BUG-059, config/JacksonConfig.java) |
 | BUG-MOB-010 | Tapping the header profile avatar went straight into edit mode (ProfileSettingsScreen — "Edit Profile", Save button, editable fields) instead of showing a read-only LinkedIn-style profile view first | MainNavigator, GlobalSearchBar | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — `HomeStackParamList`'s `"Profile"` route was wired directly to `ProfileSettingsScreen`; the fully-built read-only `ProfileScreen.tsx` (hero card, Profile Strength, Experience/Education/Certifications sections, "Edit Profile" button) was imported but never registered in any navigator. Split into two routes: `Profile` → `ProfileScreen` (view), new `ProfileSettings` → `ProfileSettingsScreen` (edit). HomeScreen's "Complete your profile" banner now targets `ProfileSettings` directly (unchanged UX intent — jump straight to editing). |
+| BUG-MOB-011 | Mock Interview's "Choose a Job Application" picker showed no applications despite the user having applied to a job — a recurring class of bug (previously BUG-018, Jun 24). Root cause had moved: `InterviewStartScreen`'s picker itself was fine (Redux pre-populate + 100-item fetch already correct), but three "Quick Apply" entry points (JobDetailScreen "Easy Apply", JobFeedScreen "Easy Apply", SavedJobsScreen "Easy Apply") never dispatched the new application to Redux — only the original full ApplyJobScreen flow did. If the picker's own live GET then failed/timed out (Railway cold start), it fell back to the stale/empty Redux data by design, leaving the modal empty until app restart | JobDetailScreen, JobFeedScreen, SavedJobsScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — all three Quick Apply call sites now capture the `ApplicationResponse` and `dispatch(addApplication(data))`, matching the pattern already used by ApplyJobScreen. Added regression tests to JobDetailScreen.test.tsx (new file), JobFeedScreen.test.tsx, SavedJobsScreen.test.tsx asserting the dispatch reaches the Redux store. 486 mobile tests green (482 + 4 new) |
 
 ---
 
@@ -56,7 +57,7 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** Jul 11, 2026 — `166e0c3` (BUG-MOB-009 log + FEAT-UI-002 PostDetailScreen redesign). BUG-MOB-010 (Profile route wiring — avatar tap opened edit mode instead of view) pending commit this session.
+**Last push:** Jul 11, 2026 — `e31aa9a` (BUG-MOB-010, Profile route wiring). BUG-MOB-011 (Quick Apply never synced Redux — Mock Interview picker empty) pending commit this session.
 **Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed four bugs (nav duplicate screen names, chat duplicate keys, static fake notifications, percent-encoded resume filenames) plus added resume delete (previously missing entirely).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.
@@ -108,6 +109,30 @@
 **Tests:** 482 mobile tests green (no test changes needed — navigation is mocked generically in existing tests). `tsc --noEmit` — zero new errors (pre-existing unrelated errors in `useFcmDeepLink.test.ts`, `AppNavigator.tsx`, `ApplicationDetailScreen.tsx`, `ChatDetailScreen.tsx`, `SearchScreen.tsx`, `ProfileSettingsScreen.tsx` were already present before this change).
 
 **Note:** Per-section editing (Education/Experience/Certifications) already existed as modals within `ProfileSettingsScreen` — this fix makes them reachable via the intended view→edit flow, it didn't need to build that capability.
+
+---
+
+### SESSION — Jul 11, 2026 — BUG-MOB-011: Quick Apply never synced Redux (Mock Interview picker empty, again)
+
+**Type:** Scenario F + G (Bug Found + Fixed, same session)
+
+**Context:** User reported applying to 1 job but the Mock Interview "Choose a Job Application" picker showed nothing, and noted this exact class of bug has recurred multiple times before ("fixed by you previously so many times... breaking again and again").
+
+**Investigation:** `InterviewStartScreen.tsx`'s picker logic (Redux pre-populate, then a live `GET /api/applications?page=0&size=100` fetch, keep-Redux-on-failure) was intact and correct — this is the BUG-018 (Jun 24) fix, unregressed. The defect had moved upstream: `ApplyJobScreen.tsx` (the original, full apply flow) correctly does `dispatch(addApplication(data))` after a successful apply, but two newer "Quick Apply" entry points added later — `JobDetailScreen.tsx`'s sticky "Easy Apply" button and `SavedJobsScreen.tsx`'s card "Easy Apply" — never captured the response or dispatched it. A third, `JobFeedScreen.tsx`'s "Easy Apply", had the same gap. Whenever a user's first application came through any of these three, Redux stayed empty; the picker's live fetch was the only path to recovery, and by BUG-018's own design, a slow/failed fetch (Railway cold start, a known recurring condition in this stack) silently falls back to the stale empty Redux data instead of erroring visibly.
+
+**Why this keeps recurring:** Every time a new "apply" surface has been added to the app (Quick Apply variants), the Redux-sync step from the original fix hasn't been carried over. This is a copy-paste-miss pattern, not a single root cause — worth remembering if a 4th apply entry point is ever added.
+
+**Fix:**
+- `JobDetailScreen.tsx` `handleQuickApply()` — captures `{ data }` from the POST, `dispatch(addApplication(data))`
+- `JobFeedScreen.tsx` `handleQuickApply()` — same; added `useDispatch`/`AppDispatch` (screen had no Redux dispatch usage before)
+- `SavedJobsScreen.tsx` `handleApply()` — same; added Redux entirely (screen had zero Redux usage before — dispatch, store import, reducer)
+
+**Files changed:**
+- `src/screens/jobs/JobDetailScreen.tsx`, `JobFeedScreen.tsx`, `SavedJobsScreen.tsx`
+- `src/__tests__/JobDetailScreen.test.tsx` (new — this screen had no test file at all before)
+- `src/__tests__/JobFeedScreen.test.tsx`, `SavedJobsScreen.test.tsx` — added Redux store wiring + regression test each
+
+**Tests:** 486 mobile tests green (482 + 4 new: 1 smoke test + regression test in the new JobDetailScreen.test.tsx, 1 regression test each in JobFeedScreen.test.tsx and SavedJobsScreen.test.tsx). `tsc --noEmit` — zero new errors attributable to this change (pre-existing project-wide test-file type-checking gaps unrelated to this fix, documented in prior sessions).
 
 ---
 

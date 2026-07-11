@@ -4,6 +4,7 @@ import {
   RefreshControl, Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
@@ -13,8 +14,10 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
-import { Job } from '../../types/api.types';
+import { Job, Application } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import { AppDispatch } from '../../store';
+import { addApplication } from '../../store/slices/applicationSlice';
 
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'SavedJobs'>;
 
@@ -152,6 +155,7 @@ export default function SavedJobsScreen() {
   const colors = useTheme();
   const styles = makeStyles(colors);
   const navigation = useNavigation<Nav>();
+  const dispatch = useDispatch<AppDispatch>();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -183,7 +187,8 @@ export default function SavedJobsScreen() {
 
   async function handleApply(job: Job) {
     try {
-      await apiClient.post(API_ENDPOINTS.QUICK_APPLY(job.id), {});
+      const { data } = await apiClient.post<Application>(API_ENDPOINTS.QUICK_APPLY(job.id), {});
+      dispatch(addApplication(data));
     } catch {}
     navigation.navigate('JobDetail', { jobId: job.id });
   }

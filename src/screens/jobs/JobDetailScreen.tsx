@@ -16,7 +16,8 @@ import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { setSelectedJob } from '../../store/slices/jobSlice';
-import { Job, Resume } from '../../types/api.types';
+import { addApplication } from '../../store/slices/applicationSlice';
+import { Job, Resume, Application } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 
 type RouteProps = RouteProp<JobsStackParamList, 'JobDetail'>;
@@ -211,7 +212,8 @@ export default function JobDetailScreen() {
     if (!job) return;
     setApplying(true);
     try {
-      await apiClient.post(API_ENDPOINTS.QUICK_APPLY(job.id));
+      const { data } = await apiClient.post<Application>(API_ENDPOINTS.QUICK_APPLY(job.id));
+      dispatch(addApplication(data));
       Alert.alert('Applied! ⚡', 'Your primary resume has been submitted.', [
         { text: 'OK' },
         { text: 'View Applications', onPress: () => navigation.getParent()?.navigate('ApplicationsTab') },
