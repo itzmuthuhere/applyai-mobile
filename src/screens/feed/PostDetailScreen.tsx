@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
   SafeAreaView, TextInput, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, Animated,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -38,14 +38,22 @@ const REACTION_COLORS: Record<string, string> = {
   LOVE: '#EF4444', INSIGHTFUL: '#8B5CF6', FUNNY: '#F97316',
 };
 
+// Same idea as the company-color hash used across the app, repurposed for people —
+// gives each avatar-fallback a stable, distinct color instead of one flat primary tone.
+const PERSON_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
+function personColor(name: string) {
+  const sum = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  return PERSON_COLORS[sum % PERSON_COLORS.length];
+}
+
 function ReactionPicker({ onPick, colors }: { onPick: (r: string) => void; colors: AppColors }) {
   return (
     <View style={{
       flexDirection: 'row', backgroundColor: colors.surface,
       borderRadius: 30, paddingHorizontal: 8, paddingVertical: 6, gap: 4,
       borderWidth: 1, borderColor: colors.border,
-      shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12, shadowRadius: 8, elevation: 6,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.16, shadowRadius: 12, elevation: 8,
     }}>
       {Object.entries(REACTION_EMOJIS).map(([key, emoji]) => (
         <TouchableOpacity key={key} testID={`reaction-option-${key}`} onPress={() => onPick(key)}
@@ -54,6 +62,57 @@ function ReactionPicker({ onPick, colors }: { onPick: (r: string) => void; color
         </TouchableOpacity>
       ))}
     </View>
+  );
+}
+
+// ─── Skeletons ──────────────────────────────────────────────────────────────
+
+function useShimmer() {
+  const opacity = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.85, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.4, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+  return opacity;
+}
+
+function PostSkeleton({ colors }: { colors: AppColors }) {
+  const opacity = useShimmer();
+  const styles = makeStyles(colors);
+  return (
+    <Animated.View style={[styles.postCard, { opacity, padding: 14, gap: 12 }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: colors.border }} />
+        <View style={{ gap: 6 }}>
+          <View style={{ height: 13, width: 120, backgroundColor: colors.border, borderRadius: 6 }} />
+          <View style={{ height: 10, width: 80, backgroundColor: colors.border, borderRadius: 6 }} />
+        </View>
+      </View>
+      <View style={{ gap: 6 }}>
+        <View style={{ height: 12, width: '90%', backgroundColor: colors.border, borderRadius: 6 }} />
+        <View style={{ height: 12, width: '70%', backgroundColor: colors.border, borderRadius: 6 }} />
+      </View>
+    </Animated.View>
+  );
+}
+
+function CommentSkeleton({ colors }: { colors: AppColors }) {
+  const opacity = useShimmer();
+  const styles = makeStyles(colors);
+  return (
+    <Animated.View style={[styles.comment, { opacity }]}>
+      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.border }} />
+      <View style={[styles.commentBubble, { gap: 6 }]}>
+        <View style={{ height: 11, width: 70, backgroundColor: colors.border, borderRadius: 6 }} />
+        <View style={{ height: 11, width: '85%', backgroundColor: colors.border, borderRadius: 6 }} />
+      </View>
+    </Animated.View>
   );
 }
 
@@ -245,6 +304,7 @@ export default function PostDetailScreen() {
   function renderComment({ item }: { item: Comment }) {
     const isOwn = item.author.id === user?.id;
     const isEditing = editingId === item.id;
+    const avatarColor = personColor(item.author.name);
 
     return (
       <TouchableOpacity
@@ -257,15 +317,15 @@ export default function PostDetailScreen() {
           onPress={() => navigation.navigate('PublicProfile', { userId: item.author.id, userName: item.author.name })}
         >
           {item.author.profilePicture ? (
-            <Image source={{ uri: item.author.profilePicture }} style={styles.commentAvatar} />
+            <Image source={{ uri: item.author.profilePicture }} style={[styles.commentAvatar, { borderColor: avatarColor }]} />
           ) : (
-            <View style={[styles.commentAvatar, styles.commentAvatarFallback]}>
-              <Text style={styles.commentAvatarText}>{item.author.name.charAt(0).toUpperCase()}</Text>
+            <View style={[styles.commentAvatar, styles.commentAvatarFallback, { backgroundColor: avatarColor + '22', borderColor: avatarColor }]}>
+              <Text style={[styles.commentAvatarText, { color: avatarColor }]}>{item.author.name.charAt(0).toUpperCase()}</Text>
             </View>
           )}
         </TouchableOpacity>
 
-        <View style={styles.commentBubble}>
+        <View style={[styles.commentBubble, isOwn && styles.commentBubbleOwn]}>
           <Text style={styles.commentAuthor}>{item.author.name}</Text>
 
           {isEditing ? (
@@ -294,7 +354,10 @@ export default function PostDetailScreen() {
           ) : (
             <>
               <Text style={styles.commentContent}>{item.content}</Text>
-              <Text style={styles.commentTime}>{dayjs(item.createdAt).fromNow()}</Text>
+              <View style={styles.commentMetaRow}>
+                <Text style={styles.commentTime}>{dayjs(item.createdAt).fromNow()}</Text>
+                {isOwn && <View style={styles.ownDot} />}
+              </View>
             </>
           )}
         </View>
@@ -303,6 +366,7 @@ export default function PostDetailScreen() {
   }
 
   const myReaction = localPost?.myReaction ?? null;
+  const authorColor = localPost ? personColor(localPost.author.name) : colors.primary;
 
   const postHeader = localPost ? (
     <View style={styles.postCard}>
@@ -314,10 +378,10 @@ export default function PostDetailScreen() {
         })}
       >
         {localPost.author.profilePicture ? (
-          <Image source={{ uri: localPost.author.profilePicture }} style={styles.postAvatar} />
+          <Image source={{ uri: localPost.author.profilePicture }} style={[styles.postAvatar, { borderColor: authorColor }]} />
         ) : (
-          <View style={[styles.postAvatar, styles.postAvatarFallback]}>
-            <Text style={styles.postAvatarText}>{localPost.author.name.charAt(0).toUpperCase()}</Text>
+          <View style={[styles.postAvatar, styles.postAvatarFallback, { backgroundColor: authorColor + '22', borderColor: authorColor }]}>
+            <Text style={[styles.postAvatarText, { color: authorColor }]}>{localPost.author.name.charAt(0).toUpperCase()}</Text>
           </View>
         )}
         <View>
@@ -335,12 +399,14 @@ export default function PostDetailScreen() {
       {(localPost.likesCount > 0 || localPost.commentsCount > 0) && (
         <View style={styles.postStats}>
           {localPost.likesCount > 0 && (
-            <Text testID="post-likes-count" style={styles.postStatText}>
-              {myReaction ? REACTION_EMOJIS[myReaction] : '👍'} {localPost.likesCount}
-            </Text>
+            <View style={styles.statPill}>
+              <Text testID="post-likes-count" style={styles.postStatText}>
+                {myReaction ? REACTION_EMOJIS[myReaction] : '👍'} {localPost.likesCount}
+              </Text>
+            </View>
           )}
           {localPost.commentsCount > 0 && (
-            <Text testID="post-comments-count" style={styles.postStatText}>
+            <Text testID="post-comments-count" style={styles.postStatTextMuted}>
               {localPost.commentsCount} {localPost.commentsCount === 1 ? 'comment' : 'comments'}
             </Text>
           )}
@@ -350,10 +416,10 @@ export default function PostDetailScreen() {
       {/* Reaction action bar */}
       <View style={styles.divider} />
       <View style={styles.actions}>
-        <View style={{ position: 'relative' }}>
+        <View style={{ position: 'relative', flex: 1 }}>
           <TouchableOpacity
             testID="detail-react-btn"
-            style={styles.actionBtn}
+            style={[styles.actionBtn, myReaction && { backgroundColor: REACTION_COLORS[myReaction] + '14' }]}
             onPress={() => myReaction ? handleReact(myReaction) : openReactionPicker()}
             onLongPress={openReactionPicker}
             activeOpacity={0.7}
@@ -371,6 +437,10 @@ export default function PostDetailScreen() {
             </View>
           )}
         </View>
+        <View style={styles.actionBtn}>
+          <Ionicons name="chatbubble-outline" size={17} color={colors.textSecondary} />
+          <Text style={styles.actionLabel}>Comment</Text>
+        </View>
       </View>
       <View style={styles.divider} />
 
@@ -381,7 +451,7 @@ export default function PostDetailScreen() {
       </View>
     </View>
   ) : postLoading ? (
-    <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+    <PostSkeleton colors={colors} />
   ) : null;
 
   return (
@@ -402,9 +472,16 @@ export default function PostDetailScreen() {
           ListHeaderComponent={postHeader}
           ListEmptyComponent={
             commentsLoading ? (
-              <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+              <View style={{ paddingTop: 4 }}>
+                <CommentSkeleton colors={colors} />
+                <CommentSkeleton colors={colors} />
+                <CommentSkeleton colors={colors} />
+              </View>
             ) : (
-              <Text style={styles.noComments}>No comments yet. Be the first!</Text>
+              <View style={styles.noCommentsWrap}>
+                <Ionicons name="chatbubbles-outline" size={30} color={colors.textMuted} />
+                <Text style={styles.noComments}>No comments yet. Be the first!</Text>
+              </View>
             )
           }
           ListFooterComponent={
@@ -459,52 +536,67 @@ function makeStyles(colors: AppColors) {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       paddingHorizontal: 16, paddingVertical: 12,
       backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 2, elevation: 1,
     },
     backBtn: { padding: 4 },
     headerTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
 
-    postCard: { backgroundColor: colors.surface, marginBottom: 8 },
+    postCard: {
+      backgroundColor: colors.surface, marginBottom: 8, borderRadius: 16, marginHorizontal: 10, marginTop: 10,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3,
+      overflow: 'hidden',
+    },
     postAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-    postAvatar: { width: 46, height: 46, borderRadius: 23 },
-    postAvatarFallback: { backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-    postAvatarText: { color: '#fff', fontWeight: '800', fontSize: 20 },
+    postAvatar: { width: 46, height: 46, borderRadius: 23, borderWidth: 2 },
+    postAvatarFallback: { alignItems: 'center', justifyContent: 'center' },
+    postAvatarText: { fontWeight: '800', fontSize: 20 },
     postAuthorName: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
     postAuthorHeadline: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
     postTime: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
     postContent: { fontSize: 16, color: colors.textPrimary, lineHeight: 24, paddingHorizontal: 14, paddingBottom: 14 },
     postStats: {
-      flexDirection: 'row', justifyContent: 'space-between',
-      paddingHorizontal: 14, paddingBottom: 8, gap: 8,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 14, paddingBottom: 10, gap: 8,
     },
-    postStatText: { fontSize: 12, color: colors.textSecondary },
+    statPill: {
+      backgroundColor: colors.surfaceAlt, borderRadius: 20,
+      paddingHorizontal: 10, paddingVertical: 4,
+    },
+    postStatText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
+    postStatTextMuted: { fontSize: 12, color: colors.textMuted },
 
     divider: { height: 1, backgroundColor: colors.border, marginHorizontal: 0 },
-    actions: { flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 4 },
+    actions: { flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
     actionBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+      paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10, flex: 1,
     },
     actionEmoji: { fontSize: 18 },
     actionLabel: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
-    pickerContainer: { position: 'absolute', bottom: 44, left: 0, zIndex: 99 },
+    pickerContainer: { position: 'absolute', bottom: 46, left: 0, zIndex: 99 },
 
-    commentsDivider: { paddingHorizontal: 14, paddingVertical: 10 },
+    commentsDivider: { paddingHorizontal: 14, paddingVertical: 10, backgroundColor: colors.surfaceAlt },
     commentsLabel: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
 
     comment: {
       flexDirection: 'row', alignItems: 'flex-start',
       paddingHorizontal: 14, paddingVertical: 8, gap: 10,
     },
-    commentAvatar: { width: 36, height: 36, borderRadius: 18 },
-    commentAvatarFallback: { backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-    commentAvatarText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+    commentAvatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5 },
+    commentAvatarFallback: { alignItems: 'center', justifyContent: 'center' },
+    commentAvatarText: { fontWeight: '800', fontSize: 14 },
     commentBubble: {
-      flex: 1, backgroundColor: colors.background, borderRadius: 14,
+      flex: 1, backgroundColor: colors.surface, borderRadius: 14,
       paddingHorizontal: 12, paddingVertical: 10,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1,
+      borderWidth: 1, borderColor: colors.border,
     },
+    commentBubbleOwn: { backgroundColor: colors.primaryLight + '30', borderColor: colors.primaryLight },
     commentAuthor: { fontSize: 13, fontWeight: '800', color: colors.textPrimary, marginBottom: 2 },
     commentContent: { fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
-    commentTime: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+    commentMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+    commentTime: { fontSize: 11, color: colors.textMuted },
+    ownDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.primary },
 
     editInput: {
       fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.primary,
@@ -517,9 +609,9 @@ function makeStyles(colors: AppColors) {
     editBtnSecondary: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
     editBtnSecondaryText: { color: colors.textSecondary, fontWeight: '700', fontSize: 13 },
 
+    noCommentsWrap: { alignItems: 'center', marginTop: 32, gap: 8 },
     noComments: {
       textAlign: 'center', color: colors.textMuted, fontSize: 14,
-      marginTop: 24, fontStyle: 'italic',
     },
     loadMoreBtn: { alignItems: 'center', paddingVertical: 12 },
     loadMoreText: { fontSize: 13, color: colors.primary, fontWeight: '700' },
@@ -528,6 +620,7 @@ function makeStyles(colors: AppColors) {
       flexDirection: 'row', alignItems: 'flex-end', gap: 10,
       paddingHorizontal: 14, paddingVertical: 12,
       backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border,
+      shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 4,
     },
     inputAvatarCircle: {
       width: 34, height: 34, borderRadius: 17, backgroundColor: colors.primary,
@@ -542,7 +635,8 @@ function makeStyles(colors: AppColors) {
     sendBtn: {
       width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary,
       alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
     },
-    sendBtnDisabled: { backgroundColor: colors.border },
+    sendBtnDisabled: { backgroundColor: colors.border, shadowOpacity: 0, elevation: 0 },
   });
 }

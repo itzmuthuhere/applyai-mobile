@@ -28,6 +28,7 @@
 | ID | Description | Day | Date | Status |
 |----|-------------|-----|------|--------|
 | FEAT-UI-001 | Centralized theme system — dark mode + 5 accent colors, single-place change propagates to all 41 screens | — | Jun 24, 2026 | ✅ Complete |
+| FEAT-UI-002 | PostDetailScreen LinkedIn-grade redesign — card shadows, per-person color-hash avatar rings (post author + every commenter), skeleton shimmer loaders (post header + comments) replacing spinners, pill-style like/comment stat badges, highlighted active-reaction button, own-comment tint + indicator dot, CTA-shadow send button. No functional change — all testIDs and handlers preserved. Bundled with BUG-MOB-009 (backend-side timestamp fix). 482 mobile tests green | — | Jul 11, 2026 | ✅ Complete |
 
 ---
 
@@ -45,6 +46,7 @@
 | BUG-MOB-006 | Bell + chat icons appeared twice on Feed screen — FeedScreen's own header duplicated GlobalSearchBar's global top-bar buttons | FeedScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — removed the duplicate buttons + unused unreadCount selector; redesigned empty state with icon badge + secondary "Find people to follow" action |
 | BUG-MOB-007 | "Tailor for a Job" quick action was a dead end — just showed an Alert describing steps to take manually instead of navigating anywhere | ResumeDetailScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — now navigates directly to JobsTab → JobFeed; added first-ever test file for this screen (2 tests) |
 | BUG-MOB-008 | Global bell icon's red unread dot showed permanently regardless of actual unread state — rendered unconditionally with zero connection to Redux | GlobalSearchBar, NotificationsScreen, SocialNotificationsScreen | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — dot now conditioned on unreadCount > 0; both notification screens auto-mark-all-read on open instead of requiring a separate button tap; removed the now-redundant "Mark all read" button/header count |
+| BUG-MOB-009 | PostDetailScreen: a comment posted seconds ago showed "6 hours ago" instead of "just now" (systemic — affects every timestamp app-wide, not just comments) | PostDetailScreen (root cause is backend-wide) | Jul 11, 2026 | ✅ FIXED Jul 11, 2026 — no mobile code change; backend serialized LocalDateTime with no timezone marker, dayjs parsed it as device-local instead of UTC. Backend added a global Jackson UTC 'Z' serializer (applyai-backend BUG-059, config/JacksonConfig.java) |
 
 ---
 
@@ -53,7 +55,7 @@
 **Next to build:** Google Play Store submission (register account ₹2,100 → EAS production build Jul 1 when free plan resets)
 **Blocked on:** Nothing code-wise. Play Developer account needs registration.
 **Open bugs:** None
-**Last push:** Jul 11, 2026 — bell dot always-on fix (BUG-MOB-008), pending commit this session.
+**Last push:** Jul 11, 2026 — bell dot always-on fix (BUG-MOB-008), pending commit this session. BUG-MOB-009 + FEAT-UI-002 (PostDetailScreen redesign) also pending commit — held for explicit user confirmation before push since the paired backend change auto-deploys to production on push to main.
 **Resume point:** All phases complete. Theme system added. First physical-device dev build/run session done Jul 10, 2026 — surfaced and fixed four bugs (nav duplicate screen names, chat duplicate keys, static fake notifications, percent-encoded resume filenames) plus added resume delete (previously missing entirely).
 
 > **Jun 29, 2026 cross-repo note:** Backend JSearch upgraded to v5 (`/search-v2`). No mobile code or test changes needed — mobile calls backend `/api/jobs` endpoints only. Job API response shape unchanged. Job feed should start populating once Railway redeploys with new JSEARCH_API_KEY.

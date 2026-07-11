@@ -25,8 +25,8 @@
 
 **Phase:** 1 — Core Screens (Days 1–12) + Theming
 **Active Day:** Phase 1 complete — theming layer added Jun 24, 2026
-**Last Session:** Jun 24, 2026
-**Overall Status:** Phase 1 complete. Centralized theme system (dark mode + 5 accent colors) added across all 41 screens. TypeScript clean (0 screen errors). 328 tests passing.
+**Last Session:** Jul 11, 2026
+**Overall Status:** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. 482 mobile tests passing.
 
 ---
 
@@ -349,6 +349,25 @@ storing (chatSlice.ts) — the 5s poll in ChatDetailScreen re-dispatches
 setMessages on every tick and this closes the gap regardless of exact race
 cause. appendMessage already had an equivalent guard. Added chatSlice.test.ts
 (10 new tests). 462 mobile tests green.
+```
+
+```
+[BUG-MOB-009] | Feed (PostDetailScreen) | FIXED | Opened Jul 11, 2026 — Fixed Jul 11, 2026
+Symptom: Posted a comment ("Bye") and it immediately showed "6 hours ago"
+instead of "just now" — same bug affects every timestamp app-wide (posts,
+chat messages, notifications, applications), comments just made it obvious.
+Screen/File: PostDetailScreen.tsx (dayjs(item.createdAt).fromNow()) — but the
+root cause and fix are entirely backend-side, see applyai-backend BUG-059.
+Reproduced: yes
+Fix applied: No mobile code change. Backend's `LocalDateTime.now()` values
+were correct UTC but serialized with no timezone marker; dayjs on the client
+parsed the marker-less string as device-local time instead of UTC, understating
+"now" by the device's UTC offset (~5.5h on IST → rounds to "6 hours ago").
+Backend added a global Jackson customizer (config/JacksonConfig.java) that
+serializes every LocalDateTime with a trailing 'Z'; once deployed, existing
+mobile dayjs calls resolve correctly with zero mobile-side changes needed.
+While in this screen, also redesigned it (see BUILD_LOG.md FEAT-UI-002) —
+card shadows, avatar color-hash rings, skeleton loaders, pill stat badges.
 ```
 
 Format when adding:
