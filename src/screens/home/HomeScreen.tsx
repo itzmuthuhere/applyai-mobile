@@ -16,13 +16,24 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
-import { DashboardSummary } from '../../types/api.types';
+import { DashboardSummary, Job, JobFeedResponse } from '../../types/api.types';
 
 dayjs.extend(relativeTime);
 
 const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
 const companyColor = (name: string) =>
   COMPANY_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COMPANY_COLORS.length];
+
+function fmtSalary(n: number): string {
+  if (n >= 10_000_000) return `₹${(n / 10_000_000).toFixed(1)}Cr`;
+  if (n >= 100_000) return `₹${Math.round(n / 100_000)}L`;
+  return `₹${n.toLocaleString('en-IN')}`;
+}
+function jobSalary(min: number | null, max: number | null): string | null {
+  if (min && max) return `${fmtSalary(min)} – ${fmtSalary(max)}`;
+  if (min) return `${fmtSalary(min)}+`;
+  return null;
+}
 
 const PLAN_CONFIG: Record<string, { bg: string; text: string; border: string; icon: string; label: string }> = {
   FREE:   { bg: '#F1F5F9', text: '#64748B', border: '#E2E8F0', icon: 'person-outline',  label: 'Free' },
@@ -76,6 +87,7 @@ export default function HomeScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [dashError, setDashError] = useState(false);
+  const [jobPreviews, setJobPreviews] = useState<Job[]>([]);
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
   const plan = user?.subscriptionPlan ?? 'FREE';
@@ -86,11 +98,14 @@ export default function HomeScreen() {
   const loadDashboard = useCallback(async (isRefresh = false) => {
     if (isRefresh) setIsRefreshing(true);
     try {
-      const [summaryRes, resumesRes, appsRes, interviewsRes] = await Promise.allSettled([
+      const [summaryRes, resumesRes, appsRes, interviewsRes, jobsRes] = await Promise.allSettled([
         apiClient.get<DashboardSummary>(API_ENDPOINTS.DASHBOARD_SUMMARY),
         apiClient.get(API_ENDPOINTS.RESUMES),
         apiClient.get(`${API_ENDPOINTS.APPLICATIONS}?page=0&size=50`),
         apiClient.get(API_ENDPOINTS.INTERVIEW_HISTORY),
+        // No q param — backend defaults to the user's targetRole when set, so this is
+        // already a personalized "jobs for you" preview, not just the raw recent feed.
+        apiClient.get<JobFeedResponse>(API_ENDPOINTS.JOB_FEED, { params: { page: 0, size: 5 } }),
       ]);
       if (summaryRes.status === 'fulfilled') setSummary(summaryRes.value.data);
       else if (summaryRes.status === 'rejected') setDashError(true);
@@ -103,6 +118,7 @@ export default function HomeScreen() {
         const d = interviewsRes.value?.data;
         dispatch(setHistory(Array.isArray(d) ? d : (d?.content ?? [])));
       }
+      if (jobsRes.status === 'fulfilled') setJobPreviews(jobsRes.value?.data?.content ?? []);
     } catch {}
     setInitialLoading(false);
     if (isRefresh) setIsRefreshing(false);
@@ -252,6 +268,63 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
         </View>
+
+        {/* ── Jobs For You ──────────────────────────────────────── */}
+        {initialLoading ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Jobs for you</Text>
+            <View style={styles.jobsForYouCard}>
+              {[1, 2, 3].map(k => (
+                <View key={k} style={[styles.jobPreviewRow, k > 1 && styles.jobPreviewRowBorder]}>
+                  <SkeletonPulse w={40} h={40} r={11} />
+                  <View style={{ flex: 1, gap: 6 }}>
+                    <SkeletonPulse w="70%" h={13} />
+                    <SkeletonPulse w="45%" h={11} />
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : jobPreviews.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Jobs for you</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('JobsTab', { screen: 'JobFeed' })}>
+                <Text style={styles.seeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
+            <View testID="jobs-for-you-card" style={styles.jobsForYouCard}>
+              {jobPreviews.map((job, idx) => {
+                const color = companyColor(job.company ?? 'A');
+                const salary = job.salaryMin != null ? jobSalary(job.salaryMin, job.salaryMax) : null;
+                return (
+                  <TouchableOpacity
+                    key={job.id}
+                    testID={`job-preview-${job.id}`}
+                    style={[styles.jobPreviewRow, idx > 0 && styles.jobPreviewRowBorder]}
+                    onPress={() => navigation.navigate('JobsTab', { screen: 'JobDetail', params: { jobId: job.id } })}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.jobPreviewLogo, { backgroundColor: color + '18', borderColor: color + '30' }]}>
+                      <Text style={[styles.jobPreviewLogoText, { color }]}>{(job.company ?? '?').charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View style={styles.jobPreviewBody}>
+                      <Text style={styles.jobPreviewTitle} numberOfLines={1}>{job.title}</Text>
+                      <Text style={styles.jobPreviewCompany} numberOfLines={1}>
+                        {job.company}{job.location ? ` · ${job.location}` : ''}{salary ? ` · ${salary}` : ''}
+                      </Text>
+                    </View>
+                    {job.matchScore != null && (
+                      <View style={styles.jobPreviewMatch}>
+                        <Text style={styles.jobPreviewMatchText}>{job.matchScore}%</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* ── Recent Applications ──────────────────────────────── */}
         {recentApps.length > 0 && (
@@ -492,6 +565,25 @@ function makeStyles(colors: AppColors) {
       fontSize: 11, fontWeight: '700', color: colors.textPrimary,
       textAlign: 'center', lineHeight: 14,
     },
+
+    // ── Jobs For You ───────────────────────────────────────
+    jobsForYouCard: {
+      backgroundColor: colors.surface, borderRadius: 18,
+      borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
+      shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    },
+    jobPreviewRow: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+    jobPreviewRowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
+    jobPreviewLogo: { width: 40, height: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center', flexShrink: 0, borderWidth: 1 },
+    jobPreviewLogoText: { fontSize: 16, fontWeight: '900' },
+    jobPreviewBody: { flex: 1 },
+    jobPreviewTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+    jobPreviewCompany: { fontSize: 12, color: colors.textSecondary },
+    jobPreviewMatch: {
+      backgroundColor: colors.primaryLight, borderRadius: 20,
+      paddingHorizontal: 9, paddingVertical: 4, flexShrink: 0,
+    },
+    jobPreviewMatchText: { fontSize: 12, fontWeight: '800', color: colors.primary },
 
     // ── Recent Applications ───────────────────────────────
     recentCard: {

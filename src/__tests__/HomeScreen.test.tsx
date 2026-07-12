@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react-native';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
 
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
@@ -22,6 +22,7 @@ jest.mock('../constants', () => ({
     RESUMES: '/api/resumes',
     APPLICATIONS: '/api/applications',
     INTERVIEW_HISTORY: '/api/interviews/history',
+    JOB_FEED: '/api/jobs/feed',
   },
 }));
 
@@ -49,14 +50,20 @@ const DASHBOARD_DATA = {
   ],
 };
 
-// HomeScreen makes 4 parallel calls: summary, resumes, applications, interview history.
+const JOB_PREVIEWS = [
+  { id: 10, title: 'Senior Java Developer', company: 'Acme Corp', location: 'Bangalore', salaryMin: 1500000, salaryMax: 2500000, matchScore: 88 },
+  { id: 11, title: 'Backend Engineer', company: 'TechCo', location: 'Chennai', salaryMin: null, salaryMax: null, matchScore: null },
+];
+
+// HomeScreen makes 5 parallel calls: summary, resumes, applications, interview history, job preview.
 // Resumes + interview history are now paginated (return { content: [] }).
-function mockDashboardCalls() {
+function mockDashboardCalls(jobPreviews: typeof JOB_PREVIEWS = JOB_PREVIEWS) {
   mockGet
     .mockResolvedValueOnce({ data: DASHBOARD_DATA })       // summary
     .mockResolvedValueOnce({ data: { content: [] } })      // resumes (paginated)
     .mockResolvedValueOnce({ data: { content: [], totalElements: 0 } }) // applications
-    .mockResolvedValueOnce({ data: { content: [] } });     // interview history (paginated)
+    .mockResolvedValueOnce({ data: { content: [] } })      // interview history (paginated)
+    .mockResolvedValueOnce({ data: { content: jobPreviews, page: 0, size: 5, totalElements: jobPreviews.length } }); // job preview
 }
 
 function makeStore(plan = 'FREE') {
@@ -182,5 +189,47 @@ describe('HomeScreen', () => {
       expect(screen.getByText('Mock Interview')).toBeTruthy();
       expect(screen.getByText('Applications')).toBeTruthy();
     });
+  });
+
+  it('shows "Jobs for you" preview with match score', async () => {
+    mockDashboardCalls();
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Jobs for you')).toBeTruthy();
+      expect(screen.getByText('Senior Java Developer')).toBeTruthy();
+      expect(screen.getByText('88%')).toBeTruthy();
+    });
+  });
+
+  it('shows a job preview without a match score gracefully', async () => {
+    mockDashboardCalls();
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Backend Engineer')).toBeTruthy();
+    });
+  });
+
+  it('hides "Jobs for you" section when there are no matches', async () => {
+    mockDashboardCalls([]);
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Upload Resume')).toBeTruthy(); // dashboard finished loading
+    });
+    expect(screen.queryByText('Jobs for you')).toBeNull();
+  });
+
+  it('navigates to job detail when a job preview is tapped', async () => {
+    const navigate = jest.fn();
+    jest.requireMock('@react-navigation/native').useNavigation.mockReturnValue({ navigate });
+    mockDashboardCalls();
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('job-preview-10'));
+    fireEvent.press(screen.getByTestId('job-preview-10'));
+
+    expect(navigate).toHaveBeenCalledWith('JobsTab', { screen: 'JobDetail', params: { jobId: 10 } });
   });
 });
