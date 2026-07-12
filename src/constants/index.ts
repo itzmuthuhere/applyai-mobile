@@ -75,6 +75,7 @@ export const API_ENDPOINTS = {
   PROFILE_UPDATE: '/api/auth/profile',
   RESUMES: '/api/resumes',
   RESUME_BY_ID: (id: number) => `/api/resumes/${id}`,
+  RESUME_SET_PRIMARY: (id: number) => `/api/resumes/${id}/primary`,
   JOB_FEED: '/api/jobs/feed',
   JOB_BY_ID: (id: number) => `/api/jobs/${id}`,
   RESUME_UPLOAD: '/api/resumes/upload',

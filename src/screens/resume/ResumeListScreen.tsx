@@ -1,7 +1,7 @@
 ﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  Animated, Platform, Alert,
+  Animated, Platform, Alert, ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,7 +13,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { ResumeStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
-import { setResumes, setLoading, setError, clearError, removeResume } from '../../store/slices/resumeSlice';
+import { setResumes, setLoading, setError, clearError, removeResume, setPrimaryResume } from '../../store/slices/resumeSlice';
 import { Resume } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { decodeFileName } from '../../utils/decodeFileName';
@@ -84,8 +84,9 @@ function SkeletonCard() {
 
 // ─── Resume card ──────────────────────────────────────────────────────────────
 
-function ResumeCard({ item, onPress, onLongPress, deleting }: {
+function ResumeCard({ item, onPress, onLongPress, deleting, onSetPrimary, settingPrimary }: {
   item: Resume; onPress: () => void; onLongPress: () => void; deleting: boolean;
+  onSetPrimary: (resume: Resume) => void; settingPrimary: boolean;
 }) {
   const colors = useTheme();
   const styles = makeStyles(colors);
@@ -153,6 +154,31 @@ function ResumeCard({ item, onPress, onLongPress, deleting }: {
           ))}
         </View>
       )}
+
+      {/* Job-matching selector — which resume is actually used for AI job matching */}
+      {item.isOriginal ? (
+        <View testID={`matching-indicator-${item.id}`} style={styles.matchingRow}>
+          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+          <Text style={styles.matchingText}>Used for job matching</Text>
+        </View>
+      ) : item.isParsed ? (
+        <TouchableOpacity
+          testID={`set-primary-btn-${item.id}`}
+          style={styles.setPrimaryBtn}
+          onPress={() => onSetPrimary(item)}
+          disabled={settingPrimary}
+          activeOpacity={0.8}
+        >
+          {settingPrimary ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <>
+              <Ionicons name="swap-horizontal" size={14} color={colors.primary} />
+              <Text style={styles.setPrimaryText}>Use for job matching</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      ) : null}
     </TouchableOpacity>
   );
 }
@@ -166,6 +192,7 @@ export default function ResumeListScreen() {
   const dispatch = useDispatch();
   const { list, isLoading, error } = useSelector((s: RootState) => s.resume);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [settingPrimaryId, setSettingPrimaryId] = useState<number | null>(null);
 
   const loadResumes = useCallback(async () => {
     dispatch(setLoading(true));
@@ -194,6 +221,19 @@ export default function ResumeListScreen() {
     }
   }, [dispatch]);
 
+  const handleSetPrimary = useCallback(async (resume: Resume) => {
+    setSettingPrimaryId(resume.id);
+    try {
+      await apiClient.put(API_ENDPOINTS.RESUME_SET_PRIMARY(resume.id));
+      dispatch(setPrimaryResume(resume.id));
+    } catch (e: any) {
+      const message = e?.response?.data?.error ?? 'Could not switch resumes. Please try again.';
+      Alert.alert('Error', message);
+    } finally {
+      setSettingPrimaryId(null);
+    }
+  }, [dispatch]);
+
   const confirmDelete = useCallback((resume: Resume) => {
     Alert.alert(
       'Delete resume?',
@@ -211,8 +251,10 @@ export default function ResumeListScreen() {
       onPress={() => navigation.navigate(ROUTES.RESUME_DETAIL as 'ResumeDetail', { resumeId: item.id })}
       onLongPress={() => confirmDelete(item)}
       deleting={deletingId === item.id}
+      onSetPrimary={handleSetPrimary}
+      settingPrimary={settingPrimaryId === item.id}
     />
-  ), [navigation, confirmDelete, deletingId]);
+  ), [navigation, confirmDelete, deletingId, handleSetPrimary, settingPrimaryId]);
 
   const keyExtractor = useCallback((item: Resume) => String(item.id), []);
 
@@ -337,6 +379,17 @@ function makeStyles(colors: AppColors) {
     paddingHorizontal: 8, paddingVertical: 3,
   },
   skillChipText: { fontSize: 11, color: colors.textSecondary, fontWeight: '500' },
+
+  matchingRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border,
+  },
+  matchingText: { fontSize: 12, fontWeight: '700', color: colors.success },
+  setPrimaryBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border,
+  },
+  setPrimaryText: { fontSize: 12, fontWeight: '700', color: colors.primary },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 32 },
   emptyIcon: {

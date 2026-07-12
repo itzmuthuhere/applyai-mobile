@@ -6,7 +6,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
-  default: { get: jest.fn(), delete: jest.fn() },
+  default: { get: jest.fn(), delete: jest.fn(), put: jest.fn() },
 }));
 
 jest.mock('@react-navigation/native', () => ({
@@ -20,7 +20,11 @@ jest.mock('../constants', () => ({
     textSecondary: '#64748B', textMuted: '#94A3B8', border: '#E2E8F0',
     error: '#EF4444', warning: '#F59E0B', success: '#10B981',
   },
-  API_ENDPOINTS: { RESUMES: '/api/resumes', RESUME_BY_ID: (id: number) => `/api/resumes/${id}` },
+  API_ENDPOINTS: {
+    RESUMES: '/api/resumes',
+    RESUME_BY_ID: (id: number) => `/api/resumes/${id}`,
+    RESUME_SET_PRIMARY: (id: number) => `/api/resumes/${id}/primary`,
+  },
   ROUTES: { RESUME_DETAIL: 'ResumeDetail', RESUME_UPLOAD: 'ResumeUpload' },
 }));
 
@@ -30,6 +34,7 @@ import ResumeListScreen from '../screens/resume/ResumeListScreen';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
 const mockDelete = apiClient.delete as jest.MockedFunction<typeof apiClient.delete>;
+const mockPut = apiClient.put as jest.MockedFunction<typeof apiClient.put>;
 
 // Simulates the user tapping the given button label in the confirmation Alert
 async function confirmAlertButton(label: string) {
@@ -58,6 +63,16 @@ const RESUME_UNPARSED = {
   isOriginal: false,
   isParsed: false,
   createdAt: '2026-04-01T10:00:00',
+};
+
+const RESUME_PARSED_NOT_PRIMARY = {
+  id: 3,
+  versionName: 'Second Resume',
+  fileUrl: 'https://cdn.com/r3.pdf',
+  aiScore: 65,
+  isOriginal: false,
+  isParsed: true,
+  createdAt: '2026-03-01T10:00:00',
 };
 
 function makeStore(preloaded?: Partial<{ isLoading: boolean; list: any[] }>) {
@@ -230,5 +245,65 @@ describe('ResumeListScreen', () => {
       );
     });
     expect(screen.getByTestId('resume-card-1')).toBeTruthy();
+  });
+
+  it('shows "Used for job matching" indicator on the primary resume', async () => {
+    mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED] });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('matching-indicator-1')).toBeTruthy();
+      expect(screen.queryByTestId('set-primary-btn-1')).toBeNull();
+    });
+  });
+
+  it('shows "Use for job matching" button on other parsed resumes', async () => {
+    mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED, RESUME_PARSED_NOT_PRIMARY] });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('set-primary-btn-3')).toBeTruthy();
+      expect(screen.queryByTestId('matching-indicator-3')).toBeNull();
+    });
+  });
+
+  it('does not show a set-primary button on unparsed resumes', async () => {
+    mockGet.mockResolvedValueOnce({ data: [RESUME_UNPARSED] });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('resume-card-2'));
+    expect(screen.queryByTestId('set-primary-btn-2')).toBeNull();
+    expect(screen.queryByTestId('matching-indicator-2')).toBeNull();
+  });
+
+  it('tapping "Use for job matching" calls the API and swaps the primary resume', async () => {
+    mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED, RESUME_PARSED_NOT_PRIMARY] });
+    mockPut.mockResolvedValueOnce({ data: { ...RESUME_PARSED_NOT_PRIMARY, isOriginal: true } });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('set-primary-btn-3'));
+    fireEvent.press(screen.getByTestId('set-primary-btn-3'));
+
+    await waitFor(() => {
+      expect(mockPut).toHaveBeenCalledWith('/api/resumes/3/primary');
+      expect(screen.getByTestId('matching-indicator-3')).toBeTruthy();
+      expect(screen.getByTestId('set-primary-btn-1')).toBeTruthy();
+    });
+  });
+
+  it('shows an error alert when switching the primary resume fails', async () => {
+    mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED, RESUME_PARSED_NOT_PRIMARY] });
+    mockPut.mockRejectedValueOnce({ response: { data: { error: 'Could not switch resumes.' } } });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('set-primary-btn-3'));
+    fireEvent.press(screen.getByTestId('set-primary-btn-3'));
+
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenCalledWith('Error', 'Could not switch resumes.');
+    });
+    // No change on failure — original resume stays primary
+    expect(screen.getByTestId('matching-indicator-1')).toBeTruthy();
+    expect(screen.getByTestId('set-primary-btn-3')).toBeTruthy();
   });
 });
