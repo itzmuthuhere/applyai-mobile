@@ -15,6 +15,8 @@ import { AppDispatch, RootState } from '../../store';
 import { signInWithGoogle, clearError } from '../../store/slices/authSlice';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
+import { useResponsive } from '../../hooks/useResponsive';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 const STATS = [
   { value: '12K+', label: 'Users hired' },
@@ -31,6 +33,7 @@ const FEATURES = [
 
 export default function GoogleSignInScreen() {
   const colors = useTheme();
+  const { isDesktopWeb } = useResponsive();
   const styles = makeStyles(colors);
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
@@ -62,7 +65,9 @@ export default function GoogleSignInScreen() {
   }, [error]);
 
   return (
-    <LinearGradient colors={['#EFF6FF', '#DBEAFE', '#BFDBFE']} style={styles.container}>
+    <LinearGradient colors={['#EFF6FF', '#DBEAFE', '#BFDBFE']} style={styles.gradientFill}>
+      <View style={isDesktopWeb ? styles.containerDesktop : styles.container}>
+      <WebPageContainer maxWidth={420}>
 
       {/* Logo */}
       <Animated.View style={[styles.logoSection, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
@@ -130,18 +135,27 @@ export default function GoogleSignInScreen() {
           By continuing, you agree to our Terms of Service and Privacy Policy.
         </Text>
       </Animated.View>
+      </WebPageContainer>
+      </View>
     </LinearGradient>
   );
 }
 
 function makeStyles(colors: AppColors) {
   return StyleSheet.create({
+  gradientFill: { flex: 1 },
   container: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 36,
     justifyContent: 'space-between',
+  },
+  containerDesktop: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 40,
   },
 
   logoSection: { alignItems: 'center', gap: 12 },

@@ -4,15 +4,16 @@
 // backend's POST /api/auth/google already expects from the native flow, so no
 // backend change is needed here — only an allow-listed audience.
 //
-// Reuses the SAME client id already passed as `webClientId` to the native SDK's
-// GoogleSignin.configure() (see authSlice.ts) and already allow-listed on the
-// backend (application.properties `google.oauth.client-ids`). That id must be a
-// Google Cloud Console "Web application" OAuth client with this app's origins
-// (http://localhost:8090 for local dev, the Vercel domain for prod) added under
-// "Authorized JavaScript origins" — see actions/ACTION_REQUIRED_005.md.
+// Reuses the "ApplyAI Chrome Extension" OAuth client (Google Cloud Console →
+// Credentials, project applyai-499114) — it's a "Web application" type client,
+// already allow-listed on the backend (application.properties
+// `google.oauth.client-ids`, first id in the list), and already has
+// http://localhost:8090 under "Authorized JavaScript origins" (added for local
+// web dev — add the Vercel domain there too once deployed). See
+// actions/ACTION_REQUIRED_004.md.
 const WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ??
-  '966711636721-o7k3vn52bimi3j9mtdgttalckc8v13a6.apps.googleusercontent.com';
+  '1008203537522-5dg9nnn9kf4dfmlbhe592fu6rhppmu4s.apps.googleusercontent.com';
 
 declare global {
   interface Window {

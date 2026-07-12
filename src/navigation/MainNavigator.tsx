@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { COLORS } from '../constants';
 import GlobalSearchBar from '../components/GlobalSearchBar';
+import WebSidebar, { SIDEBAR_WIDTH } from './WebSidebar';
+import { useResponsive } from '../hooks/useResponsive';
 import {
   MainTabParamList,
   HomeStackParamList,
@@ -156,15 +158,17 @@ function InterviewNavigator() {
 
 export default function MainNavigator() {
   const insets = useSafeAreaInsets();
+  const { isDesktopWeb } = useResponsive();
 
   return (
     // Override top inset to 0 so child SafeAreaViews don't double-pad below the GlobalSearchBar
     <SafeAreaInsetsContext.Provider
       value={{ top: 0, bottom: insets.bottom, left: insets.left, right: insets.right }}
     >
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, paddingLeft: isDesktopWeb ? SIDEBAR_WIDTH : 0 }}>
         <GlobalSearchBar topInset={insets.top} />
         <Tab.Navigator
+          tabBar={(props) => <WebSidebar {...props} />}
           screenOptions={({ route }) => ({
             headerShown: false,
             tabBarActiveTintColor: COLORS.primary,

@@ -17,6 +17,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { DashboardSummary, Job, JobFeedResponse } from '../../types/api.types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 dayjs.extend(relativeTime);
 
@@ -161,6 +162,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.primary} />}
       >
+      <WebPageContainer maxWidth={880}>
 
         {/* ── Hero ────────────────────────────────────────────── */}
         <View style={styles.hero}>
@@ -431,6 +433,7 @@ export default function HomeScreen() {
         )}
 
         <View style={{ height: 32 }} />
+      </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );
