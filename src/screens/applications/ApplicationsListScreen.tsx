@@ -20,6 +20,7 @@ import { RootState } from '../../store';
 import { setApplications } from '../../store/slices/applicationSlice';
 import { Application, ApplicationStatus } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type Nav = NativeStackNavigationProp<ApplicationsStackParamList, 'ApplicationsList'>;
 
@@ -280,6 +281,7 @@ export default function ApplicationsListScreen() {
 
   return (
     <View style={styles.screen}>
+      <WebPageContainer maxWidth={720}>
       {/* Stats */}
       {applications.length > 0 && <StatsBar apps={applications} />}
 
@@ -341,6 +343,7 @@ export default function ApplicationsListScreen() {
           }
         />
       )}
+      </WebPageContainer>
     </View>
   );
 }

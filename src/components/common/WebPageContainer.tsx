@@ -24,6 +24,7 @@ export default function WebPageContainer({ children, maxWidth = 720 }: Props) {
 
 const styles = StyleSheet.create({
   center: {
+    flex: 1,
     width: '100%',
     alignSelf: 'center',
   },

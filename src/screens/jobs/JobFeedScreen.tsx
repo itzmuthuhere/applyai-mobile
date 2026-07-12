@@ -20,6 +20,7 @@ import apiClient from '../../api/apiClient';
 import { RootState, AppDispatch } from '../../store';
 import { addApplication } from '../../store/slices/applicationSlice';
 import { decodeFileName } from '../../utils/decodeFileName';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'JobFeed'>;
 type SortBy = 'match' | 'recent';
@@ -433,6 +434,7 @@ export default function JobFeedScreen() {
 
   return (
     <View style={styles.screen}>
+      <WebPageContainer maxWidth={720}>
       {/* Resume status — the gate for AI-matched jobs */}
       {!isHr && (
         primaryResume ? (
@@ -729,6 +731,7 @@ export default function JobFeedScreen() {
           </TouchableOpacity>
         </View>
       )}
+      </WebPageContainer>
     </View>
   );
 }

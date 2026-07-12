@@ -44,13 +44,15 @@ export default function AppNavigator() {
         // Preload all dashboard data in parallel — makes HomeScreen instant
         await Promise.allSettled([
           apiClient.get(API_ENDPOINTS.RESUMES).then(r => {
-            dispatch(setResumes(r.data));
+            const d = r.data;
+            dispatch(setResumes(Array.isArray(d) ? d : (d?.content ?? [])));
           }),
           apiClient.get(`${API_ENDPOINTS.APPLICATIONS}?page=0&size=50`).then(r => {
             dispatch(setApplications(r.data.content ?? []));
           }),
           apiClient.get(API_ENDPOINTS.INTERVIEW_HISTORY).then(r => {
-            dispatch(setHistory(r.data ?? []));
+            const d = r.data;
+            dispatch(setHistory(Array.isArray(d) ? d : (d?.content ?? [])));
           }),
         ]);
       } catch {

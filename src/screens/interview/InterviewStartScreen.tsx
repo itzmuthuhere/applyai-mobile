@@ -16,6 +16,7 @@ import { RootState } from '../../store';
 import { setHistory, setCurrentSession } from '../../store/slices/interviewSlice';
 import { InterviewSession, Application } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type Nav = NativeStackNavigationProp<InterviewStackParamList, 'InterviewStart'>;
 
@@ -264,6 +265,7 @@ export default function InterviewStartScreen() {
 
   return (
     <View style={styles.container}>
+      <WebPageContainer maxWidth={720}>
       {historyLoading && history.length === 0 ? (
         <>
           {ListHeader}
@@ -295,6 +297,7 @@ export default function InterviewStartScreen() {
           }
         />
       )}
+      </WebPageContainer>
 
       {/* Application Picker Modal */}
       <Modal visible={pickerVisible} animationType="slide" transparent onRequestClose={() => setPickerVisible(false)}>

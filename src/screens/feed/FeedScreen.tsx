@@ -15,6 +15,7 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 dayjs.extend(relativeTime);
 
@@ -404,6 +405,7 @@ export default function FeedScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <WebPageContainer maxWidth={640}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.headerLogo}>
@@ -469,6 +471,7 @@ export default function FeedScreen() {
           removeClippedSubviews
         />
       )}
+      </WebPageContainer>
     </SafeAreaView>
   );
 }

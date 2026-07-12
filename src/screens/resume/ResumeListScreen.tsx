@@ -17,6 +17,7 @@ import { setResumes, setLoading, setError, clearError, removeResume, setPrimaryR
 import { Resume } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { decodeFileName } from '../../utils/decodeFileName';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type Nav = NativeStackNavigationProp<ResumeStackParamList, 'ResumeList'>;
 
@@ -296,6 +297,7 @@ export default function ResumeListScreen() {
 
   return (
     <View style={styles.screen}>
+      <WebPageContainer maxWidth={720}>
       <FlatList
         data={list}
         keyExtractor={keyExtractor}
@@ -333,6 +335,7 @@ export default function ResumeListScreen() {
           </View>
         }
       />
+      </WebPageContainer>
 
       {/* FAB */}
       {list.length > 0 && (
