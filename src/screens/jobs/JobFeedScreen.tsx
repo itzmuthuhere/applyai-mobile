@@ -350,7 +350,10 @@ export default function JobFeedScreen() {
     });
   }, []);
 
-  const enterSelectMode = useCallback(async () => {
+  // "Apply All" — one tap selects every visible job and drops straight into the
+  // tailor/cover-letter toggle bar. Users can still deselect individual jobs
+  // (tap the card) or restore full selection (the "All" chip) once inside.
+  const handleApplyAll = useCallback(async () => {
     try {
       const { data } = await apiClient.get<{ content: Resume[] } | Resume[]>(API_ENDPOINTS.RESUMES);
       const list = Array.isArray(data) ? data : (data.content ?? []);
@@ -359,8 +362,8 @@ export default function JobFeedScreen() {
       if (parsed.length > 0) setSelectedResumeId(parsed[0].id);
     } catch { setResumes([]); }
     setSelectMode(true);
-    setSelectedJobs(new Set());
-  }, []);
+    setSelectedJobs(new Set(jobs.map(j => j.id)));
+  }, [jobs]);
 
   const exitSelectMode = useCallback(() => {
     setSelectMode(false);
@@ -558,9 +561,9 @@ export default function JobFeedScreen() {
               : total > 0 ? `${total.toLocaleString()} job${total !== 1 ? 's' : ''}` : 'No jobs found'}
           </Text>
           {!isHr && !selectMode && jobs.length > 0 && (
-            <TouchableOpacity testID="select-btn" onPress={enterSelectMode} style={styles.selectBtn} activeOpacity={0.8}>
-              <Ionicons name="checkmark-circle-outline" size={14} color={colors.primary} />
-              <Text style={styles.selectBtnText}>Select</Text>
+            <TouchableOpacity testID="apply-all-btn" onPress={handleApplyAll} style={styles.selectBtn} activeOpacity={0.8}>
+              <Ionicons name="rocket-outline" size={14} color={colors.primary} />
+              <Text style={styles.selectBtnText}>Apply All</Text>
             </TouchableOpacity>
           )}
           {selectMode && (

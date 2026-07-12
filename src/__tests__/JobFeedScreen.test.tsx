@@ -145,77 +145,78 @@ describe('JobFeedScreen', () => {
     });
   });
 
-  it('shows Select button for JOBSEEKER users', async () => {
+  it('shows Apply All button for JOBSEEKER users', async () => {
     mockGet.mockResolvedValueOnce({
       data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 },
     });
     renderScreen('JOBSEEKER');
 
     await waitFor(() => {
-      expect(screen.getByTestId('select-btn')).toBeTruthy();
+      expect(screen.getByTestId('apply-all-btn')).toBeTruthy();
     });
   });
 
-  it('does NOT show Select button for HR users', async () => {
+  it('does NOT show Apply All button for HR users', async () => {
     mockGet.mockResolvedValueOnce({
       data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 },
     });
     renderScreen('HR');
 
     await waitFor(() => {
-      expect(screen.queryByTestId('select-btn')).toBeNull();
+      expect(screen.queryByTestId('apply-all-btn')).toBeNull();
     });
   });
 
-  it('enters select mode when Select is pressed', async () => {
+  it('auto-selects every job and enters select mode when Apply All is pressed', async () => {
     mockGet
       .mockResolvedValueOnce({ data: { content: [JOB, JOB_2], totalElements: 2, number: 0, totalPages: 1 } })
       .mockResolvedValueOnce({ data: [RESUME] });
 
     renderScreen();
 
-    await waitFor(() => screen.getByTestId('select-btn'));
-    fireEvent.press(screen.getByTestId('select-btn'));
+    await waitFor(() => screen.getByTestId('apply-all-btn'));
+    fireEvent.press(screen.getByTestId('apply-all-btn'));
 
     await waitFor(() => {
       expect(screen.getByTestId('select-all-btn')).toBeTruthy();
       expect(screen.getByTestId('cancel-select-btn')).toBeTruthy();
+      expect(screen.getByTestId('selected-count')).toBeTruthy();
+      expect(screen.getByText(/2 selected/i)).toBeTruthy();
     });
   });
 
-  it('shows Auto Apply bar when jobs are selected', async () => {
+  it('shows Auto Apply bar as soon as Apply All is pressed', async () => {
     mockGet
       .mockResolvedValueOnce({ data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 } })
       .mockResolvedValueOnce({ data: [RESUME] });
 
     renderScreen();
 
-    await waitFor(() => screen.getByTestId('select-btn'));
-    fireEvent.press(screen.getByTestId('select-btn'));
-
-    await waitFor(() => screen.getByTestId(`job-card-10`));
-    fireEvent.press(screen.getByTestId('job-card-10'));
+    await waitFor(() => screen.getByTestId('apply-all-btn'));
+    fireEvent.press(screen.getByTestId('apply-all-btn'));
 
     await waitFor(() => {
       expect(screen.getByTestId('auto-apply-bar')).toBeTruthy();
     });
   });
 
-  it('selects all jobs when Select All is pressed', async () => {
+  it('deselecting a job then pressing All restores full selection', async () => {
     mockGet
       .mockResolvedValueOnce({ data: { content: [JOB, JOB_2], totalElements: 2, number: 0, totalPages: 1 } })
       .mockResolvedValueOnce({ data: [RESUME] });
 
     renderScreen();
 
-    await waitFor(() => screen.getByTestId('select-btn'));
-    fireEvent.press(screen.getByTestId('select-btn'));
+    await waitFor(() => screen.getByTestId('apply-all-btn'));
+    fireEvent.press(screen.getByTestId('apply-all-btn'));
 
-    await waitFor(() => screen.getByTestId('select-all-btn'));
+    await waitFor(() => screen.getByText(/2 selected/i));
+    fireEvent.press(screen.getByTestId('job-card-10')); // deselect job 10
+
+    await waitFor(() => screen.getByText(/1 selected/i));
     fireEvent.press(screen.getByTestId('select-all-btn'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('selected-count')).toBeTruthy();
       expect(screen.getByText(/2 selected/i)).toBeTruthy();
     });
   });
@@ -227,15 +228,15 @@ describe('JobFeedScreen', () => {
 
     renderScreen();
 
-    await waitFor(() => screen.getByTestId('select-btn'));
-    fireEvent.press(screen.getByTestId('select-btn'));
+    await waitFor(() => screen.getByTestId('apply-all-btn'));
+    fireEvent.press(screen.getByTestId('apply-all-btn'));
 
     await waitFor(() => screen.getByTestId('cancel-select-btn'));
     fireEvent.press(screen.getByTestId('cancel-select-btn'));
 
     await waitFor(() => {
       expect(screen.queryByTestId('cancel-select-btn')).toBeNull();
-      expect(screen.getByTestId('select-btn')).toBeTruthy();
+      expect(screen.getByTestId('apply-all-btn')).toBeTruthy();
     });
   });
 
@@ -263,11 +264,8 @@ describe('JobFeedScreen', () => {
 
     renderScreen();
 
-    await waitFor(() => screen.getByTestId('select-btn'));
-    fireEvent.press(screen.getByTestId('select-btn'));
-
-    await waitFor(() => screen.getByTestId('job-card-10'));
-    fireEvent.press(screen.getByTestId('job-card-10'));
+    await waitFor(() => screen.getByTestId('apply-all-btn'));
+    fireEvent.press(screen.getByTestId('apply-all-btn'));
 
     await waitFor(() => screen.getByTestId('auto-apply-submit-btn'));
     fireEvent.press(screen.getByTestId('auto-apply-submit-btn'));
@@ -288,11 +286,8 @@ describe('JobFeedScreen', () => {
 
     renderScreen();
 
-    await waitFor(() => screen.getByTestId('select-btn'));
-    fireEvent.press(screen.getByTestId('select-btn'));
-
-    await waitFor(() => screen.getByTestId('job-card-10'));
-    fireEvent.press(screen.getByTestId('job-card-10'));
+    await waitFor(() => screen.getByTestId('apply-all-btn'));
+    fireEvent.press(screen.getByTestId('apply-all-btn'));
 
     await waitFor(() => screen.getByTestId('toggle-tailor-resume'));
     fireEvent.press(screen.getByTestId('toggle-tailor-resume')); // off
