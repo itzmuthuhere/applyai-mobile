@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStorage from '../utils/secureStorage';
 import { RootState, AppDispatch } from '../store';
 import { buildTheme, AppColors, ThemeMode, AccentColor } from './themes';
 import { setMode, setAccent } from '../store/slices/themeSlice';
@@ -29,7 +29,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    SecureStore.getItemAsync(PREFS_KEY).then(val => {
+    SecureStorage.getItemAsync(PREFS_KEY).then(val => {
       if (val) {
         try {
           const { mode: m, accent: a } = JSON.parse(val);
@@ -43,7 +43,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    SecureStore.setItemAsync(PREFS_KEY, JSON.stringify({ mode, accent }));
+    SecureStorage.setItemAsync(PREFS_KEY, JSON.stringify({ mode, accent }));
   }, [mode, accent, ready]);
 
   const colors = buildTheme(mode, accent);

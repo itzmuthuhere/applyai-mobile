@@ -16,6 +16,7 @@ import { useFcmDeepLink } from '../hooks/useFcmDeepLink';
 import { initRevenueCat } from '../services/revenueCat';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
+import { linking } from './linking';
 
 const Root = createNativeStackNavigator<RootStackParamList>();
 
@@ -82,7 +83,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer ref={navRef} onReady={onNavigationReady}>
+    <NavigationContainer ref={navRef} onReady={onNavigationReady} linking={linking}>
       <Root.Navigator screenOptions={{ headerShown: false }}>
         {jwt ? (
           <Root.Screen name="Main" component={MainNavigator} />

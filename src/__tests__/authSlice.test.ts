@@ -1,4 +1,8 @@
+import { Platform } from 'react-native';
 import { configureStore } from '@reduxjs/toolkit';
+import apiClient from '../api/apiClient';
+import { saveJwt } from '../utils/auth';
+import { signInWithGoogleWeb } from '../utils/googleWebAuth';
 import authReducer, {
   setAuth,
   clearAuth,
@@ -7,6 +11,19 @@ import authReducer, {
   signOut,
 } from '../store/slices/authSlice';
 import { User } from '../types/api.types';
+
+jest.mock('../api/apiClient', () => ({
+  __esModule: true,
+  default: { post: jest.fn() },
+}));
+jest.mock('../utils/auth', () => ({
+  saveJwt: jest.fn(),
+  getJwt: jest.fn(),
+  clearJwt: jest.fn(),
+}));
+jest.mock('../utils/googleWebAuth', () => ({
+  signInWithGoogleWeb: jest.fn(),
+}));
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
@@ -133,5 +150,40 @@ describe('authSlice', () => {
     const state = store.getState().auth;
     expect(state.jwt).toBeNull();
     expect(state.user).toBeNull();
+  });
+
+  describe('signInWithGoogle on web', () => {
+    const originalOS = Platform.OS;
+    afterEach(() => {
+      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+      jest.clearAllMocks();
+    });
+
+    it('uses Google Identity Services (not the native SDK) and stores the returned jwt', async () => {
+      Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
+      (signInWithGoogleWeb as jest.Mock).mockResolvedValueOnce('web-id-token');
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        data: { jwt: 'backend-jwt', user: makeUser() },
+      });
+
+      const store = makeStore();
+      await store.dispatch(signInWithGoogle());
+
+      expect(signInWithGoogleWeb).toHaveBeenCalled();
+      expect(apiClient.post).toHaveBeenCalledWith('/api/auth/google', { idToken: 'web-id-token' });
+      expect(saveJwt).toHaveBeenCalledWith('backend-jwt');
+      expect(store.getState().auth.jwt).toBe('backend-jwt');
+    });
+
+    it('rejects with an error message when the web sign-in is cancelled', async () => {
+      Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
+      (signInWithGoogleWeb as jest.Mock).mockRejectedValueOnce(new Error('Sign-in cancelled'));
+
+      const store = makeStore();
+      await store.dispatch(signInWithGoogle());
+
+      expect(apiClient.post).not.toHaveBeenCalled();
+      expect(store.getState().auth.error).toBe('Sign-in cancelled');
+    });
   });
 });
