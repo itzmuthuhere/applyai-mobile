@@ -7,7 +7,7 @@ jest.mock('../api/apiClient', () => ({
 }));
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: jest.fn(() => ({ navigate: jest.fn() })),
+  useNavigation: jest.fn(() => ({ navigate: jest.fn(), getParent: () => ({ navigate: jest.fn() }) })),
 }));
 
 jest.mock('../constants', () => ({
@@ -31,6 +31,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../store/slices/authSlice';
 import applicationReducer from '../store/slices/applicationSlice';
+import resumeReducer from '../store/slices/resumeSlice';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
 const mockPost = apiClient.post as jest.MockedFunction<typeof apiClient.post>;
@@ -64,9 +65,9 @@ const RESUME = {
   createdAt: '2026-01-01',
 };
 
-function makeStore(role = 'JOBSEEKER') {
+function makeStore(role = 'JOBSEEKER', resumes: typeof RESUME[] = []) {
   return configureStore({
-    reducer: { auth: authReducer, application: applicationReducer },
+    reducer: { auth: authReducer, application: applicationReducer, resume: resumeReducer },
     preloadedState: {
       auth: {
         jwt: 'test-token',
@@ -74,12 +75,13 @@ function makeStore(role = 'JOBSEEKER') {
         isLoading: false,
         error: null,
       },
+      resume: { list: resumes, selected: null, isUploading: false, isAnalyzing: false, isLoading: false, error: null },
     },
   });
 }
 
-function renderScreen(role = 'JOBSEEKER') {
-  const store = makeStore(role);
+function renderScreen(role = 'JOBSEEKER', resumes: typeof RESUME[] = []) {
+  const store = makeStore(role, resumes);
   return { store, ...render(
     <Provider store={store}>
       <JobFeedScreen />
@@ -90,6 +92,38 @@ function renderScreen(role = 'JOBSEEKER') {
 describe('JobFeedScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('shows upload CTA when no parsed resume exists', async () => {
+    mockGet.mockResolvedValueOnce({ data: { content: [], totalElements: 0, number: 0, totalPages: 0 } });
+    renderScreen('JOBSEEKER', []);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('resume-upload-cta')).toBeTruthy();
+      expect(screen.queryByTestId('resume-status-card')).toBeNull();
+    });
+  });
+
+  it('shows resume status card with AI score when a parsed resume exists', async () => {
+    mockGet.mockResolvedValueOnce({ data: { content: [], totalElements: 0, number: 0, totalPages: 0 } });
+    renderScreen('JOBSEEKER', [RESUME]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('resume-status-card')).toBeTruthy();
+      expect(screen.getByText('My Resume')).toBeTruthy();
+      expect(screen.getByText('80')).toBeTruthy();
+      expect(screen.queryByTestId('resume-upload-cta')).toBeNull();
+    });
+  });
+
+  it('hides the resume status section entirely for HR users', async () => {
+    mockGet.mockResolvedValueOnce({ data: { content: [], totalElements: 0, number: 0, totalPages: 0 } });
+    renderScreen('HR', []);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('resume-upload-cta')).toBeNull();
+      expect(screen.queryByTestId('resume-status-card')).toBeNull();
+    });
   });
 
   it('shows loading state initially', async () => {

@@ -228,6 +228,8 @@ export default function JobFeedScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
   const isHr = user?.role === 'HR';
+  const resumeList = useSelector((s: RootState) => s.resume.list);
+  const primaryResume = resumeList.find(r => r.isParsed && r.isOriginal) ?? resumeList.find(r => r.isParsed) ?? null;
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
@@ -424,6 +426,48 @@ export default function JobFeedScreen() {
 
   return (
     <View style={styles.screen}>
+      {/* Resume status — the gate for AI-matched jobs */}
+      {!isHr && (
+        primaryResume ? (
+          <TouchableOpacity
+            testID="resume-status-card"
+            style={styles.resumeStatusCard}
+            onPress={() => navigation.getParent()?.navigate('ResumeTab', { screen: 'ResumeList' })}
+            activeOpacity={0.8}
+          >
+            <View style={styles.resumeStatusIcon}>
+              <Ionicons name="document-text" size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.resumeStatusTitle} numberOfLines={1}>{decodeFileName(primaryResume.versionName)}</Text>
+              <Text style={styles.resumeStatusSub}>Matching jobs against this resume</Text>
+            </View>
+            {primaryResume.aiScore != null && (
+              <View style={styles.resumeStatusScore}>
+                <Text style={styles.resumeStatusScoreText}>{primaryResume.aiScore}</Text>
+              </View>
+            )}
+            <Text style={styles.resumeStatusChange}>Change</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            testID="resume-upload-cta"
+            style={styles.resumeUploadCta}
+            onPress={() => navigation.getParent()?.navigate('ResumeTab', { screen: 'ResumeUpload' })}
+            activeOpacity={0.85}
+          >
+            <View style={styles.resumeUploadIcon}>
+              <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.resumeUploadTitle}>Upload your resume</Text>
+              <Text style={styles.resumeUploadSub}>Unlock AI-matched jobs tailored to your skills</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#fff" />
+          </TouchableOpacity>
+        )
+      )}
+
       {/* Search + HR bar */}
       <View style={styles.topBar}>
         <View style={[styles.searchRow, searchFocused && styles.searchRowFocused]}>
@@ -684,6 +728,36 @@ export default function JobFeedScreen() {
 function makeStyles(colors: AppColors) {
   return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+
+  resumeStatusCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: colors.primaryLight, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  resumeStatusIcon: {
+    width: 34, height: 34, borderRadius: 10, backgroundColor: colors.surface,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  resumeStatusTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  resumeStatusSub: { fontSize: 11, color: colors.textSecondary, marginTop: 1 },
+  resumeStatusScore: {
+    backgroundColor: colors.surface, borderRadius: 12,
+    paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0,
+  },
+  resumeStatusScoreText: { fontSize: 12, fontWeight: '800', color: colors.primary },
+  resumeStatusChange: { fontSize: 12, fontWeight: '700', color: colors.primary, flexShrink: 0 },
+
+  resumeUploadCta: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingHorizontal: 16, paddingVertical: 14,
+    backgroundColor: colors.primary,
+  },
+  resumeUploadIcon: {
+    width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  resumeUploadTitle: { fontSize: 14, fontWeight: '800', color: '#fff' },
+  resumeUploadSub: { fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
 
   topBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
