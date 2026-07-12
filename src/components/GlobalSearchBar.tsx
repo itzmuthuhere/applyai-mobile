@@ -27,14 +27,14 @@ export default function GlobalSearchBar({ topInset }: Props) {
 
   const openProfile = () => {
     navigation.navigate('Main', {
-      screen: 'Home',
+      screen: 'HomeTab',
       params: { screen: 'Profile' },
     });
   };
 
   const openNotifications = () => {
     navigation.navigate('Main', {
-      screen: 'Home',
+      screen: 'HomeTab',
       params: { screen: 'Notifications' },
     });
   };

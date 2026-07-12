@@ -5,7 +5,7 @@ export const ROUTES = {
   GOOGLE_SIGN_IN: 'GoogleSignIn',
 
   // Main tabs
-  HOME: 'Home',
+  HOME: 'HomeTab',
   JOBS_TAB: 'JobsTab',
   RESUME_TAB: 'ResumeTab',
   APPLICATIONS_TAB: 'ApplicationsTab',

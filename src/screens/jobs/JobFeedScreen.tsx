@@ -288,7 +288,11 @@ export default function JobFeedScreen() {
         setPage(0);
       } else {
         const res = await apiClient.get<JobFeedResponse>(API_ENDPOINTS.JOB_FEED, { params: buildParams(pageNum) });
-        setJobs(prev => append ? [...prev, ...res.data.content] : res.data.content);
+        setJobs(prev => {
+          if (!append) return res.data.content;
+          const seen = new Set(prev.map(j => j.id));
+          return [...prev, ...res.data.content.filter(j => !seen.has(j.id))];
+        });
         setTotal(res.data.totalElements);
         setPage(pageNum);
         // Merge saved state
@@ -599,6 +603,7 @@ export default function JobFeedScreen() {
         </View>
       ) : (
         <FlatList
+          testID="jobs-list"
           ref={listRef}
           data={jobs}
           keyExtractor={keyExtractor}

@@ -65,7 +65,7 @@ describe('GlobalSearchBar', () => {
     render(<GlobalSearchBar topInset={44} />);
     fireEvent.press(screen.getByTestId('global-bell-btn'));
     expect(mockNavigate).toHaveBeenCalledWith('Main', {
-      screen: 'Home',
+      screen: 'HomeTab',
       params: { screen: 'Notifications' },
     });
   });

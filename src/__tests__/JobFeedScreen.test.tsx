@@ -302,6 +302,24 @@ describe('JobFeedScreen', () => {
     });
   });
 
+  it('deduplicates jobs by id when a paginated page overlaps the previous one', async () => {
+    mockGet
+      .mockResolvedValueOnce({ data: { content: [JOB], totalElements: 2, number: 0, totalPages: 2 } })
+      // Page 2 re-returns JOB (id 10) alongside a genuinely new job — simulates an
+      // unstable DB sort tiebreak shifting the same row across two OFFSET/LIMIT pages.
+      .mockResolvedValueOnce({ data: { content: [JOB, JOB_2], totalElements: 2, number: 1, totalPages: 2 } });
+
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('job-card-10'));
+    fireEvent(screen.getByTestId('jobs-list'), 'onEndReached');
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('job-card-10')).toHaveLength(1);
+      expect(screen.getByTestId('job-card-11')).toBeTruthy();
+    });
+  });
+
   it('shows empty state when no jobs found', async () => {
     mockGet.mockResolvedValueOnce({ data: { content: [], totalElements: 0, number: 0, totalPages: 0 } });
     renderScreen();

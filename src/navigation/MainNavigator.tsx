@@ -172,7 +172,7 @@ export default function MainNavigator() {
             tabBarStyle: { backgroundColor: COLORS.surface, borderTopColor: COLORS.border },
             tabBarIcon: ({ color, size }) => {
               const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-                Home: 'home-outline',
+                HomeTab: 'home-outline',
                 FeedTab: 'newspaper-outline',
                 JobsTab: 'briefcase-outline',
                 ResumeTab: 'document-text-outline',
@@ -184,7 +184,7 @@ export default function MainNavigator() {
             tabBarShowLabel: false,
           })}
         >
-          <Tab.Screen name="Home" component={HomeNavigator} />
+          <Tab.Screen name="HomeTab" component={HomeNavigator} />
           <Tab.Screen name="FeedTab" component={FeedNavigator} />
           <Tab.Screen name="JobsTab" component={JobsNavigator} />
           <Tab.Screen name="ResumeTab" component={ResumeNavigator} />

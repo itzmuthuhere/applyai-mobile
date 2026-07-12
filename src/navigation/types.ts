@@ -68,7 +68,7 @@ export type FeedStackParamList = {
 };
 
 export type MainTabParamList = {
-  Home: NavigatorScreenParams<HomeStackParamList>;
+  HomeTab: NavigatorScreenParams<HomeStackParamList>;
   FeedTab: NavigatorScreenParams<FeedStackParamList>;
   JobsTab: NavigatorScreenParams<JobsStackParamList>;
   ResumeTab: NavigatorScreenParams<ResumeStackParamList>;
