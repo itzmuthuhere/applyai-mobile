@@ -291,6 +291,26 @@ describe('ResumeListScreen', () => {
     });
   });
 
+  it('BUG-MOB-013 regression: with multiple stale isOriginal=true resumes, only the newest shows the indicator', async () => {
+    // Simulates accounts with resumes uploaded before BUG-060's exclusivity fix —
+    // several rows can all still have isOriginal=true in the backend response.
+    const staleOlder = { ...RESUME_PARSED_NOT_PRIMARY, id: 4, isOriginal: true, createdAt: '2026-06-01T10:00:00' };
+    const newest = { ...RESUME_PARSED, id: 5, isOriginal: true, createdAt: '2026-07-01T10:00:00' };
+    // List order matches backend's createdAt DESC.
+    mockGet.mockResolvedValueOnce({ data: [newest, staleOlder, RESUME_PARSED] });
+    renderScreen();
+
+    await waitFor(() => {
+      // Only the newest gets the indicator...
+      expect(screen.getByTestId('matching-indicator-5')).toBeTruthy();
+      // ...every other stale "original" gets a real selector button instead.
+      expect(screen.getByTestId('set-primary-btn-4')).toBeTruthy();
+      expect(screen.getByTestId('set-primary-btn-1')).toBeTruthy();
+      expect(screen.queryByTestId('matching-indicator-4')).toBeNull();
+      expect(screen.queryByTestId('matching-indicator-1')).toBeNull();
+    });
+  });
+
   it('shows an error alert when switching the primary resume fails', async () => {
     mockGet.mockResolvedValueOnce({ data: [RESUME_PARSED, RESUME_PARSED_NOT_PRIMARY] });
     mockPut.mockRejectedValueOnce({ response: { data: { error: 'Could not switch resumes.' } } });

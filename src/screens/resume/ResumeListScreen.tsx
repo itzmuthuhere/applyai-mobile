@@ -84,9 +84,9 @@ function SkeletonCard() {
 
 // ─── Resume card ──────────────────────────────────────────────────────────────
 
-function ResumeCard({ item, onPress, onLongPress, deleting, onSetPrimary, settingPrimary }: {
+function ResumeCard({ item, onPress, onLongPress, deleting, onSetPrimary, settingPrimary, isPrimary }: {
   item: Resume; onPress: () => void; onLongPress: () => void; deleting: boolean;
-  onSetPrimary: (resume: Resume) => void; settingPrimary: boolean;
+  onSetPrimary: (resume: Resume) => void; settingPrimary: boolean; isPrimary: boolean;
 }) {
   const colors = useTheme();
   const styles = makeStyles(colors);
@@ -155,8 +155,13 @@ function ResumeCard({ item, onPress, onLongPress, deleting, onSetPrimary, settin
         </View>
       )}
 
-      {/* Job-matching selector — which resume is actually used for AI job matching */}
-      {item.isOriginal ? (
+      {/* Job-matching selector — which resume is actually used for AI job matching.
+          Uses the computed isPrimary (single-winner tiebreak), not the raw isOriginal
+          flag directly — older accounts can have multiple resumes stuck with
+          isOriginal=true from before uploads/set-primary started enforcing exclusivity
+          server-side, which would otherwise show every one of them as "primary" and
+          hide the selector on all of them (BUG-MOB-013). */}
+      {isPrimary ? (
         <View testID={`matching-indicator-${item.id}`} style={styles.matchingRow}>
           <Ionicons name="checkmark-circle" size={14} color={colors.success} />
           <Text style={styles.matchingText}>Used for job matching</Text>
@@ -193,6 +198,13 @@ export default function ResumeListScreen() {
   const { list, isLoading, error } = useSelector((s: RootState) => s.resume);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [settingPrimaryId, setSettingPrimaryId] = useState<number | null>(null);
+
+  // Single-winner tiebreak — list is createdAt DESC, so this is "the newest resume
+  // still flagged isOriginal", matching what JobFeedScreen/JobDetailScreen already use
+  // to pick the resume for AI matching. Needed because accounts with resumes uploaded
+  // before the isOriginal-exclusivity fix (BUG-060) can have several rows simultaneously
+  // flagged isOriginal=true.
+  const primaryResumeId = (list.find(r => r.isParsed && r.isOriginal) ?? list.find(r => r.isOriginal))?.id ?? null;
 
   const loadResumes = useCallback(async () => {
     dispatch(setLoading(true));
@@ -253,8 +265,9 @@ export default function ResumeListScreen() {
       deleting={deletingId === item.id}
       onSetPrimary={handleSetPrimary}
       settingPrimary={settingPrimaryId === item.id}
+      isPrimary={item.id === primaryResumeId}
     />
-  ), [navigation, confirmDelete, deletingId, handleSetPrimary, settingPrimaryId]);
+  ), [navigation, confirmDelete, deletingId, handleSetPrimary, settingPrimaryId, primaryResumeId]);
 
   const keyExtractor = useCallback((item: Resume) => String(item.id), []);
 
