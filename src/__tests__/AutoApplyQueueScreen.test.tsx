@@ -135,6 +135,16 @@ describe('AutoApplyQueueScreen', () => {
     });
   });
 
+  it('renders queue items when API returns a paginated Page response (regression, BUG-062)', async () => {
+    mockGet.mockResolvedValueOnce({ data: { content: [PENDING_ITEM, APPLIED_ITEM], totalPages: 1, totalElements: 2 } });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Senior Engineer').length).toBeGreaterThan(0);
+      expect(screen.getByTestId('queue-summary-bar')).toBeTruthy();
+    });
+  });
+
   it('shows error message on API failure', async () => {
     mockGet.mockRejectedValueOnce(new Error('Network error'));
     renderScreen();

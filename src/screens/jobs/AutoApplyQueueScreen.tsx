@@ -147,8 +147,8 @@ export default function AutoApplyQueueScreen() {
     if (!refresh) setIsLoading(true);
     setError('');
     try {
-      const { data } = await apiClient.get<AutoApplyQueueItem[]>(API_ENDPOINTS.AUTO_APPLY_QUEUE);
-      setItems(data);
+      const { data } = await apiClient.get<any>(API_ENDPOINTS.AUTO_APPLY_QUEUE);
+      setItems(Array.isArray(data) ? data : (data.content ?? []));
     } catch {
       setError('Could not load queue. Pull to refresh.');
     } finally {
