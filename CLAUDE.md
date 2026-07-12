@@ -1,7 +1,22 @@
 # ApplyAI Mobile — Claude Master Instructions
-> Version: 2.0 | Last updated: Jun 6, 2026
+> Version: 2.1 | Last updated: Jul 12, 2026
 > Read this file every session. Entry point to the entire frontend knowledge system.
 > EVERY rule is MANDATORY. "Mandatory" = no exceptions, no skipping, no "I'll do it later."
+
+---
+
+## PLATFORM PRIORITY — WEB FIRST (as of Jul 12, 2026)
+
+**This repo now targets web as the primary platform, native Android/iOS as secondary.** Same Expo/React Native codebase (`react-native-web`), reused rather than a separate app — but when working here, default to thinking "how does this look/work as a web app" first, native second.
+
+**Why:** the Chrome extension that actually submits Naukri/LinkedIn applications only runs in a desktop browser, not inside the native app — so a mobile-only user's "Apply All" had nothing to consume the queue. Opening the web build in the same browser as the extension makes the whole pipeline work with zero extension changes.
+
+**Active work surface:** branch `feature/web-app` (not `main`) — full-parity web rollout in progress, tracked as FEAT-023 onward in BUILD_LOG.md. `main` still serves the native app builds (EAS/Play Store) unchanged.
+
+**Concrete implications for new work in this repo:**
+- Every new/changed screen needs a web-appropriate layout (`WebPageContainer` for max-width/centering — see `src/components/common/WebPageContainer.tsx`), not just the phone-width column stretched to fit. Verify at both a desktop width (≥900px) and a narrow/mobile-browser width.
+- Native-only APIs (`@react-native-google-signin/google-signin`, `react-native-purchases`, `expo-secure-store`, file-upload `FormData` shapes, `expo-av` recording) need a `Platform.OS === 'web'` branch — check `src/utils/secureStorage.ts` and `src/utils/googleWebAuth.ts` for the established pattern before inventing a new one.
+- `AppNavigator.tsx`'s bootstrap effect (JWT restore + preload resumes/applications/interviews) is exercised on every web page hard-reload in a way it never was on native (native rarely "reloads" mid-session) — API response shape assumptions there need the same defensive `Array.isArray(d) ? d : (d?.content ?? [])` unwrap used throughout the rest of the codebase (see BUG-MOB-016/017).
 
 ---
 

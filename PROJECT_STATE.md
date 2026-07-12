@@ -2,6 +2,7 @@
 > This is the SINGLE SOURCE OF TRUTH for the current frontend codebase state.
 > Read this first every session. Update before ending every session.
 > If this file contradicts code on disk, trust the code — then fix this file.
+> **Platform priority: web-first as of Jul 12, 2026 — see CLAUDE.md.** This repo's `react-native-web` build (`feature/web-app` branch) is the primary platform; native Android/iOS is secondary.
 
 ---
 
