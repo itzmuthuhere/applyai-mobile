@@ -70,7 +70,11 @@ export default function WebSidebar(props: BottomTabBarProps) {
         })}
       </View>
 
-      <View style={styles.userRow}>
+      <TouchableOpacity
+        style={styles.userRow}
+        activeOpacity={0.75}
+        onPress={() => navigation.navigate('HomeTab', { screen: 'Profile' })}
+      >
         {user?.profilePicture ? (
           <Image source={{ uri: user.profilePicture }} style={styles.avatarImg} />
         ) : (
@@ -82,7 +86,7 @@ export default function WebSidebar(props: BottomTabBarProps) {
           <Text style={styles.userName} numberOfLines={1}>{user?.name ?? 'Account'}</Text>
           <Text style={styles.userPlan} numberOfLines={1}>{user?.subscriptionPlan ?? 'FREE'} Plan</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     </View>
   );
 }

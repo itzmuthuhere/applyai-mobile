@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
 
 jest.mock('@react-navigation/native', () => ({
@@ -88,5 +89,21 @@ describe('PaywallScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('Restore previous purchases')).toBeTruthy();
     });
+  });
+
+  it('shows the real error message when restoring purchases fails (e.g. web-unsupported)', async () => {
+    const { restorePurchases } = require('../services/revenueCat');
+    restorePurchases.mockRejectedValueOnce(new Error("Restoring purchases isn't available on web yet."));
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+    render(<PaywallScreen />);
+    await waitFor(() => screen.getByText('Restore previous purchases'));
+    fireEvent.press(screen.getByText('Restore previous purchases'));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Error', "Restoring purchases isn't available on web yet.");
+    });
+
+    alertSpy.mockRestore();
   });
 });

@@ -143,5 +143,11 @@ describe('revenueCat service', () => {
       expect(result).toEqual([]);
       expect(mockPurchases.getCustomerInfo).not.toHaveBeenCalled();
     });
+
+    it('restorePurchases throws a web-specific message without calling Purchases', async () => {
+      Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
+      await expect(restorePurchases()).rejects.toThrow("Restoring purchases isn't available on web yet.");
+      expect(mockPurchases.restorePurchases).not.toHaveBeenCalled();
+    });
   });
 });

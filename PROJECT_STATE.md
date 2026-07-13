@@ -24,10 +24,12 @@
 
 ## CURRENT BUILD PHASE
 
-**Phase:** 1 — Core Screens (Days 1–12) + Theming
-**Active Day:** Phase 1 complete — theming layer added Jun 24, 2026
-**Last Session:** Jul 11, 2026
-**Overall Status:** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. BUG-MOB-010 fixed — profile avatar now opens the read-only view screen (with Edit button) instead of jumping straight into the edit form. BUG-MOB-011 fixed — all 3 Quick Apply entry points (JobDetailScreen, JobFeedScreen, SavedJobsScreen) now sync Redux so the Mock Interview job picker sees new applications immediately. FEAT-019 — JobFeedScreen bulk-queue bar gets tailor/cover-letter toggle chips; AutoApplyQueueScreen gets full select-mode + bulk remove (applyai-backend FEAT-018). FEAT-020 — HomeScreen (the actual landing tab) gets a "Jobs for you" personalized preview section since Jobs is a separate tab users weren't reaching. FEAT-021 — JobFeedScreen now opens with a resume upload CTA (no parsed resume) or a resume status card with AI score (parsed resume exists), making the "resume → matched jobs" connection explicit instead of three disconnected tabs. BUG-MOB-012 — ResumeListScreen now has a real "Use for job matching" selector (was previously impossible to change; see applyai-backend BUG-060). BUG-MOB-013 — the selector now computes a single-winner primary client-side instead of trusting the raw isOriginal flag, so accounts with multiple stale-original resumes (uploaded before BUG-060) get a working selector instead of every resume showing "already primary." 506 mobile tests passing.
+**Phase:** 1 — Core Screens (Days 1–12) + Theming + Web Parity (in progress)
+**Active Day:** Phase 1 complete — theming layer added Jun 24, 2026. Web app (feature/web-app branch) bootstrapped Jul 12, login verified end-to-end Jul 13, 2026.
+**Last Session:** Jul 13, 2026
+**Overall Status (Jul 13, 2026):** Web app login now works end-to-end against the live Railway backend (ACTION_REQUIRED_004 done — Google Cloud Console origin + Railway CORS_ALLOWED_ORIGINS both set). Live web testing (via Claude in Chrome, the user's real signed-in browser) found and fixed BUG-MOB-018 (Alert.alert was a total no-op on web, app-wide — 75 call sites, fixed via a react-native-web patch-package patch), BUG-MOB-019 (Paywall restore-purchases unguarded on web), BUG-MOB-020 (WebSidebar account footer wasn't clickable, ProfileScreen unreachable from it). Verified working on web: Onboarding, GoogleSignIn, Home, Feed, Jobs list + JobDetail, Resumes list, Applications, Interview landing, Profile, ProfileSettings. ~25 screens still need the same live-web verification pass (see BUILD_LOG.md CURRENT STATUS for the full list) — treat as ongoing, multi-session work. 517 mobile tests passing.
+
+**Overall Status (Jul 11, 2026, prior):** BUG-MOB-009 (comment/post timestamps showing wrong relative time) fixed — backend-side global UTC serializer, no mobile code change (see applyai-backend BUG-059). PostDetailScreen redesigned (FEAT-UI-002) — card shadows, avatar color-hash rings, skeleton loaders, pill stat badges. BUG-MOB-010 fixed — profile avatar now opens the read-only view screen (with Edit button) instead of jumping straight into the edit form. BUG-MOB-011 fixed — all 3 Quick Apply entry points (JobDetailScreen, JobFeedScreen, SavedJobsScreen) now sync Redux so the Mock Interview job picker sees new applications immediately. FEAT-019 — JobFeedScreen bulk-queue bar gets tailor/cover-letter toggle chips; AutoApplyQueueScreen gets full select-mode + bulk remove (applyai-backend FEAT-018). FEAT-020 — HomeScreen (the actual landing tab) gets a "Jobs for you" personalized preview section since Jobs is a separate tab users weren't reaching. FEAT-021 — JobFeedScreen now opens with a resume upload CTA (no parsed resume) or a resume status card with AI score (parsed resume exists), making the "resume → matched jobs" connection explicit instead of three disconnected tabs. BUG-MOB-012 — ResumeListScreen now has a real "Use for job matching" selector (was previously impossible to change; see applyai-backend BUG-060). BUG-MOB-013 — the selector now computes a single-winner primary client-side instead of trusting the raw isOriginal flag, so accounts with multiple stale-original resumes (uploaded before BUG-060) get a working selector instead of every resume showing "already primary." 506 mobile tests passing.
 
 ---
 
@@ -412,6 +414,61 @@ and SavedJobsScreen.test.tsx. 486 mobile tests green.
 Note: this is a recurring pattern — every new "apply" entry point added
 since BUG-018 forgot the Redux-sync step. Watch for this if a 4th apply
 surface is ever added.
+```
+
+```
+[BUG-MOB-018] | Web (app-wide) | FIXED | Opened Jul 13, 2026 — Fixed Jul 13, 2026
+Symptom: On the web build, every confirmation dialog and error alert did
+nothing — no popup, no console error, just silence. Found when
+GoogleSignInScreen's sign-in-failed Alert produced zero visible feedback
+during live web testing.
+Screen/File: node_modules/react-native-web (Alert/index.js) — not app code.
+75 Alert.alert(...) call sites across 20 screens were all affected equally.
+Reproduced: yes, in both the sandboxed preview browser and the user's real
+Chrome
+Fix applied: react-native-web ships `Alert.alert()` as a literal no-op
+(`static alert() {}`). Patched via patch-package
+(patches/react-native-web+0.21.2.patch) to fall back to window.alert/
+window.confirm, replicating RN's button-array contract (0 buttons → alert;
+1 button → alert then its onPress; 2 buttons → confirm, then the
+non-cancel-style button's onPress on OK / the cancel-style button's onPress
+on Cancel). Fixes all 75 call sites at once, zero app code changed. No new
+Jest test possible (Jest uses the react-native preset, not react-native-web,
+so it can't exercise a react-native-web patch) — verified instead by running
+the exact patched logic against all 4 real button-array shapes in a live
+browser and confirming it matches RN Alert semantics.
+```
+
+```
+[BUG-MOB-019] | Web (PaywallScreen) | FIXED | Opened Jul 13, 2026 — Fixed Jul 13, 2026
+Symptom: Clicking "Restore previous purchases" on web always showed a
+generic "Could not restore purchases. Try again." — misleading, since web
+billing isn't RevenueCat at all (see FEAT-023 note re: Stripe).
+Screen/File: services/revenueCat.ts (restorePurchases), PaywallScreen.tsx
+(handleRestore)
+Reproduced: yes, by code inspection — restorePurchases() was the only
+RevenueCat call in the file without a Platform.OS==='web' guard (getOfferings/
+getActiveEntitlements/initRevenueCat all already had one)
+Fix applied: restorePurchases() now throws "Restoring purchases isn't
+available on web yet." before touching the native SDK on web;
+PaywallScreen's catch now shows e.message instead of a hardcoded string.
+New tests: revenueCat.test.ts (web-guard case), PaywallScreen.test.tsx
+(restore-failure-message case).
+```
+
+```
+[BUG-MOB-020] | Web (WebSidebar) | FIXED | Opened Jul 13, 2026 — Fixed Jul 13, 2026
+Symptom: Clicking the account footer ("Name / Plan") at the bottom of the
+desktop-web sidebar did nothing — no navigation, no error, despite looking
+exactly like the working avatar button in the top bar (GlobalSearchBar).
+Screen/File: navigation/WebSidebar.tsx — userRow was a plain View, not a
+TouchableOpacity, with no onPress at all.
+Reproduced: yes, live in the user's real Chrome
+Fix applied: Wrapped userRow in TouchableOpacity, onPress now
+navigation.navigate('HomeTab', { screen: 'Profile' }) — same destination
+GlobalSearchBar's avatar already uses. New WebSidebar.test.tsx (2 tests:
+footer press navigates to Profile on desktop web; narrow viewport still
+falls back to the stock BottomTabBar unchanged).
 ```
 
 Format when adding:

@@ -29,6 +29,7 @@ export async function purchasePackage(pkg: PurchasesPackage) {
 }
 
 export async function restorePurchases() {
+  if (Platform.OS === 'web') throw new Error('Restoring purchases isn\'t available on web yet.');
   const customerInfo = await Purchases.restorePurchases();
   return customerInfo;
 }

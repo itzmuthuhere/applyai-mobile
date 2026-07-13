@@ -1,0 +1,38 @@
+diff --git a/node_modules/react-native-web/dist/exports/Alert/index.js b/node_modules/react-native-web/dist/exports/Alert/index.js
+index 705bda5..5890230 100644
+--- a/node_modules/react-native-web/dist/exports/Alert/index.js
++++ b/node_modules/react-native-web/dist/exports/Alert/index.js
+@@ -7,7 +7,31 @@
+  * 
+  */
+ 
++// react-native-web ships Alert.alert() as a no-op, which silently swallows every
++// confirmation dialog and error message in the app on web. Fall back to the
++// browser's native confirm/alert so button callbacks (Cancel/Delete/OK/etc.)
++// still fire — same button-array contract as React Native's Alert.
+ class Alert {
+-  static alert() {}
++  static alert(title, message, buttons) {
++    const fullMessage = [title, message].filter(Boolean).join('\n\n');
++    if (!buttons || buttons.length === 0) {
++      window.alert(fullMessage);
++      return;
++    }
++    if (buttons.length === 1) {
++      window.alert(fullMessage);
++      buttons[0].onPress && buttons[0].onPress();
++      return;
++    }
++    const cancelIndex = buttons.findIndex(b => b.style === 'cancel');
++    const confirmed = window.confirm(fullMessage);
++    if (confirmed) {
++      const confirmBtn = buttons.find((b, i) => i !== cancelIndex) || buttons[buttons.length - 1];
++      confirmBtn.onPress && confirmBtn.onPress();
++    } else {
++      const cancelBtn = cancelIndex >= 0 ? buttons[cancelIndex] : buttons[0];
++      cancelBtn.onPress && cancelBtn.onPress();
++    }
++  }
+ }
+ export default Alert;
+\ No newline at end of file

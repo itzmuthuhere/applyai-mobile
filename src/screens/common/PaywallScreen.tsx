@@ -126,8 +126,8 @@ export default function PaywallScreen() {
     try {
       await restorePurchases();
       Alert.alert('Restored', 'Your purchases have been restored.');
-    } catch {
-      Alert.alert('Error', 'Could not restore purchases. Try again.');
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'Could not restore purchases. Try again.');
     }
   }
 

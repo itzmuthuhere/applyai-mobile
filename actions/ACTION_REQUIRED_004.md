@@ -1,7 +1,7 @@
 # ACTION REQUIRED 004 — Google Cloud Console + Railway CORS (web app login)
 > Blocks: Phase 1 verification — signing in on the web app
 > Estimated time: 10 minutes
-> Status: ⬜ PENDING
+> Status: ✅ DONE — confirmed by user Jul 13, 2026. Google sign-in verified working end-to-end on http://localhost:8090 against the live Railway backend.
 
 ---
 
