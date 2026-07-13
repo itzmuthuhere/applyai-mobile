@@ -9,6 +9,7 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 const CATEGORIES = [
   'Technology', 'Finance', 'Marketing', 'Sales', 'Design',
@@ -119,7 +120,7 @@ export default function HrPostJobScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
+        <WebPageContainer maxWidth={720} style={{ gap: 14 }}>
         {/* Basic Info */}
         <SectionCard icon="briefcase-outline" color={colors.primary} bg={colors.primaryLight} title="Basic Information">
           <LabeledInput
@@ -293,6 +294,7 @@ export default function HrPostJobScreen() {
         )}
 
         <View style={{ height: 32 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

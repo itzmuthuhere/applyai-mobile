@@ -15,6 +15,7 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 interface Attachment {
   url: string;
@@ -236,6 +237,7 @@ export default function CreatePostScreen() {
           </TouchableOpacity>
         </View>
 
+        <WebPageContainer maxWidth={640} style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
           {/* Compose area */}
           <View style={styles.compose}>
@@ -344,6 +346,7 @@ export default function CreatePostScreen() {
             )}
           </View>
         </View>
+        </WebPageContainer>
 
         {/* Image source picker modal */}
         {imagePickerVisible && (

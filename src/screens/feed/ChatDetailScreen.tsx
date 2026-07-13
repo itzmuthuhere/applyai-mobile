@@ -17,6 +17,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { FeedStackParamList } from '../../navigation/types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteT = RouteProp<FeedStackParamList, 'ChatDetail'>;
 
@@ -406,6 +407,7 @@ export default function ChatDetailScreen() {
           <View style={{ width: 34 }} />
         </View>
 
+        <WebPageContainer maxWidth={680} style={{ flex: 1 }}>
         {loading ? (
           <View style={styles.loadingCenter}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -491,6 +493,7 @@ export default function ChatDetailScreen() {
             )}
           </TouchableOpacity>
         </View>
+        </WebPageContainer>
       </KeyboardAvoidingView>
 
       {/* Action Sheet Modal */}

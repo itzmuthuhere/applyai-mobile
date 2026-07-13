@@ -18,6 +18,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
+import WebPageContainer from '../../components/common/WebPageContainer';
 import { setMatchScore } from '../../store/slices/jobSlice';
 import { Resume, MatchScore } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
@@ -145,7 +146,7 @@ export default function MatchScoreScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-
+      <WebPageContainer maxWidth={720} style={{ gap: 14 }}>
       {/* Job header */}
       {(() => {
         const color = companyColor(job?.company ?? '');
@@ -297,7 +298,7 @@ export default function MatchScoreScreen() {
           </TouchableOpacity>
         </>
       )}
-
+      </WebPageContainer>
     </ScrollView>
   );
 }

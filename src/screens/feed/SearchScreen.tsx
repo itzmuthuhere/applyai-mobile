@@ -16,6 +16,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import apiClient from '../../api/apiClient';
 import { COLORS, API_ENDPOINTS } from '../../constants';
 import { FeedStackParamList } from '../../navigation/types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type Nav = NativeStackNavigationProp<FeedStackParamList, 'Search'>;
 type FilterTab = 'All' | 'People' | 'Posts' | 'Hashtags';
@@ -268,6 +269,7 @@ export default function SearchScreen() {
       </ScrollView>
 
       {/* Body */}
+      <WebPageContainer maxWidth={680} style={{ flex: 1 }}>
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator color={COLORS.primary} />
@@ -287,6 +289,7 @@ export default function SearchScreen() {
       ) : (
         renderResults()
       )}
+      </WebPageContainer>
     </View>
   );
 }

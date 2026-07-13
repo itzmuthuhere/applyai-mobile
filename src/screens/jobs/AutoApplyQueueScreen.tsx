@@ -13,6 +13,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { AutoApplyQueueItem } from '../../types/api.types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
   PENDING:  { color: '#92400E', bg: '#FEF3C7', icon: 'time-outline',           label: 'Queued' },
@@ -240,6 +241,7 @@ export default function AutoApplyQueueScreen() {
 
   return (
     <View style={styles.screen}>
+      <WebPageContainer maxWidth={760}>
       {/* Select toggle row */}
       {items.length > 0 && (
         <View testID="queue-select-row" style={styles.selectRow}>
@@ -350,6 +352,7 @@ export default function AutoApplyQueueScreen() {
           </TouchableOpacity>
         </View>
       )}
+      </WebPageContainer>
     </View>
   );
 }

@@ -17,6 +17,7 @@ import { addApplication } from '../../store/slices/applicationSlice';
 import { Resume, Application } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import ResumeDropdown from '../../components/common/ResumeDropdown';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<JobsStackParamList, 'ApplyJob'>;
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'ApplyJob'>;
@@ -111,6 +112,7 @@ export default function ApplyJobScreen() {
     return (
       <SafeAreaView testID="apply-success" style={styles.safe}>
         <ScrollView contentContainerStyle={styles.successScroll} showsVerticalScrollIndicator={false}>
+          <WebPageContainer maxWidth={480} style={{ alignItems: 'center', gap: 20 }}>
           {/* Success illustration */}
           <View style={styles.successBurst}>
             <View style={[styles.successRing2, { backgroundColor: '#D1FAE5' }]} />
@@ -165,6 +167,7 @@ export default function ApplyJobScreen() {
             <Ionicons name="search-outline" size={16} color={colors.primary} />
             <Text style={styles.backToJobsText}>Continue Browsing Jobs</Text>
           </TouchableOpacity>
+          </WebPageContainer>
         </ScrollView>
       </SafeAreaView>
     );
@@ -179,6 +182,7 @@ export default function ApplyJobScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <WebPageContainer maxWidth={720} style={{ gap: 14 }}>
         {/* Job context hero */}
         <View style={styles.jobHero}>
           <View style={[styles.jobIcon, { backgroundColor: jColor + '18', borderColor: jColor + '30' }]}>
@@ -298,6 +302,7 @@ export default function ApplyJobScreen() {
         )}
 
         <View style={{ height: 32 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

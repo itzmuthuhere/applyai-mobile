@@ -14,6 +14,7 @@ import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { API_ENDPOINTS } from '../../constants';
 import { FullProfile, Experience, Education, Certification, ProfileHint } from '../../types/api.types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 // ── Plan config ───────────────────────────────────────────────────────────────
 const PLAN_CONFIG: Record<string, { bg: string; text: string; border: string; icon: string; label: string; accent: string }> = {
@@ -267,6 +268,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
+        <WebPageContainer maxWidth={720} style={{ gap: 12 }}>
         {/* ── Hero card ──────────────────────────────────────────────────────── */}
         <View style={styles.heroCard}>
           <View style={[styles.cover, { backgroundColor: planCfg.accent }]} />
@@ -441,6 +443,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <View style={{ height: 32 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

@@ -9,6 +9,7 @@ import { PurchasesPackage } from 'react-native-purchases';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { getOfferings, purchasePackage, restorePurchases } from '../../services/revenueCat';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type BillingCycle = 'monthly' | 'annual';
 
@@ -143,7 +144,8 @@ export default function PaywallScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
+        <WebPageContainer maxWidth={640}>
+        <View style={{ gap: 16 }}>
         {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.heroIconRow}>
@@ -285,6 +287,8 @@ export default function PaywallScreen() {
         </Text>
 
         <View style={{ height: 24 }} />
+        </View>
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

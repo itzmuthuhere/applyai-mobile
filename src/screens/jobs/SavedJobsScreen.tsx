@@ -17,6 +17,7 @@ import { JobsStackParamList } from '../../navigation/types';
 import { Job, Application } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { AppDispatch } from '../../store';
+import WebPageContainer from '../../components/common/WebPageContainer';
 import { addApplication } from '../../store/slices/applicationSlice';
 
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'SavedJobs'>;
@@ -216,6 +217,7 @@ export default function SavedJobsScreen() {
 
   return (
     <View style={styles.screen}>
+      <WebPageContainer maxWidth={720}>
       <FlatList
         data={jobs}
         keyExtractor={keyExtractor}
@@ -253,6 +255,7 @@ export default function SavedJobsScreen() {
           </View>
         }
       />
+      </WebPageContainer>
     </View>
   );
 }

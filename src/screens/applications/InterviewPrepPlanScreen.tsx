@@ -10,6 +10,7 @@ import { AppDispatch, RootState } from '../../store';
 import { fetchInterviewPrepPlan } from '../../store/intelligenceSlice';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
 const companyColor = (name: string) =>
@@ -78,7 +79,7 @@ export default function InterviewPrepPlanScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-
+        <WebPageContainer maxWidth={720} style={{ gap: 12 }}>
         {/* Hero header */}
         <View style={styles.heroCard}>
           <View style={[styles.companyBadge, { backgroundColor: color + '18', borderColor: color + '30' }]}>
@@ -205,6 +206,7 @@ export default function InterviewPrepPlanScreen() {
         )}
 
         <View style={{ height: 32 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

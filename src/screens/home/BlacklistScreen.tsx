@@ -9,6 +9,7 @@ import { AppDispatch, RootState } from '../../store';
 import { fetchBlacklist, addToBlacklist, removeFromBlacklist } from '../../store/blacklistSlice';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
 const companyColor = (name: string) =>
@@ -156,6 +157,8 @@ export default function BlacklistScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.list}>
+          <WebPageContainer maxWidth={720}>
+          <View style={{ gap: 10 }}>
           {items.map((item) => {
             const color = companyColor(item.companyName);
             const rColor = REASON_COLORS[item.reason] ?? colors.textMuted;
@@ -192,6 +195,8 @@ export default function BlacklistScreen() {
               </View>
             );
           })}
+          </View>
+          </WebPageContainer>
         </ScrollView>
       )}
 

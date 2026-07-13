@@ -18,6 +18,7 @@ import { NOTIFICATION_ICON, DEFAULT_NOTIFICATION_ICON } from '../../constants/no
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 dayjs.extend(relativeTime);
 
@@ -120,6 +121,7 @@ export default function SocialNotificationsScreen() {
         <View style={{ width: 22 }} />
       </View>
 
+      <WebPageContainer maxWidth={720}>
       {initialLoading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -150,6 +152,7 @@ export default function SocialNotificationsScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+      </WebPageContainer>
     </SafeAreaView>
   );
 }

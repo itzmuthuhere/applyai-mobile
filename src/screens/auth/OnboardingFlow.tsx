@@ -12,6 +12,7 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { AppDispatch } from '../../store';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type Step = 'upload' | 'parsing' | 'parsed' | 'scoring' | 'scored' | 'done';
 
@@ -99,6 +100,7 @@ export default function OnboardingFlow() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.scoreScroll}>
+          <WebPageContainer maxWidth={560} style={{ gap: 14 }}>
           {/* Hero */}
           <View style={[styles.scoreHero, { backgroundColor: sColor }]}>
             <View style={styles.scoreRingOuter}>
@@ -186,6 +188,7 @@ export default function OnboardingFlow() {
           </TouchableOpacity>
 
           <View style={{ height: 24 }} />
+          </WebPageContainer>
         </View>
       </SafeAreaView>
     );
@@ -195,6 +198,7 @@ export default function OnboardingFlow() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.uploadScreen}>
+        <WebPageContainer maxWidth={480} style={{ gap: 20 }}>
         {/* Header */}
         <View style={styles.uploadHeader}>
           <View style={styles.uploadHeaderBadge}>
@@ -242,6 +246,7 @@ export default function OnboardingFlow() {
         </TouchableOpacity>
 
         <Text style={styles.uploadHint}>PDF only · Max 5 MB · Secure & private</Text>
+        </WebPageContainer>
       </View>
     </SafeAreaView>
   );

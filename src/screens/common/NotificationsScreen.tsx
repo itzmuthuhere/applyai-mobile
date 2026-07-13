@@ -19,6 +19,7 @@ import {
   setNotifications, appendNotifications, setUnreadCount, markAllRead, markOneRead,
   SocialNotif,
 } from '../../store/slices/notificationSlice';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 interface JobAlert {
   id: number;
@@ -213,10 +214,13 @@ export default function NotificationsScreen() {
       </View>
 
       {loading ? (
+        <WebPageContainer maxWidth={720}>
         <View style={styles.listContent}>
           {[1, 2, 3, 4].map(k => <SkeletonNotif key={k} />)}
         </View>
+        </WebPageContainer>
       ) : (
+        <WebPageContainer maxWidth={720}>
         <FlatList
           testID="notifications-list"
           data={notifications}
@@ -245,6 +249,7 @@ export default function NotificationsScreen() {
             ) : null
           }
         />
+        </WebPageContainer>
       )}
     </SafeAreaView>
   );

@@ -13,6 +13,7 @@ import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { setResumes } from '../../store/slices/resumeSlice';
+import WebPageContainer from '../../components/common/WebPageContainer';
 import { Resume, CoverLetterResponse } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 
@@ -87,7 +88,7 @@ export default function CoverLetterScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scroll}>
-
+        <WebPageContainer maxWidth={720} style={{ gap: 12 }}>
         {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
@@ -244,6 +245,7 @@ export default function CoverLetterScreen() {
         )}
 
         <View style={{ height: 32 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

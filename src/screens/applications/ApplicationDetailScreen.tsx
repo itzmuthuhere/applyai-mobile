@@ -26,6 +26,7 @@ import {
 } from '../../store/slices/applicationSlice';
 import { Application, ApplicationStatus } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<ApplicationsStackParamList, 'ApplicationDetail'>;
 type Nav = NativeStackNavigationProp<ApplicationsStackParamList, 'ApplicationDetail'>;
@@ -260,6 +261,7 @@ export default function ApplicationDetailScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <WebPageContainer maxWidth={720}>
       {/* Hero banner */}
       <View style={[styles.heroBanner, { backgroundColor: color }]}>
         <View style={styles.heroBannerRow}>
@@ -546,6 +548,7 @@ export default function ApplicationDetailScreen() {
           <Text style={styles.notesText}>{application.notes}</Text>
         </View>
       )}
+      </WebPageContainer>
     </ScrollView>
   );
 }

@@ -15,6 +15,7 @@ import { ResumeStackParamList } from '../../navigation/types';
 import { addResume } from '../../store/slices/resumeSlice';
 import { Resume, ResumeUploadResponse } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type Nav = NativeStackNavigationProp<ResumeStackParamList, 'ResumeUpload'>;
 
@@ -106,7 +107,7 @@ export default function ResumeUploadScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-
+        <WebPageContainer maxWidth={640} style={{ gap: 14 }}>
         {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.heroIconBox}>
@@ -234,6 +235,7 @@ export default function ResumeUploadScreen() {
         </View>
 
         <View style={{ height: 24 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

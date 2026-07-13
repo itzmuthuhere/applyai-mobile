@@ -19,6 +19,7 @@ import { setSelectedJob } from '../../store/slices/jobSlice';
 import { addApplication } from '../../store/slices/applicationSlice';
 import { Job, Resume, Application } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<JobsStackParamList, 'JobDetail'>;
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'JobDetail'>;
@@ -328,6 +329,7 @@ export default function JobDetailScreen() {
 
   return (
     <View style={styles.screen}>
+      <WebPageContainer maxWidth={760}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -651,6 +653,7 @@ export default function JobDetailScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      </WebPageContainer>
     </View>
   );
 }

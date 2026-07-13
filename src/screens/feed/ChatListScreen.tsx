@@ -14,6 +14,7 @@ import { API_ENDPOINTS } from '../../constants';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 dayjs.extend(relativeTime);
 
@@ -91,6 +92,7 @@ export default function ChatListScreen() {
         <View style={{ width: 34 }} />
       </View>
 
+      <WebPageContainer maxWidth={720}>
       {loading ? (
         <View style={styles.loadingCenter}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -120,6 +122,7 @@ export default function ChatListScreen() {
           getItemLayout={(_data, index) => ({ length: 72, offset: 72 * index, index })}
         />
       )}
+      </WebPageContainer>
     </SafeAreaView>
   );
 }

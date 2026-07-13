@@ -9,6 +9,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { JobAlert } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 export default function JobAlertsScreen() {
   const colors = useTheme();
@@ -79,6 +80,7 @@ export default function JobAlertsScreen() {
 
   return (
     <>
+      <WebPageContainer maxWidth={720}>
       <FlatList
         data={alerts}
         keyExtractor={a => String(a.id)}
@@ -150,6 +152,7 @@ export default function JobAlertsScreen() {
           </View>
         )}
       />
+      </WebPageContainer>
 
       <Modal visible={showForm} animationType="slide" transparent presentationStyle="overFullScreen">
         <View style={styles.overlay}>

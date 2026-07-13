@@ -16,6 +16,7 @@ import { RootState } from '../../store';
 import { addResume, setResumes } from '../../store/slices/resumeSlice';
 import { Resume, TailoredResumeResponse } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<JobsStackParamList, 'TailorResume'>;
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'TailorResume'>;
@@ -97,7 +98,7 @@ export default function TailorResumeScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scroll}>
-
+        <WebPageContainer maxWidth={720} style={{ gap: 12 }}>
         {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
@@ -287,6 +288,7 @@ export default function TailorResumeScreen() {
         )}
 
         <View style={{ height: 32 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

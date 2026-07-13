@@ -18,6 +18,7 @@ import { AppColors } from '../../theme/themes';
 import { InterviewStackParamList } from '../../navigation/types';
 import { InterviewSession, InterviewQuestion } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<InterviewStackParamList, 'InterviewReport'>;
 type Nav = NativeStackNavigationProp<InterviewStackParamList, 'InterviewReport'>;
@@ -199,6 +200,7 @@ export default function InterviewReportScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        <WebPageContainer maxWidth={720} style={{ gap: 14 }}>
         {/* Hero */}
         <View style={[styles.hero, { backgroundColor: color }]}>
           <View style={styles.heroCompanyBox}>
@@ -306,6 +308,7 @@ export default function InterviewReportScreen() {
         </TouchableOpacity>
 
         <View style={{ height: 24 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

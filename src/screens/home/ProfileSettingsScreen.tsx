@@ -15,6 +15,7 @@ import { FullProfile, Experience, Education, Certification, ProfileHint } from '
 import apiClient from '../../api/apiClient';
 import { useTheme, useThemeSettings } from '../../theme/ThemeContext';
 import { AppColors, AccentColor, ACCENT_PRESETS } from '../../theme/themes';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 // ─── Remote / Role options ────────────────────────────────────────────────────
 const REMOTE_OPTIONS = [
@@ -415,6 +416,7 @@ export default function ProfileSettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <WebPageContainer maxWidth={720}>
         {/* Avatar */}
         <View style={styles.avatarSection}>
           <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.85} disabled={uploadingPic} testID="avatar-btn">
@@ -702,6 +704,7 @@ export default function ProfileSettingsScreen() {
 
         <Text style={{ textAlign: 'center', fontSize: 12, color: colors.textMuted }}>ApplyAI v1.0.0</Text>
         <View style={{ height: 20 }} />
+        </WebPageContainer>
       </ScrollView>
 
       {/* Modals */}

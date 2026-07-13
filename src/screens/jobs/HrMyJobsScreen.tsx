@@ -13,6 +13,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { HrJob } from '../../types/api.types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 const COMPANY_COLORS = ['#2563EB', '#7C3AED', '#059669', '#DC2626', '#D97706', '#0891B2', '#C026D3', '#65A30D'];
 function companyColor(name: string) {
@@ -154,6 +155,7 @@ export default function HrMyJobsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <WebPageContainer maxWidth={760}>
       <FlatList
         data={jobs}
         keyExtractor={item => String(item.id)}
@@ -273,6 +275,7 @@ export default function HrMyJobsScreen() {
           );
         }}
       />
+      </WebPageContainer>
     </SafeAreaView>
   );
 }

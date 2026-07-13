@@ -18,6 +18,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { FeedStackParamList } from '../../navigation/types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 dayjs.extend(relativeTime);
 
@@ -465,6 +466,7 @@ export default function PostDetailScreen() {
           <View style={{ width: 34 }} />
         </View>
 
+        <WebPageContainer maxWidth={680} style={{ flex: 1 }}>
         <FlatList
           data={comments}
           keyExtractor={item => String(item.id)}
@@ -524,6 +526,7 @@ export default function PostDetailScreen() {
             )}
           </TouchableOpacity>
         </View>
+        </WebPageContainer>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

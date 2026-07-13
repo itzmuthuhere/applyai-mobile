@@ -23,6 +23,7 @@ import { InterviewStackParamList } from '../../navigation/types';
 import { RootState } from '../../store';
 import { InterviewAnswerResponse, InterviewQuestion } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<InterviewStackParamList, 'InterviewQuestion'>;
 type Nav = NativeStackNavigationProp<InterviewStackParamList, 'InterviewQuestion'>;
@@ -224,6 +225,7 @@ export default function InterviewQuestionScreen() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
+      <WebPageContainer maxWidth={720}>
       {/* Progress bar */}
       <View style={styles.progressRow}>
         <View style={styles.progressTrack}>
@@ -455,6 +457,7 @@ export default function InterviewQuestionScreen() {
           )}
         </>
       )}
+      </WebPageContainer>
     </ScrollView>
   );
 }

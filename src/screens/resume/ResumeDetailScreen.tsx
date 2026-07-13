@@ -25,6 +25,7 @@ import { setSelectedResume, updateResumeScore, updateResumeParsed } from '../../
 import { ParsedResume, ResumeScore } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
 import { decodeFileName } from '../../utils/decodeFileName';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<ResumeStackParamList, 'ResumeDetail'>;
 type Nav = NativeStackNavigationProp<ResumeStackParamList, 'ResumeDetail'>;
@@ -147,6 +148,7 @@ export default function ResumeDetailScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        <WebPageContainer maxWidth={720}>
         {/* Hero Banner */}
         <View style={styles.hero}>
           <View style={styles.heroInner}>
@@ -427,6 +429,7 @@ export default function ResumeDetailScreen() {
         </View>
 
         <View style={{ height: 32 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

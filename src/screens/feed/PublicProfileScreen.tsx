@@ -14,6 +14,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { FeedStackParamList } from '../../navigation/types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 dayjs.extend(relativeTime);
 
@@ -112,6 +113,7 @@ export default function PublicProfileScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+        <WebPageContainer maxWidth={680}>
         {/* Cover + Avatar */}
         <View style={styles.coverBg} />
         <View style={styles.avatarSection}>
@@ -245,6 +247,7 @@ export default function PublicProfileScreen() {
         )}
 
         <View style={{ height: 32 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

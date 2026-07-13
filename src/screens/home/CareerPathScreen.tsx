@@ -9,6 +9,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { HomeStackParamList } from '../../navigation/types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<HomeStackParamList, 'CareerPath'>;
 
@@ -112,7 +113,7 @@ export default function CareerPathScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-
+        <WebPageContainer maxWidth={720}>
         {/* Current level hero */}
         <View style={styles.currentCard}>
           <View style={styles.currentLeft}>
@@ -240,6 +241,7 @@ export default function CareerPathScreen() {
         ) : null}
 
         <View style={{ height: 24 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

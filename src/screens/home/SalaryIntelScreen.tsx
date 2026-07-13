@@ -9,6 +9,7 @@ import { AppDispatch, RootState } from '../../store';
 import { fetchSalaryIntel, clearSalary } from '../../store/intelligenceSlice';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 const EXP_PRESETS = [
   { label: '0–2 yrs', value: '1' },
@@ -100,7 +101,7 @@ export default function SalaryIntelScreen() {
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-
+          <WebPageContainer maxWidth={720}>
           {/* Hero */}
           <View style={styles.hero}>
             <View style={styles.heroIcon}>
@@ -249,6 +250,7 @@ export default function SalaryIntelScreen() {
           )}
 
           <View style={{ height: 20 }} />
+          </WebPageContainer>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

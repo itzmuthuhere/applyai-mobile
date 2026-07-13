@@ -11,6 +11,7 @@ import { fetchCompanyIntel, clearCompanyIntel } from '../../store/intelligenceSl
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type RouteProps = RouteProp<JobsStackParamList, 'CompanyIntel'>;
 
@@ -61,7 +62,7 @@ export default function CompanyIntelScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-
+        <WebPageContainer maxWidth={720} style={{ gap: 12 }}>
         {/* Header */}
         <View style={styles.headerCard}>
           {(() => {
@@ -150,7 +151,7 @@ export default function CompanyIntelScreen() {
           <SectionTitle icon="checkmark-circle-outline" title="Verdict" color={colors.success} />
           <Text style={[styles.bodyText, { color: colors.success, fontWeight: '600' }]}>{data.verdict}</Text>
         </View>
-
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );

@@ -12,6 +12,7 @@ import { AppColors } from '../../theme/themes';
 import { JobsStackParamList } from '../../navigation/types';
 import { CompanyProfile } from '../../types/api.types';
 import apiClient from '../../api/apiClient';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 type Nav = NativeStackNavigationProp<JobsStackParamList, 'CompanyProfiles'>;
 
@@ -148,6 +149,7 @@ export default function CompanyProfilesScreen() {
 
   return (
     <View style={styles.screen}>
+      <WebPageContainer maxWidth={720}>
       {loading ? (
         <>
           <View style={{ padding: 14 }}>{ListHeader}</View>
@@ -184,6 +186,7 @@ export default function CompanyProfilesScreen() {
           }
         />
       )}
+      </WebPageContainer>
     </View>
   );
 }

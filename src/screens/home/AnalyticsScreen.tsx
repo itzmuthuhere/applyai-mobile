@@ -9,6 +9,7 @@ import { AppDispatch, RootState } from '../../store';
 import { fetchAnalyticsOverview, fetchResumePerformance } from '../../store/analyticsSlice';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
+import WebPageContainer from '../../components/common/WebPageContainer';
 
 const STAT_CONFIG: Array<{
   key: keyof ReturnType<typeof buildStats>;
@@ -136,7 +137,7 @@ export default function AnalyticsScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scroll}>
-
+        <WebPageContainer maxWidth={760}>
         {/* Stat cards */}
         <View style={styles.statsGrid}>
           {STAT_CONFIG.map(cfg => (
@@ -268,6 +269,7 @@ export default function AnalyticsScreen() {
         )}
 
         <View style={{ height: 24 }} />
+        </WebPageContainer>
       </ScrollView>
     </SafeAreaView>
   );
