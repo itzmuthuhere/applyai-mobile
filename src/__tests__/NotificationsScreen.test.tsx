@@ -51,6 +51,18 @@ const ALERTS = [
 
 const NOTIF = {
   id: 10,
+  type: 'INTERVIEW_SCHEDULED',
+  message: 'Your interview for Senior Engineer is scheduled',
+  read: false,
+  createdAt: '2026-06-24T10:00:00',
+  actor: null,
+  postId: null,
+};
+
+// Social-layer type — the social feed/chat tab is hidden, so notifications of
+// this shape must never render even if the backend still returns legacy rows.
+const SOCIAL_NOTIF = {
+  id: 11,
   type: 'POST_LIKE',
   message: 'Alice liked your post',
   read: false,
@@ -98,12 +110,24 @@ describe('NotificationsScreen', () => {
   it('shows real dynamic notifications from the backend, not static tips', async () => {
     renderScreen();
     await waitFor(() => {
-      expect(screen.getByText('Alice liked your post')).toBeTruthy();
+      expect(screen.getByText('Your interview for Senior Engineer is scheduled')).toBeTruthy();
     });
     expect(screen.queryByText('Complete your profile')).toBeNull();
     expect(screen.queryByText('Tailor your resume')).toBeNull();
     expect(screen.queryByText('Practice mock interviews')).toBeNull();
     expect(screen.queryByText('Check your ATS score')).toBeNull();
+  });
+
+  it('filters out social-layer notifications (feed/chat is hidden, their tap targets no longer exist)', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/alerts') return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: { content: [NOTIF, SOCIAL_NOTIF], last: true } });
+    });
+    renderScreen();
+    await waitFor(() => {
+      expect(screen.getByText('Your interview for Senior Engineer is scheduled')).toBeTruthy();
+    });
+    expect(screen.queryByText('Alice liked your post')).toBeNull();
   });
 
   it('shows salary filter in alert body', async () => {
@@ -147,7 +171,7 @@ describe('NotificationsScreen', () => {
     });
   });
 
-  it('marks a notification read and navigates on tap', async () => {
+  it('marks a job notification read on tap (no navigation — job notifications carry no feed/chat target)', async () => {
     // Auto-mark-all-read fires on load; make it fail here so this item stays
     // unread and the individual tap-to-read fallback path is actually exercised.
     mockPost.mockRejectedValueOnce(new Error('network error'));
@@ -163,8 +187,8 @@ describe('NotificationsScreen', () => {
 
     await waitFor(() => {
       expect(mockPatch).toHaveBeenCalledWith('/api/notifications/social/10/read');
-      expect(mockNavigate).toHaveBeenCalledWith('PostDetail', { postId: 5 });
     });
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('automatically marks all read once the list loads (opening the screen is the "seen it" signal)', async () => {

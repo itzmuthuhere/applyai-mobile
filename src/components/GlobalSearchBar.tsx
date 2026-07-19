@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { COLORS } from '../constants';
-import { RootState } from '../store';
+import { useDispatch, useSelector } from 'react-redux';
+import { COLORS, API_ENDPOINTS } from '../constants';
+import { RootState, AppDispatch } from '../store';
+import apiClient from '../api/apiClient';
+import { setUnreadCount } from '../store/slices/notificationSlice';
 
 interface Props {
   topInset: number;
@@ -12,16 +14,25 @@ interface Props {
 
 export default function GlobalSearchBar({ topInset }: Props) {
   const navigation = useNavigation<any>();
+  const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((s: RootState) => s.auth.user);
   const unreadCount = useSelector((s: RootState) => s.socialNotifications.unreadCount);
   const initial = (user?.name?.trim().charAt(0) ?? '?').toUpperCase();
 
+  // This used to only be fetched inside FeedScreen, which is no longer reachable
+  // now that the social feed tab is hidden — without this, the bell badge would
+  // never populate even for real job-related notifications (interview scheduled,
+  // offer received, etc). The bar is globally mounted, so fetch on mount here.
+  useEffect(() => {
+    apiClient.get(API_ENDPOINTS.SOCIAL_NOTIFICATIONS_UNREAD)
+      .then(({ data }) => dispatch(setUnreadCount(data.count ?? 0)))
+      .catch(() => {});
+  }, []);
+
   const openSearch = () => {
-    // GlobalSearchBar's useNavigation() returns Root Stack nav (knows 'Main'+'Auth').
-    // Navigate into Main's nested Tab → FeedTab → Search.
     navigation.navigate('Main', {
-      screen: 'FeedTab',
-      params: { screen: 'Search', params: { initialQuery: '' } },
+      screen: 'JobsTab',
+      params: { screen: 'JobFeed' },
     });
   };
 
@@ -36,13 +47,6 @@ export default function GlobalSearchBar({ topInset }: Props) {
     navigation.navigate('Main', {
       screen: 'HomeTab',
       params: { screen: 'Notifications' },
-    });
-  };
-
-  const openChat = () => {
-    navigation.navigate('Main', {
-      screen: 'FeedTab',
-      params: { screen: 'ChatList' },
     });
   };
 
@@ -69,13 +73,8 @@ export default function GlobalSearchBar({ topInset }: Props) {
         >
           <Ionicons name="search-outline" size={15} color={COLORS.textMuted} style={styles.searchIcon} />
           <Text style={styles.placeholder} numberOfLines={1}>
-            Search people, posts, hashtags...
+            Search jobs...
           </Text>
-        </TouchableOpacity>
-
-        {/* Chat icon */}
-        <TouchableOpacity onPress={openChat} activeOpacity={0.8} style={styles.iconBtn} testID="global-chat-btn">
-          <Ionicons name="chatbubble-ellipses-outline" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
 
         {/* Notifications bell */}

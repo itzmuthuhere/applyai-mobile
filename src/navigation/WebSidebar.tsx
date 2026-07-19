@@ -11,7 +11,6 @@ export const SIDEBAR_WIDTH = 232;
 
 const LABELS: Record<string, string> = {
   HomeTab: 'Home',
-  FeedTab: 'Feed',
   JobsTab: 'Jobs',
   ResumeTab: 'Resumes',
   ApplicationsTab: 'Applications',

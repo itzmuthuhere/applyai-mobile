@@ -177,7 +177,6 @@ export default function MainNavigator() {
             tabBarIcon: ({ color, size }) => {
               const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
                 HomeTab: 'home-outline',
-                FeedTab: 'newspaper-outline',
                 JobsTab: 'briefcase-outline',
                 ResumeTab: 'document-text-outline',
                 ApplicationsTab: 'list-outline',
@@ -189,7 +188,6 @@ export default function MainNavigator() {
           })}
         >
           <Tab.Screen name="HomeTab" component={HomeNavigator} />
-          <Tab.Screen name="FeedTab" component={FeedNavigator} />
           <Tab.Screen name="JobsTab" component={JobsNavigator} />
           <Tab.Screen name="ResumeTab" component={ResumeNavigator} />
           <Tab.Screen name="ApplicationsTab" component={ApplicationsNavigator} />

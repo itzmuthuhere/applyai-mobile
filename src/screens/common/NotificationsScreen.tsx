@@ -31,6 +31,14 @@ interface JobAlert {
   createdAt: string;
 }
 
+// Social-layer types (FOLLOW, DM, POST_LIKE, etc.) are excluded here since the
+// social feed/chat tab is hidden — their tap targets (ChatDetail, PostDetail,
+// PublicProfile) no longer exist anywhere in the navigation tree.
+const JOB_NOTIFICATION_TYPES = new Set([
+  'APPLICATION_STATUS_CHANGE', 'INTERVIEW_SCHEDULED', 'OFFER_RECEIVED',
+  'QUICK_APPLY_SUBMITTED', 'JOB_ALERT_MATCH', 'FOLLOW_UP_REMINDER',
+]);
+
 function alertBody(alert: JobAlert): string {
   return [
     alert.remote && 'Remote only',
@@ -70,7 +78,8 @@ export default function NotificationsScreen() {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch<AppDispatch>();
 
-  const notifications = useSelector((s: RootState) => s.socialNotifications.notifications);
+  const allNotifications = useSelector((s: RootState) => s.socialNotifications.notifications);
+  const notifications = allNotifications.filter(n => JOB_NOTIFICATION_TYPES.has(n.type));
   const hasMore = useSelector((s: RootState) => s.socialNotifications.hasMore);
   const page = useSelector((s: RootState) => s.socialNotifications.page);
 
