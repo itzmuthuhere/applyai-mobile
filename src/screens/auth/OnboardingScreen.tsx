@@ -1,6 +1,6 @@
 ﻿import React, { useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Dimensions,
+  View, Text, StyleSheet, TouchableOpacity,
   ScrollView, SafeAreaView, Animated,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -8,8 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { AuthStackParamList } from '../../navigation/types';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
+import { useResponsive } from '../../hooks/useResponsive';
 
-const { width } = Dimensions.get('window');
+const WEB_MAX_WIDTH = 480;
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
 
@@ -52,6 +53,8 @@ const FEATURES = [
 
 export default function OnboardingScreen({ navigation }: Props) {
   const colors = useTheme();
+  const { width: winWidth, isWeb } = useResponsive();
+  const slideWidth = isWeb ? Math.min(winWidth, WEB_MAX_WIDTH) : winWidth;
   const styles = makeStyles(colors);
   const scrollRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -59,7 +62,7 @@ export default function OnboardingScreen({ navigation }: Props) {
   function goNext() {
     if (activeIndex < SLIDES.length - 1) {
       const next = activeIndex + 1;
-      scrollRef.current?.scrollTo({ x: next * width, animated: true });
+      scrollRef.current?.scrollTo({ x: next * slideWidth, animated: true });
       setActiveIndex(next);
     } else {
       navigation.navigate('GoogleSignIn');
@@ -67,7 +70,7 @@ export default function OnboardingScreen({ navigation }: Props) {
   }
 
   function handleScroll(e: any) {
-    const index = Math.round(e.nativeEvent.contentOffset.x / width);
+    const index = Math.round(e.nativeEvent.contentOffset.x / slideWidth);
     setActiveIndex(index);
   }
 
@@ -85,64 +88,68 @@ export default function OnboardingScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {/* Slides */}
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
-        scrollEventThrottle={16}
-        style={styles.slider}
-      >
-        {SLIDES.map((slide, i) => (
-          <View key={i} style={styles.slide}>
-            <View style={[styles.slideIconBox, { backgroundColor: slide.iconBg }]}>
-              <Ionicons name={slide.icon} size={44} color={slide.iconColor} />
-            </View>
-            <View style={[styles.statPill, { backgroundColor: slide.iconBg }]}>
-              <Text style={[styles.statNum, { color: slide.iconColor }]}>{slide.stat}</Text>
-              <Text style={[styles.statLabel, { color: slide.iconColor }]}>{slide.statLabel}</Text>
-            </View>
-            <Text style={styles.slideTitle}>{slide.title}</Text>
-            <Text style={styles.slideSubtitle}>{slide.subtitle}</Text>
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Dots */}
-      <View style={styles.dotsRow}>
-        {SLIDES.map((_, i) => (
-          <View
-            key={i}
-            style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
-          />
-        ))}
-      </View>
-
-      {/* Features strip */}
-      <View style={styles.featuresCard}>
-        <View style={styles.featuresGrid}>
-          {FEATURES.map((f, i) => (
-            <View key={i} style={styles.featureItem}>
-              <View style={styles.featureIconBox}>
-                <Ionicons name={f.icon} size={16} color={colors.primary} />
+      {/* Slides + dots + features + CTA — centered as one compact block on web
+          instead of the slider stretching full-bleed across a tall browser
+          window (that's what produced the huge gap above the dots on web) */}
+      <View style={[styles.contentBlock, isWeb && styles.contentBlockWeb]}>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handleScroll}
+          scrollEventThrottle={16}
+          style={isWeb ? styles.sliderWeb : styles.slider}
+        >
+          {SLIDES.map((slide, i) => (
+            <View key={i} style={[styles.slide, { width: slideWidth }]}>
+              <View style={[styles.slideIconBox, { backgroundColor: slide.iconBg }]}>
+                <Ionicons name={slide.icon} size={44} color={slide.iconColor} />
               </View>
-              <Text style={styles.featureText}>{f.text}</Text>
+              <View style={[styles.statPill, { backgroundColor: slide.iconBg }]}>
+                <Text style={[styles.statNum, { color: slide.iconColor }]}>{slide.stat}</Text>
+                <Text style={[styles.statLabel, { color: slide.iconColor }]}>{slide.statLabel}</Text>
+              </View>
+              <Text style={styles.slideTitle}>{slide.title}</Text>
+              <Text style={styles.slideSubtitle}>{slide.subtitle}</Text>
             </View>
           ))}
-        </View>
-      </View>
+        </ScrollView>
 
-      {/* CTA */}
-      <View style={styles.ctaWrap}>
-        <TouchableOpacity style={styles.ctaBtn} onPress={goNext} activeOpacity={0.85}>
-          <Text style={styles.ctaBtnText}>{isLast ? 'Get Started Free' : 'Next'}</Text>
-          <Ionicons name={isLast ? 'arrow-forward-circle' : 'chevron-forward'} size={20} color="#FFF" />
-        </TouchableOpacity>
-        {isLast && (
-          <Text style={styles.ctaDisclaimer}>No credit card required · Cancel anytime</Text>
-        )}
+        {/* Dots */}
+        <View style={styles.dotsRow}>
+          {SLIDES.map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
+            />
+          ))}
+        </View>
+
+        {/* Features strip */}
+        <View style={styles.featuresCard}>
+          <View style={styles.featuresGrid}>
+            {FEATURES.map((f, i) => (
+              <View key={i} style={styles.featureItem}>
+                <View style={styles.featureIconBox}>
+                  <Ionicons name={f.icon} size={16} color={colors.primary} />
+                </View>
+                <Text style={styles.featureText}>{f.text}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* CTA */}
+        <View style={styles.ctaWrap}>
+          <TouchableOpacity style={styles.ctaBtn} onPress={goNext} activeOpacity={0.85}>
+            <Text style={styles.ctaBtnText}>{isLast ? 'Get Started Free' : 'Next'}</Text>
+            <Ionicons name={isLast ? 'arrow-forward-circle' : 'chevron-forward'} size={20} color="#FFF" />
+          </TouchableOpacity>
+          {isLast && (
+            <Text style={styles.ctaDisclaimer}>No credit card required · Cancel anytime</Text>
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -164,9 +171,17 @@ function makeStyles(colors: AppColors) {
   skipBtn: { paddingHorizontal: 10, paddingVertical: 6 },
   skipBtnText: { fontSize: 14, color: colors.textMuted, fontWeight: '600' },
 
+  contentBlock: { flex: 1 },
+  contentBlockWeb: {
+    flex: 1, justifyContent: 'center',
+    width: '100%', maxWidth: WEB_MAX_WIDTH, alignSelf: 'center',
+  },
+
   slider: { flex: 1 },
+  // On web the block is centered as a unit (contentBlockWeb), so the slider
+  // sizes to its content instead of stretching to fill a tall browser window.
+  sliderWeb: { flexGrow: 0, height: 340 },
   slide: {
-    width,
     paddingHorizontal: 32,
     alignItems: 'center',
     justifyContent: 'center',
