@@ -98,48 +98,54 @@ const JobCard = memo(function JobCard({
           </View>
         </View>
       )}
-      {/* Top row */}
-      <View style={styles.cardHeader}>
-        <View style={[styles.logoCircle, { backgroundColor: bgColor + '20' }]}>
-          <Text style={[styles.logoInitial, { color: bgColor }]}>{initial}</Text>
+
+      {/* Left: everything informational — title, company, JD, job-attribute tags */}
+      <View style={styles.cardMain}>
+        <View style={styles.cardHeader}>
+          <View style={[styles.logoCircle, { backgroundColor: bgColor + '20' }]}>
+            <Text style={[styles.logoInitial, { color: bgColor }]}>{initial}</Text>
+          </View>
+          <View style={styles.cardMeta}>
+            <Text style={styles.jobTitle} numberOfLines={2}>{item.title}</Text>
+            <Text style={styles.companyLine} numberOfLines={1}>
+              {item.company}{item.location ? ` · ${item.location}` : ''}
+              {postedAgo ? <Text style={styles.postedAgoInline}> · {postedAgo}</Text> : null}
+            </Text>
+          </View>
         </View>
-        <View style={styles.cardMeta}>
-          <Text style={styles.jobTitle} numberOfLines={2}>{item.title}</Text>
-          <Text style={styles.companyLine} numberOfLines={1}>
-            {item.company}{item.location ? ` · ${item.location}` : ''}
-            {postedAgo ? <Text style={styles.postedAgoInline}> · {postedAgo}</Text> : null}
-          </Text>
-        </View>
-        {mc && (
-          <View style={[styles.matchCircle, { backgroundColor: mc.bg, borderColor: mc.ring }]}>
-            <Text style={[styles.matchPct, { color: mc.text }]}>{item.matchScore}</Text>
-            <Text style={[styles.matchLabel, { color: mc.text }]}>%</Text>
+
+        {!!item.description?.trim() && (
+          <Text style={styles.jdSnippet} numberOfLines={1}>{item.description.trim()}</Text>
+        )}
+
+        {(salary || item.isRemote || item.category) && (
+          <View style={styles.tagsRow}>
+            {salary && (
+              <View style={styles.tagSalary}>
+                <Ionicons name="cash-outline" size={10} color={colors.primary} />
+                <Text style={styles.tagSalaryText}>{salary}</Text>
+              </View>
+            )}
+            {item.isRemote && (
+              <View style={styles.tagRemote}>
+                <Text style={styles.tagRemoteText}>Remote</Text>
+              </View>
+            )}
+            {item.category && (
+              <View style={styles.tagNeutral}>
+                <Text style={styles.tagNeutralText} numberOfLines={1}>{item.category}</Text>
+              </View>
+            )}
           </View>
         )}
       </View>
 
-      {/* JD snippet — fills the space tags alone leave empty, gives a reason to open the job */}
-      {!!item.description?.trim() && (
-        <Text style={styles.jdSnippet} numberOfLines={1}>{item.description.trim()}</Text>
-      )}
-
-      {/* Tags + actions share one row, sequential (no flex spacer) so sparse
-          cards don't stretch a gap between the last chip and the button */}
-      <View style={styles.cardActions}>
-        {salary && (
-          <View style={styles.tagSalary}>
-            <Ionicons name="cash-outline" size={10} color={colors.primary} />
-            <Text style={styles.tagSalaryText}>{salary}</Text>
-          </View>
-        )}
-        {item.isRemote && (
-          <View style={styles.tagRemote}>
-            <Text style={styles.tagRemoteText}>Remote</Text>
-          </View>
-        )}
-        {item.category && (
-          <View style={styles.tagNeutral}>
-            <Text style={styles.tagNeutralText} numberOfLines={1}>{item.category}</Text>
+      {/* Right: vertical action rail — source, match %, Easy Apply, save, deadline */}
+      <View style={styles.cardRail}>
+        {mc && (
+          <View style={[styles.matchCircle, { backgroundColor: mc.bg, borderColor: mc.ring }]}>
+            <Text style={[styles.matchPct, { color: mc.text }]}>{item.matchScore}</Text>
+            <Text style={[styles.matchLabel, { color: mc.text }]}>%</Text>
           </View>
         )}
         {item.source && (
@@ -186,16 +192,18 @@ function SkeletonCard() {
 
   return (
     <Animated.View style={[styles.card, { opacity }]}>
-      <View style={styles.cardHeader}>
-        <View style={[styles.logoCircle, { backgroundColor: colors.border }]} />
-        <View style={styles.cardMeta}>
-          <View style={{ height: 14, width: '70%', backgroundColor: colors.border, borderRadius: 6, marginBottom: 8 }} />
-          <View style={{ height: 12, width: '45%', backgroundColor: colors.border, borderRadius: 6 }} />
+      <View style={styles.cardMain}>
+        <View style={styles.cardHeader}>
+          <View style={[styles.logoCircle, { backgroundColor: colors.border }]} />
+          <View style={styles.cardMeta}>
+            <View style={{ height: 14, width: '70%', backgroundColor: colors.border, borderRadius: 6, marginBottom: 8 }} />
+            <View style={{ height: 12, width: '45%', backgroundColor: colors.border, borderRadius: 6 }} />
+          </View>
         </View>
-      </View>
-      <View style={styles.tagsRow}>
-        <View style={{ height: 24, width: 80, backgroundColor: colors.border, borderRadius: 8 }} />
-        <View style={{ height: 24, width: 60, backgroundColor: colors.border, borderRadius: 8 }} />
+        <View style={styles.tagsRow}>
+          <View style={{ height: 24, width: 80, backgroundColor: colors.border, borderRadius: 8 }} />
+          <View style={{ height: 24, width: 60, backgroundColor: colors.border, borderRadius: 8 }} />
+        </View>
       </View>
     </Animated.View>
   );
@@ -942,11 +950,11 @@ function makeStyles(colors: AppColors) {
   autoApplyBtnDisabled: { backgroundColor: colors.textMuted },
   autoApplyBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 
-  // Job card
+  // Job card — two columns: informational content (left) + a vertical action rail (right)
   card: {
     backgroundColor: colors.surface, borderRadius: 14,
     padding: 12, borderWidth: 1, borderColor: colors.border,
-    gap: 7,
+    flexDirection: 'row', alignItems: 'stretch', gap: 10,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
@@ -961,6 +969,10 @@ function makeStyles(colors: AppColors) {
     alignItems: 'center', justifyContent: 'center',
   },
   checkCircleActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  cardMain: { flex: 1, gap: 7, justifyContent: 'center' },
+  cardRail: {
+    alignItems: 'flex-end', justifyContent: 'center', gap: 6, flexShrink: 0,
+  },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   logoCircle: {
     width: 42, height: 42, borderRadius: 12,
@@ -1002,15 +1014,14 @@ function makeStyles(colors: AppColors) {
   },
   tagNeutralText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
 
-  cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   quickApplyBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
     backgroundColor: colors.primary, borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 6,
+    paddingHorizontal: 10, paddingVertical: 7,
   },
-  quickApplyText: { fontSize: 13, fontWeight: '700', color: '#fff' },
-  deadlineText: { fontSize: 11, color: colors.warning, fontWeight: '600' },
-  saveBtn: { padding: 6 },
+  quickApplyText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  deadlineText: { fontSize: 10, color: colors.warning, fontWeight: '600' },
+  saveBtn: { padding: 4 },
 
   // States
   centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12 },
