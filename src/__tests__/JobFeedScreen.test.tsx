@@ -145,6 +145,28 @@ describe('JobFeedScreen', () => {
     });
   });
 
+  it('shows a JD snippet on the card when the job has a description', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 },
+    });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Build things')).toBeTruthy();
+    });
+  });
+
+  it('omits the JD snippet when the job has a blank description', async () => {
+    const blankDescJob = { ...JOB, description: '   ' };
+    mockGet.mockResolvedValueOnce({
+      data: { content: [blankDescJob], totalElements: 1, number: 0, totalPages: 1 },
+    });
+    renderScreen();
+
+    await waitFor(() => screen.getByText('Senior Engineer'));
+    expect(screen.queryByText('   ')).toBeNull();
+  });
+
   it('shows Apply All button for JOBSEEKER users', async () => {
     mockGet.mockResolvedValueOnce({
       data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 },

@@ -27,7 +27,7 @@ type SortBy = 'match' | 'recent';
 type FeedTab = 'all' | 'remote' | 'recent' | 'saved';
 
 const PAGE_SIZE = 20;
-const CARD_HEIGHT = 146;
+const CARD_HEIGHT = 160;
 
 const SALARY_OPTIONS = [
   { label: '₹10L+', value: 1_000_000 },
@@ -118,6 +118,11 @@ const JobCard = memo(function JobCard({
         )}
       </View>
 
+      {/* JD snippet — fills the space tags alone leave empty, gives a reason to open the job */}
+      {!!item.description?.trim() && (
+        <Text style={styles.jdSnippet} numberOfLines={1}>{item.description.trim()}</Text>
+      )}
+
       {/* Tags row */}
       <View style={styles.tagsRow}>
         {salary && (
@@ -144,25 +149,24 @@ const JobCard = memo(function JobCard({
         )}
       </View>
 
-      {/* Action row */}
+      {/* Action row — no stretch spacer, so sparse cards don't leave a dead gap */}
       <View style={styles.cardActions}>
         <TouchableOpacity style={styles.quickApplyBtn} onPress={onQuickApply} activeOpacity={0.8}>
           <Ionicons name="flash" size={13} color="#fff" />
           <Text style={styles.quickApplyText}>Easy Apply</Text>
         </TouchableOpacity>
-        <View style={{ flex: 1 }} />
+        <TouchableOpacity style={styles.saveBtn} onPress={onSave} activeOpacity={0.7}>
+          <Ionicons
+            name={item.saved ? 'bookmark' : 'bookmark-outline'}
+            size={18}
+            color={item.saved ? colors.primary : colors.textMuted}
+          />
+        </TouchableOpacity>
         {item.deadline && (
           <Text style={styles.deadlineText}>
             Closes {dayjs(item.deadline).format('MMM D')}
           </Text>
         )}
-        <TouchableOpacity style={styles.saveBtn} onPress={onSave} activeOpacity={0.7}>
-          <Ionicons
-            name={item.saved ? 'bookmark' : 'bookmark-outline'}
-            size={20}
-            color={item.saved ? colors.primary : colors.textMuted}
-          />
-        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -945,9 +949,9 @@ function makeStyles(colors: AppColors) {
 
   // Job card
   card: {
-    backgroundColor: colors.surface, borderRadius: 16,
-    padding: 13, borderWidth: 1, borderColor: colors.border,
-    gap: 9,
+    backgroundColor: colors.surface, borderRadius: 14,
+    padding: 12, borderWidth: 1, borderColor: colors.border,
+    gap: 7,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
@@ -972,6 +976,7 @@ function makeStyles(colors: AppColors) {
   jobTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, lineHeight: 20, marginBottom: 3 },
   companyLine: { fontSize: 13, color: colors.textSecondary },
   postedAgoInline: { color: colors.textMuted },
+  jdSnippet: { fontSize: 12, color: colors.textMuted, lineHeight: 16 },
   matchCircle: {
     width: 46, height: 46, borderRadius: 23,
     alignItems: 'center', justifyContent: 'center',
