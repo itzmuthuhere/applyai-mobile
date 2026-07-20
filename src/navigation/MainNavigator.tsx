@@ -3,9 +3,7 @@ import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets, SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { COLORS } from '../constants';
-import GlobalSearchBar from '../components/GlobalSearchBar';
 import WebSidebar, { SIDEBAR_WIDTH } from './WebSidebar';
 import { useResponsive } from '../hooks/useResponsive';
 import {
@@ -157,43 +155,36 @@ function InterviewNavigator() {
 }
 
 export default function MainNavigator() {
-  const insets = useSafeAreaInsets();
   const { isDesktopWeb } = useResponsive();
 
   return (
-    // Override top inset to 0 so child SafeAreaViews don't double-pad below the GlobalSearchBar
-    <SafeAreaInsetsContext.Provider
-      value={{ top: 0, bottom: insets.bottom, left: insets.left, right: insets.right }}
-    >
-      <View style={{ flex: 1, paddingLeft: isDesktopWeb ? SIDEBAR_WIDTH : 0 }}>
-        <GlobalSearchBar topInset={insets.top} />
-        <Tab.Navigator
-          tabBar={(props) => <WebSidebar {...props} />}
-          screenOptions={({ route }) => ({
-            headerShown: false,
-            tabBarActiveTintColor: COLORS.primary,
-            tabBarInactiveTintColor: COLORS.textMuted,
-            tabBarStyle: { backgroundColor: COLORS.surface, borderTopColor: COLORS.border },
-            tabBarIcon: ({ color, size }) => {
-              const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-                HomeTab: 'home-outline',
-                JobsTab: 'briefcase-outline',
-                ResumeTab: 'document-text-outline',
-                ApplicationsTab: 'list-outline',
-                InterviewTab: 'mic-outline',
-              };
-              return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
-            },
-            tabBarShowLabel: false,
-          })}
-        >
-          <Tab.Screen name="HomeTab" component={HomeNavigator} />
-          <Tab.Screen name="JobsTab" component={JobsNavigator} />
-          <Tab.Screen name="ResumeTab" component={ResumeNavigator} />
-          <Tab.Screen name="ApplicationsTab" component={ApplicationsNavigator} />
-          <Tab.Screen name="InterviewTab" component={InterviewNavigator} />
-        </Tab.Navigator>
-      </View>
-    </SafeAreaInsetsContext.Provider>
+    <View style={{ flex: 1, paddingLeft: isDesktopWeb ? SIDEBAR_WIDTH : 0 }}>
+      <Tab.Navigator
+        tabBar={(props) => <WebSidebar {...props} />}
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: COLORS.primary,
+          tabBarInactiveTintColor: COLORS.textMuted,
+          tabBarStyle: { backgroundColor: COLORS.surface, borderTopColor: COLORS.border },
+          tabBarIcon: ({ color, size }) => {
+            const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
+              HomeTab: 'home-outline',
+              JobsTab: 'briefcase-outline',
+              ResumeTab: 'document-text-outline',
+              ApplicationsTab: 'list-outline',
+              InterviewTab: 'mic-outline',
+            };
+            return <Ionicons name={icons[route.name] ?? 'ellipse-outline'} size={size} color={color} />;
+          },
+          tabBarShowLabel: false,
+        })}
+      >
+        <Tab.Screen name="HomeTab" component={HomeNavigator} />
+        <Tab.Screen name="JobsTab" component={JobsNavigator} />
+        <Tab.Screen name="ResumeTab" component={ResumeNavigator} />
+        <Tab.Screen name="ApplicationsTab" component={ApplicationsNavigator} />
+        <Tab.Screen name="InterviewTab" component={InterviewNavigator} />
+      </Tab.Navigator>
+    </View>
   );
 }

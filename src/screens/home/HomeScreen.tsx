@@ -91,6 +91,7 @@ export default function HomeScreen() {
   const [jobPreviews, setJobPreviews] = useState<Job[]>([]);
 
   const firstName = user?.name?.split(' ')[0] ?? 'there';
+  const initial = (user?.name?.trim().charAt(0) ?? '?').toUpperCase();
   const plan = user?.subscriptionPlan ?? 'FREE';
   const planCfg = PLAN_CONFIG[plan] ?? PLAN_CONFIG.FREE;
   const isHr = user?.role === 'HR';
@@ -176,9 +177,34 @@ export default function HomeScreen() {
                   <Text style={styles.heroHeadline} numberOfLines={1}>{user.headline}</Text>
                 ) : null}
               </View>
-              <View testID={`plan-badge-${plan}`} style={[styles.planBadge, { backgroundColor: planCfg.bg, borderColor: planCfg.border }]}>
-                <Ionicons name={planCfg.icon as any} size={12} color={planCfg.text} />
-                <Text style={[styles.planText, { color: planCfg.text }]}>{planCfg.label} Plan</Text>
+              <View style={styles.heroTopRight}>
+                <View style={styles.heroIconRow}>
+                  <TouchableOpacity
+                    testID="home-notifications-btn"
+                    onPress={() => navigation.navigate('Notifications')}
+                    style={styles.heroIconBtn}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons name="notifications-outline" size={20} color={colors.textPrimary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    testID="home-profile-btn"
+                    onPress={() => navigation.navigate('Profile')}
+                    activeOpacity={0.8}
+                  >
+                    {user?.profilePicture ? (
+                      <Image source={{ uri: user.profilePicture }} style={styles.heroAvatarImg} />
+                    ) : (
+                      <View style={styles.heroAvatarCircle}>
+                        <Text style={styles.heroAvatarInitial}>{initial}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+                <View testID={`plan-badge-${plan}`} style={[styles.planBadge, { backgroundColor: planCfg.bg, borderColor: planCfg.border }]}>
+                  <Ionicons name={planCfg.icon as any} size={12} color={planCfg.text} />
+                  <Text style={[styles.planText, { color: planCfg.text }]}>{planCfg.label} Plan</Text>
+                </View>
               </View>
             </View>
 
@@ -475,6 +501,15 @@ function makeStyles(colors: AppColors) {
     greeting: { fontSize: 12, color: colors.textMuted, fontWeight: '500', letterSpacing: 0.3, marginBottom: 2 },
     name: { fontSize: 26, fontWeight: '900', color: colors.textPrimary, letterSpacing: -0.5 },
     heroHeadline: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
+    heroTopRight: { alignItems: 'flex-end', gap: 8, flexShrink: 0 },
+    heroIconRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    heroIconBtn: { padding: 2 },
+    heroAvatarImg: { width: 30, height: 30, borderRadius: 15 },
+    heroAvatarCircle: {
+      width: 30, height: 30, borderRadius: 15, backgroundColor: colors.primary,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    heroAvatarInitial: { color: '#fff', fontSize: 13, fontWeight: '800' },
     planBadge: {
       flexDirection: 'row', alignItems: 'center', gap: 5,
       paddingHorizontal: 10, paddingVertical: 5,

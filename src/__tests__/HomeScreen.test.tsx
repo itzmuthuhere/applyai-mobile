@@ -232,4 +232,31 @@ describe('HomeScreen', () => {
 
     expect(navigate).toHaveBeenCalledWith('JobsTab', { screen: 'JobDetail', params: { jobId: 10 } });
   });
+
+  // Regression: removing the old global top bar (avatar + bell mounted above every
+  // tab) left Profile and Notifications unreachable from any tab but Home on native/
+  // narrow-web. These hero-row buttons are the replacement entry point.
+  it('navigates to Profile when the hero avatar is tapped', async () => {
+    const navigate = jest.fn();
+    jest.requireMock('@react-navigation/native').useNavigation.mockReturnValue({ navigate });
+    mockDashboardCalls();
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('home-profile-btn'));
+    fireEvent.press(screen.getByTestId('home-profile-btn'));
+
+    expect(navigate).toHaveBeenCalledWith('Profile');
+  });
+
+  it('navigates to Notifications when the hero bell is tapped', async () => {
+    const navigate = jest.fn();
+    jest.requireMock('@react-navigation/native').useNavigation.mockReturnValue({ navigate });
+    mockDashboardCalls();
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('home-notifications-btn'));
+    fireEvent.press(screen.getByTestId('home-notifications-btn'));
+
+    expect(navigate).toHaveBeenCalledWith('Notifications');
+  });
 });

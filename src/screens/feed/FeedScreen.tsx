@@ -413,8 +413,6 @@ export default function FeedScreen() {
           </View>
           <Text style={styles.headerTitle}>Feed</Text>
         </View>
-        {/* Notifications + chat already live in the global top bar (GlobalSearchBar) —
-            only the create-post action is specific to this screen. */}
         <TouchableOpacity
           testID="feed-create-post-btn"
           onPress={() => navigation.navigate('CreatePost')}
