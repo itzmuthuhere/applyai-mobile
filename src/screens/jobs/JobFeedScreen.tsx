@@ -27,7 +27,7 @@ type SortBy = 'match' | 'recent';
 type FeedTab = 'all' | 'remote' | 'recent' | 'saved';
 
 const PAGE_SIZE = 20;
-const CARD_HEIGHT = 160;
+const CARD_HEIGHT = 130;
 
 const SALARY_OPTIONS = [
   { label: '₹10L+', value: 1_000_000 },
@@ -123,8 +123,9 @@ const JobCard = memo(function JobCard({
         <Text style={styles.jdSnippet} numberOfLines={1}>{item.description.trim()}</Text>
       )}
 
-      {/* Tags row */}
-      <View style={styles.tagsRow}>
+      {/* Tags + actions share one row, sequential (no flex spacer) so sparse
+          cards don't stretch a gap between the last chip and the button */}
+      <View style={styles.cardActions}>
         {salary && (
           <View style={styles.tagSalary}>
             <Ionicons name="cash-outline" size={10} color={colors.primary} />
@@ -147,25 +148,19 @@ const JobCard = memo(function JobCard({
             <Text style={styles.tagSourceText}>{item.source}</Text>
           </View>
         )}
-      </View>
-
-      {/* Action row — no stretch spacer, so sparse cards don't leave a dead gap */}
-      <View style={styles.cardActions}>
         <TouchableOpacity style={styles.quickApplyBtn} onPress={onQuickApply} activeOpacity={0.8}>
-          <Ionicons name="flash" size={13} color="#fff" />
+          <Ionicons name="flash" size={12} color="#fff" />
           <Text style={styles.quickApplyText}>Easy Apply</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.saveBtn} onPress={onSave} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.saveBtn} onPress={onSave} activeOpacity={0.7} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
           <Ionicons
             name={item.saved ? 'bookmark' : 'bookmark-outline'}
-            size={18}
+            size={17}
             color={item.saved ? colors.primary : colors.textMuted}
           />
         </TouchableOpacity>
         {item.deadline && (
-          <Text style={styles.deadlineText}>
-            Closes {dayjs(item.deadline).format('MMM D')}
-          </Text>
+          <Text style={styles.deadlineText}>Closes {dayjs(item.deadline).format('MMM D')}</Text>
         )}
       </View>
     </TouchableOpacity>
@@ -1007,11 +1002,11 @@ function makeStyles(colors: AppColors) {
   },
   tagNeutralText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
 
-  cardActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   quickApplyBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: colors.primary, borderRadius: 9,
-    paddingHorizontal: 14, paddingVertical: 8,
+    backgroundColor: colors.primary, borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
   },
   quickApplyText: { fontSize: 13, fontWeight: '700', color: '#fff' },
   deadlineText: { fontSize: 11, color: colors.warning, fontWeight: '600' },
