@@ -14,6 +14,10 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: jest.fn(() => ({ goBack: jest.fn(), setOptions: jest.fn() })),
 }));
 
+jest.mock('../hooks/useExtensionInstalled', () => ({
+  useExtensionInstalled: jest.fn(() => false),
+}));
+
 jest.mock('../constants', () => ({
   COLORS: {
     primary: '#2563EB', primaryLight: '#DBEAFE', secondary: '#10B981',
@@ -30,9 +34,11 @@ jest.mock('../constants', () => ({
 
 import apiClient from '../api/apiClient';
 import AutoApplyQueueScreen from '../screens/jobs/AutoApplyQueueScreen';
+import { useExtensionInstalled } from '../hooks/useExtensionInstalled';
 
 const mockGet = apiClient.get as jest.MockedFunction<typeof apiClient.get>;
 const mockDelete = apiClient.delete as jest.MockedFunction<typeof apiClient.delete>;
+const mockUseExtensionInstalled = useExtensionInstalled as jest.MockedFunction<typeof useExtensionInstalled>;
 
 const PENDING_ITEM = {
   id: 1,
@@ -62,6 +68,7 @@ function renderScreen() {
 describe('AutoApplyQueueScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseExtensionInstalled.mockReturnValue(false);
   });
 
   it('shows loading indicator on initial load', async () => {
@@ -183,13 +190,24 @@ describe('AutoApplyQueueScreen', () => {
     });
   });
 
-  it('shows extension hint banner', async () => {
+  it('shows extension hint banner when the extension is not detected', async () => {
     mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM] });
     renderScreen();
 
     await waitFor(() => {
       expect(screen.getByTestId('extension-hint-banner')).toBeTruthy();
     });
+  });
+
+  it('hides extension hint banner when the extension is already installed (BUG-MOB-021)', async () => {
+    mockUseExtensionInstalled.mockReturnValue(true);
+    mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM] });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Senior Engineer')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('extension-hint-banner')).toBeNull();
   });
 
   it('shows "Cover letter ready" badge when tailoredCoverLetterText is present', async () => {

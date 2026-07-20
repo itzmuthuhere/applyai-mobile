@@ -471,6 +471,25 @@ navigation.navigate('HomeTab', { screen: 'Profile' }) — same destination
 GlobalSearchBar's avatar already uses. New WebSidebar.test.tsx (2 tests:
 footer press navigates to Profile on desktop web; narrow viewport still
 falls back to the stock BottomTabBar unchanged).
+
+[BUG-MOB-021] | Web (AutoApplyQueueScreen) | FIXED | Opened Jul 20, 2026 — Fixed Jul 20, 2026
+Symptom: The "Install the ApplyAI Chrome extension" hint banner kept showing
+even when the extension was already installed — user reported this from a
+screenshot showing 20 queued jobs with the banner still visible.
+Screen/File: screens/jobs/AutoApplyQueueScreen.tsx — the banner had no
+detection logic at all, it rendered unconditionally whenever !selectMode.
+Reproduced: yes, from user screenshot.
+Fix applied: New hooks/useExtensionInstalled.ts (web-only; native always
+reports not-installed since there's no browser/extension concept there)
+pings window.postMessage({ type: 'APPLYAI_EXTENSION_PING' }) and waits
+400ms for an APPLYAI_EXTENSION_PONG reply. The reply comes from a new
+content script in the applyai-extension repo (src/content/webapp.ts) that
+only runs on the ApplyAI web app's own origin. Banner now conditioned on
+!extensionInstalled. New useExtensionInstalled.test.ts (3 tests) +
+AutoApplyQueueScreen.test.tsx banner-hidden-when-installed case.
+Caveat: requires a new Chrome Web Store release of the extension (live
+since Jul 1, 2026) before already-installed users actually see the banner
+disappear — see applyai-extension PROJECT_STATE.md.
 ```
 
 Format when adding:

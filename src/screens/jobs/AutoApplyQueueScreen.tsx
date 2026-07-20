@@ -14,6 +14,7 @@ import { AppColors } from '../../theme/themes';
 import apiClient from '../../api/apiClient';
 import { AutoApplyQueueItem } from '../../types/api.types';
 import WebPageContainer from '../../components/common/WebPageContainer';
+import { useExtensionInstalled } from '../../hooks/useExtensionInstalled';
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
   PENDING:  { color: '#92400E', bg: '#FEF3C7', icon: 'time-outline',           label: 'Queued' },
@@ -143,6 +144,7 @@ export default function AutoApplyQueueScreen() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isBulkRemoving, setIsBulkRemoving] = useState(false);
+  const extensionInstalled = useExtensionInstalled();
 
   const load = useCallback(async (refresh = false) => {
     if (!refresh) setIsLoading(true);
@@ -277,7 +279,7 @@ export default function AutoApplyQueueScreen() {
       )}
 
       {/* Extension hint banner */}
-      {!selectMode && (
+      {!selectMode && !extensionInstalled && (
         <View testID="extension-hint-banner" style={styles.hintBanner}>
           <Ionicons name="extension-puzzle-outline" size={15} color={colors.primary} />
           <Text style={styles.hintText}>
