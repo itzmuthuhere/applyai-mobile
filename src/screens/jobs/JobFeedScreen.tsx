@@ -27,7 +27,7 @@ type SortBy = 'match' | 'recent';
 type FeedTab = 'all' | 'remote' | 'recent' | 'saved';
 
 const PAGE_SIZE = 20;
-const CARD_HEIGHT = 158;
+const CARD_HEIGHT = 146;
 
 const SALARY_OPTIONS = [
   { label: '₹10L+', value: 1_000_000 },
@@ -107,6 +107,7 @@ const JobCard = memo(function JobCard({
           <Text style={styles.jobTitle} numberOfLines={2}>{item.title}</Text>
           <Text style={styles.companyLine} numberOfLines={1}>
             {item.company}{item.location ? ` · ${item.location}` : ''}
+            {postedAgo ? <Text style={styles.postedAgoInline}> · {postedAgo}</Text> : null}
           </Text>
         </View>
         {mc && (
@@ -140,9 +141,6 @@ const JobCard = memo(function JobCard({
             <Ionicons name="flash-outline" size={10} color="#2563EB" />
             <Text style={styles.tagSourceText}>{item.source}</Text>
           </View>
-        )}
-        {postedAgo && (
-          <Text style={styles.postedAgo}>{postedAgo}</Text>
         )}
       </View>
 
@@ -246,6 +244,8 @@ export default function JobFeedScreen() {
   const [activeTab, setActiveTab] = useState<FeedTab>('all');
   const [filterSalary, setFilterSalary] = useState(0);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [sortModalVisible, setSortModalVisible] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [applyingId, setApplyingId] = useState<number | null>(null);
   const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
 
@@ -510,44 +510,43 @@ export default function JobFeedScreen() {
         )}
       </View>
 
-      {/* Tab pills */}
-      <View style={styles.tabRow}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabContent}>
+      {/* Filters — tabs, sort and salary combined into a single compact row */}
+      <View style={styles.filterRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRowContent}>
           <TabPill label="All Jobs" active={activeTab === 'all'} onPress={() => setActiveTab('all')} />
           <TabPill label="Remote" active={activeTab === 'remote'} onPress={() => setActiveTab('remote')} />
           <TabPill label="Latest" active={activeTab === 'recent'} onPress={() => setActiveTab('recent')} />
           <TabPill label="Saved" active={activeTab === 'saved'} onPress={() => setActiveTab('saved')} />
-        </ScrollView>
-      </View>
 
-      {/* Salary filter chips + sort */}
-      <View style={styles.filterBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
+          <View style={styles.filterDivider} />
+
           <TouchableOpacity
-            style={[styles.filterChip, sortBy === 'match' && styles.filterChipActive]}
-            onPress={() => setSortBy('match')}
+            testID="sort-pill-btn"
+            style={styles.metaPill}
+            onPress={() => setSortModalVisible(true)}
+            activeOpacity={0.75}
           >
-            <Text style={[styles.filterChipText, sortBy === 'match' && styles.filterChipTextActive]}>Best Match</Text>
+            <Ionicons name="swap-vertical" size={13} color={colors.textSecondary} />
+            <Text style={styles.metaPillText}>{sortBy === 'match' ? 'Best Match' : 'Most Recent'}</Text>
+            <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.filterChip, sortBy === 'recent' && styles.filterChipActive]}
-            onPress={() => setSortBy('recent')}
+            testID="salary-pill-btn"
+            style={[styles.metaPill, filterSalary > 0 && styles.metaPillActive]}
+            onPress={() => setFilterModalVisible(true)}
+            activeOpacity={0.75}
           >
-            <Text style={[styles.filterChipText, sortBy === 'recent' && styles.filterChipTextActive]}>Most Recent</Text>
+            <Ionicons name="cash-outline" size={13} color={filterSalary > 0 ? colors.primary : colors.textSecondary} />
+            <Text style={[styles.metaPillText, filterSalary > 0 && styles.metaPillTextActive]}>
+              {filterSalary > 0 ? SALARY_OPTIONS.find(o => o.value === filterSalary)?.label : 'Salary'}
+            </Text>
+            <Ionicons name="chevron-down" size={12} color={filterSalary > 0 ? colors.primary : colors.textSecondary} />
           </TouchableOpacity>
-          {SALARY_OPTIONS.map(opt => (
-            <TouchableOpacity
-              key={opt.value}
-              style={[styles.filterChip, filterSalary === opt.value && styles.filterChipActive]}
-              onPress={() => setFilterSalary(prev => prev === opt.value ? 0 : opt.value)}
-            >
-              <Text style={[styles.filterChipText, filterSalary === opt.value && styles.filterChipTextActive]}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+
           {hasFilters && (
             <TouchableOpacity
+              testID="clear-filters-btn"
               style={styles.clearChip}
               onPress={() => { setQuery(''); setDebouncedQuery(''); setSortBy('match'); setActiveTab('all'); setFilterSalary(0); }}
             >
@@ -557,6 +556,52 @@ export default function JobFeedScreen() {
           )}
         </ScrollView>
       </View>
+
+      {/* Sort picker */}
+      <Modal visible={sortModalVisible} transparent animationType="fade" onRequestClose={() => setSortModalVisible(false)}>
+        <TouchableOpacity testID="sort-modal" style={styles.modalOverlay} activeOpacity={1} onPress={() => setSortModalVisible(false)}>
+          <View style={styles.sheetCard}>
+            <Text style={styles.sheetTitle}>Sort by</Text>
+            {(['match', 'recent'] as SortBy[]).map(opt => (
+              <TouchableOpacity
+                key={opt}
+                testID={`sort-option-${opt}`}
+                style={styles.sheetOption}
+                onPress={() => { setSortBy(opt); setSortModalVisible(false); }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sheetOptionText, sortBy === opt && styles.sheetOptionTextActive]}>
+                  {opt === 'match' ? 'Best Match' : 'Most Recent'}
+                </Text>
+                {sortBy === opt && <Ionicons name="checkmark" size={18} color={colors.primary} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Salary picker */}
+      <Modal visible={filterModalVisible} transparent animationType="fade" onRequestClose={() => setFilterModalVisible(false)}>
+        <TouchableOpacity testID="salary-modal" style={styles.modalOverlay} activeOpacity={1} onPress={() => setFilterModalVisible(false)}>
+          <View style={styles.sheetCard}>
+            <Text style={styles.sheetTitle}>Minimum salary</Text>
+            {SALARY_OPTIONS.map(opt => (
+              <TouchableOpacity
+                key={opt.value}
+                testID={`salary-option-${opt.value}`}
+                style={styles.sheetOption}
+                onPress={() => { setFilterSalary(prev => prev === opt.value ? 0 : opt.value); setFilterModalVisible(false); }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sheetOptionText, filterSalary === opt.value && styles.sheetOptionTextActive]}>
+                  {opt.label}
+                </Text>
+                {filterSalary === opt.value && <Ionicons name="checkmark" size={18} color={colors.primary} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Results count + Select toggle */}
       {!isLoading && !loadError && (
@@ -791,11 +836,11 @@ function makeStyles(colors: AppColors) {
   },
   postJobText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
-  tabRow: {
+  filterRow: {
     backgroundColor: colors.surface,
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  tabContent: { paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
+  filterRowContent: { paddingHorizontal: 14, paddingVertical: 9, gap: 8, alignItems: 'center' },
   tabPill: {
     paddingHorizontal: 16, paddingVertical: 7,
     borderRadius: 20, backgroundColor: '#F1F5F9',
@@ -805,16 +850,16 @@ function makeStyles(colors: AppColors) {
   tabPillText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
   tabPillTextActive: { color: colors.primary },
 
-  filterBar: { backgroundColor: colors.surface },
-  filterContent: { paddingHorizontal: 14, paddingVertical: 8, gap: 8 },
-  filterChip: {
-    paddingHorizontal: 12, paddingVertical: 6,
+  filterDivider: { width: 1, height: 20, backgroundColor: colors.border, marginHorizontal: 2 },
+  metaPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 7,
     borderRadius: 16, borderWidth: 1, borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  filterChipActive: { backgroundColor: colors.primaryLight, borderColor: colors.primary },
-  filterChipText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
-  filterChipTextActive: { color: colors.primary },
+  metaPillActive: { backgroundColor: colors.primaryLight, borderColor: colors.primary },
+  metaPillText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
+  metaPillTextActive: { color: colors.primary },
   clearChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 6,
@@ -822,6 +867,19 @@ function makeStyles(colors: AppColors) {
     backgroundColor: '#FEF2F2',
   },
   clearChipText: { fontSize: 12, fontWeight: '600', color: colors.error },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.4)', justifyContent: 'flex-end' },
+  sheetCard: {
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingHorizontal: 20, paddingTop: 16, paddingBottom: 28,
+  },
+  sheetTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: 8 },
+  sheetOption: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  sheetOptionText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
+  sheetOptionTextActive: { color: colors.primary, fontWeight: '700' },
 
   resultsMeta: {
     paddingHorizontal: 18, paddingVertical: 8,
@@ -888,8 +946,8 @@ function makeStyles(colors: AppColors) {
   // Job card
   card: {
     backgroundColor: colors.surface, borderRadius: 16,
-    padding: 16, borderWidth: 1, borderColor: colors.border,
-    gap: 12,
+    padding: 13, borderWidth: 1, borderColor: colors.border,
+    gap: 9,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
@@ -904,15 +962,16 @@ function makeStyles(colors: AppColors) {
     alignItems: 'center', justifyContent: 'center',
   },
   checkCircleActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   logoCircle: {
-    width: 48, height: 48, borderRadius: 13,
+    width: 42, height: 42, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  logoInitial: { fontSize: 20, fontWeight: '800' },
+  logoInitial: { fontSize: 18, fontWeight: '800' },
   cardMeta: { flex: 1 },
-  jobTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, lineHeight: 20, marginBottom: 4 },
+  jobTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, lineHeight: 20, marginBottom: 3 },
   companyLine: { fontSize: 13, color: colors.textSecondary },
+  postedAgoInline: { color: colors.textMuted },
   matchCircle: {
     width: 46, height: 46, borderRadius: 23,
     alignItems: 'center', justifyContent: 'center',
@@ -942,7 +1001,6 @@ function makeStyles(colors: AppColors) {
     backgroundColor: '#F1F5F9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
   },
   tagNeutralText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
-  postedAgo: { fontSize: 11, color: colors.textMuted, marginLeft: 'auto' },
 
   cardActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   quickApplyBtn: {

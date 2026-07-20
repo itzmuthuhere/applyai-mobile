@@ -329,6 +329,45 @@ describe('JobFeedScreen', () => {
     });
   });
 
+  it('opens the sort sheet and applies a new sort choice from the compact pill', async () => {
+    mockGet.mockResolvedValue({ data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 } });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('sort-pill-btn'));
+    expect(screen.getByText('Best Match')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('sort-pill-btn'));
+    await waitFor(() => screen.getByTestId('sort-option-recent'));
+    fireEvent.press(screen.getByTestId('sort-option-recent'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Most Recent')).toBeTruthy();
+      expect(screen.queryByTestId('sort-option-recent')).toBeNull(); // sheet closed
+    });
+  });
+
+  it('opens the salary sheet and applies a minimum salary filter from the compact pill', async () => {
+    mockGet.mockResolvedValue({ data: { content: [JOB], totalElements: 1, number: 0, totalPages: 1 } });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('salary-pill-btn'));
+    fireEvent.press(screen.getByTestId('salary-pill-btn'));
+
+    await waitFor(() => screen.getByTestId('salary-option-1000000'));
+    fireEvent.press(screen.getByTestId('salary-option-1000000'));
+
+    await waitFor(() => {
+      expect(screen.getByText('₹10L+')).toBeTruthy();
+      expect(screen.getByTestId('clear-filters-btn')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByTestId('clear-filters-btn'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('clear-filters-btn')).toBeNull();
+      expect(screen.getByText('Salary')).toBeTruthy();
+    });
+  });
+
   // Regression test for BUG-MOB-011: Easy Apply from this screen never
   // dispatched the new application to Redux, so it went missing from the
   // Mock Interview job picker (which reads state.application.list) until
