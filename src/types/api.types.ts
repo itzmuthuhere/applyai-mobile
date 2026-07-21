@@ -255,6 +255,7 @@ export interface Application {
   lastUpdated: string | null;
   notes: string | null;
   coverLetter: string | null;
+  tailoredResumeText: string | null;
   interviewDate: string | null;
   interviewNotes: string | null;
   offerSalary: number | null;

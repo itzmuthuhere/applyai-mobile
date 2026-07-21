@@ -490,6 +490,38 @@ AutoApplyQueueScreen.test.tsx banner-hidden-when-installed case.
 Caveat: requires a new Chrome Web Store release of the extension (live
 since Jul 1, 2026) before already-installed users actually see the banner
 disappear — see applyai-extension PROJECT_STATE.md.
+
+[BUG-MOB-022] | Web (GoogleSignInScreen) | FIXED | Opened Jul 20, 2026 — Fixed Jul 20, 2026
+Symptom: Found live while testing web sign-in via Claude in Chrome —
+clicking "Continue with Google" left the button spinning forever with
+no feedback, and in one reproduction the tab froze entirely. Console
+showed "[GSI_LOGGER]: FedCM get() rejects with AbortError: signal is
+aborted without reason" with no notification ever delivered to our code.
+Screen/File: utils/googleWebAuth.ts — signInWithGoogleWeb() had no
+timeout at all; if Google's SDK never called back (FedCM abort, script
+load hang, anything), the returned promise just hung forever with no way
+to recover short of reloading the page.
+Fix applied: Wrapped the whole flow (script load included, not just the
+prompt) in an 8-second timeout that always settles with a clear,
+actionable error message. Also opted into use_fedcm_for_prompt: true
+(the SDK was in an unsupported in-between state without it) and
+distinguished a real user dismissal (isDismissedMoment — silent
+"Sign-in cancelled") from Google never showing anything at all
+(isNotDisplayed/isSkippedMoment — now a visible, actionable error
+instead of silently swallowed). New googleWebAuth.test.ts (5 tests).
+528 mobile tests green (523 + 5 new).
+
+[BUG-MOB-023] | Web+Mobile (ApplicationDetailScreen) | FIXED | Opened Jul 20, 2026 — Fixed Jul 20, 2026
+Symptom: User asked to "store the tailored resume for interview
+preparation" — paired with applyai-backend BUG-071 (the tailored resume
+text was never persisted to the Application record at all, only ever
+sat on the auto-apply queue row).
+Fix applied: Added tailoredResumeText to the Application type
+(api.types.ts) and a new collapsible "Tailored Resume (used for this
+application)" section in ApplicationDetailScreen.tsx, mirroring the
+existing Cover Letter section — only rendered when present. New tests:
+shows the section and its content when tailoredResumeText is set, and
+confirms it's absent when not. 530 mobile tests green (528 + 2 new).
 ```
 
 Format when adding:

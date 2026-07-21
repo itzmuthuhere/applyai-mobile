@@ -110,6 +110,29 @@ describe('ApplicationDetailScreen', () => {
     });
   });
 
+  it('shows the tailored resume used for this application when present, for interview prep', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { ...APPLICATION, tailoredResumeText: 'Tailored resume content for Acme Corp role.' },
+    });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('tailored-resume-toggle'));
+    fireEvent.press(screen.getByTestId('tailored-resume-toggle'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tailored-resume-text').props.children)
+        .toBe('Tailored resume content for Acme Corp role.');
+    });
+  });
+
+  it('does not show the tailored resume section when none was stored', async () => {
+    renderScreen();
+
+    await waitFor(() => screen.getByText('Software Engineer'));
+
+    expect(screen.queryByTestId('tailored-resume-toggle')).toBeNull();
+  });
+
   it('shows resume version name, decoded (BUG-051 regression)', async () => {
     renderScreen();
 

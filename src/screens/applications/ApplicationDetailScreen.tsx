@@ -134,6 +134,7 @@ export default function ApplicationDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
+  const [showTailoredResume, setShowTailoredResume] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Interview scheduling
@@ -358,6 +359,30 @@ export default function ApplicationDetailScreen() {
           {showCoverLetter && (
             <Text style={styles.coverLetterText} selectable>
               {application.coverLetter}
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Tailored resume — kept for interview prep: the version actually sent for this
+          application, not necessarily what's currently in the Resumes list. */}
+      {application.tailoredResumeText && (
+        <View style={styles.section}>
+          <TouchableOpacity
+            testID="tailored-resume-toggle"
+            style={styles.sectionToggle}
+            onPress={() => setShowTailoredResume((v) => !v)}
+          >
+            <Text style={styles.sectionTitle}>Tailored Resume (used for this application)</Text>
+            <Ionicons
+              name={showTailoredResume ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+          {showTailoredResume && (
+            <Text testID="tailored-resume-text" style={styles.coverLetterText} selectable>
+              {application.tailoredResumeText}
             </Text>
           )}
         </View>

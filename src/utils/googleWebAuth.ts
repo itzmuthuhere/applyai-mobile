@@ -40,20 +40,68 @@ function loadGisScript(): Promise<void> {
   return gisScriptPromise;
 }
 
-export async function signInWithGoogleWeb(): Promise<string> {
-  await loadGisScript();
-  return new Promise<string>((resolve, reject) => {
+// Google's own SDK — script load, One Tap's prompt(), and the underlying FedCM
+// call it now makes — has multiple stages that can each silently hang forever
+// instead of calling back at all (observed live: "FedCM get() rejects with
+// AbortError: signal is aborted without reason" with no notification ever
+// delivered). Any of these leaves the sign-in button spinning indefinitely with
+// no way to recover short of reloading the page. This timeout wraps the WHOLE
+// flow — script load included — so the promise always settles no matter which
+// stage stalls.
+const SIGN_IN_TIMEOUT_MS = 8000;
+
+function signInWithGoogleWebInner(): Promise<string> {
+  return loadGisScript().then(() => new Promise<string>((resolve, reject) => {
     window.google.accounts.id.initialize({
       client_id: WEB_CLIENT_ID,
+      // Chrome now routes One Tap through FedCM regardless of this flag, but
+      // omitting it leaves the SDK in an unsupported transitional state where
+      // a FedCM abort produces no notification at all instead of a clean
+      // isNotDisplayed/isSkippedMoment callback — this opts fully into the
+      // FedCM path so failures are at least reported back to us.
+      use_fedcm_for_prompt: true,
       callback: (response: { credential?: string }) => {
         if (response.credential) resolve(response.credential);
         else reject(new Error('Google sign-in did not return a credential'));
       },
     });
     window.google.accounts.id.prompt((notification: any) => {
-      if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
+      // Only a real user dismissal (closed an actually-shown prompt) should be
+      // silent/"cancelled" — isNotDisplayed/isSkippedMoment mean Google never
+      // showed anything at all (e.g. FedCM declined), which is a real failure
+      // the user needs to see, not something they chose.
+      if (notification?.isDismissedMoment?.()) {
         reject(new Error('Sign-in cancelled'));
+      } else if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
+        reject(new Error(
+          "Google didn't show a sign-in prompt. Check that pop-ups and third-party " +
+          'cookies are allowed for this site, then try again.'
+        ));
       }
     });
+  }));
+}
+
+export function signInWithGoogleWeb(): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      fn();
+    };
+
+    const timeoutId = setTimeout(() => {
+      settle(() => reject(new Error(
+        "Google Sign-In didn't respond. Check that pop-ups and third-party cookies " +
+        'are allowed for this site, then try again.'
+      )));
+    }, SIGN_IN_TIMEOUT_MS);
+
+    signInWithGoogleWebInner().then(
+      (token) => settle(() => resolve(token)),
+      (err) => settle(() => reject(err)),
+    );
   });
 }
