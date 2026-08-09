@@ -125,6 +125,32 @@ describe('AutoApplyQueueScreen', () => {
     });
   });
 
+  // BUG-075: errorMessage was persisted by the backend (BUG-073) but never
+  // rendered anywhere — a FAILED item gave the user no way to see why.
+  it('shows the failure reason when a FAILED item has an errorMessage', async () => {
+    const FAILED_ITEM = {
+      ...PENDING_ITEM, id: 3, status: 'FAILED',
+      errorMessage: 'LinkedIn Easy Apply: no next/submit button found — application not submitted',
+    };
+    mockGet.mockResolvedValueOnce({ data: [FAILED_ITEM] });
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('error-reason-3')).toHaveTextContent(
+        'LinkedIn Easy Apply: no next/submit button found — application not submitted'
+      );
+    });
+  });
+
+  it('does not render an error reason when a FAILED item has no errorMessage', async () => {
+    const FAILED_ITEM = { ...PENDING_ITEM, id: 4, status: 'FAILED', errorMessage: null };
+    mockGet.mockResolvedValueOnce({ data: [FAILED_ITEM] });
+    renderScreen();
+
+    await waitFor(() => screen.getAllByText('Failed'));
+    expect(screen.queryByTestId('error-reason-4')).toBeNull();
+  });
+
   it('shows summary count bar', async () => {
     mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM, APPLIED_ITEM] });
     renderScreen();

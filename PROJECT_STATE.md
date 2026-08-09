@@ -563,6 +563,20 @@ expo-document-picker already exposes on web (asset.file) instead, with
 an explicit error shown if it's ever missing. New regression tests:
 web File appended correctly; missing-file error path. 564 mobile tests
 green (562 + 2 new).
+
+[BUG-MOB-025 (cross-repo, backend BUG-075)] | Web (AutoApplyQueueScreen) | FIXED | Opened Aug 10, 2026 — Fixed Aug 10, 2026
+Symptom: Live-verifying backend BUG-074's fix on the deployed web app,
+a real 19-job auto-apply batch produced 9 FAILED items with no visible
+reason anywhere in the UI.
+Screen/File: AutoApplyQueueScreen.tsx (QueueCard), types/api.types.ts
+Reproduced: yes (real Chrome session, live Railway backend)
+Fix applied: backend's AutoApplyQueueResponse never exposed the
+errorMessage column that BUG-073 (Jul 22) started persisting — confirmed
+live via a raw fetch() of the API response in the browser console, field
+simply absent. AutoApplyQueueItem type gains errorMessage; QueueCard now
+renders it as a red reason line under FAILED/SKIPPED items once the
+backend field is present. 2 new tests (renders reason; renders nothing
+when null). 564 mobile tests green.
 ```
 
 Format when adding:

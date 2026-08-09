@@ -21,6 +21,7 @@ export interface AutoApplyQueueItem {
   matchScore: number | null;
   tailoredResumeText: string | null;
   tailoredCoverLetterText: string | null;
+  errorMessage: string | null;
   queuedAt: string;
   appliedAt: string | null;
 }

@@ -101,6 +101,11 @@ function QueueCard({
             </View>
           )}
         </View>
+        {item.errorMessage && (item.status === 'FAILED' || item.status === 'SKIPPED') && (
+          <Text style={styles.errorReason} testID={`error-reason-${item.id}`} numberOfLines={2}>
+            {item.errorMessage}
+          </Text>
+        )}
         {item.appliedAt && (
           <Text style={styles.appliedAt}>Applied {dayjs(item.appliedAt).fromNow()}</Text>
         )}
@@ -434,6 +439,7 @@ function makeStyles(colors: AppColors) {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2,
   },
   tailoredText: { fontSize: 11, color: colors.primary, fontWeight: '500' },
+  errorReason: { fontSize: 11, color: colors.error, marginTop: 4 },
   appliedAt: { fontSize: 11, color: colors.success, marginTop: 2 },
 
   removeBtn: { padding: 4 },
