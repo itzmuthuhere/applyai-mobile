@@ -5,7 +5,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { PurchasesPackage } from 'react-native-purchases';
 import { useTheme } from '../../theme/ThemeContext';
 import { AppColors } from '../../theme/themes';
 import { getOfferings, purchasePackage, restorePurchases } from '../../services/revenueCat';
@@ -85,7 +84,10 @@ export default function PaywallScreen() {
   const styles = makeStyles(colors);
   const navigation = useNavigation<any>();
   const [billing, setBilling] = useState<BillingCycle>('annual');
-  const [packages, setPackages] = useState<Record<string, PurchasesPackage>>({});
+  // Package type differs by platform (native PurchasesPackage vs. Web Billing's
+  // Package) — the service layer (revenueCat.ts / revenueCat.web.ts) abstracts
+  // over both, so this stays untyped rather than importing a platform-specific type here.
+  const [packages, setPackages] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
@@ -95,7 +97,7 @@ export default function PaywallScreen() {
     try {
       const offering = await getOfferings();
       if (offering) {
-        const map: Record<string, PurchasesPackage> = {};
+        const map: Record<string, any> = {};
         offering.availablePackages.forEach(pkg => { map[pkg.identifier] = pkg; });
         setPackages(map);
       }
@@ -107,7 +109,7 @@ export default function PaywallScreen() {
     const pkgId = billing === 'monthly' ? plan.monthlyId : plan.annualId;
     const pkg = packages[pkgId];
     if (!pkg) {
-      Alert.alert('Coming Soon', 'Payments will be live when the app launches on Google Play.');
+      Alert.alert('Plan Unavailable', 'This plan isn\'t available right now. Please try again shortly.');
       return;
     }
     setPurchasing(plan.name);
@@ -277,12 +279,14 @@ export default function PaywallScreen() {
         </View>
 
         {/* Footer */}
-        <TouchableOpacity style={styles.restoreBtn} onPress={handleRestore} activeOpacity={0.7}>
-          <Text style={styles.restoreText}>Restore previous purchases</Text>
-        </TouchableOpacity>
+        {Platform.OS !== 'web' && (
+          <TouchableOpacity style={styles.restoreBtn} onPress={handleRestore} activeOpacity={0.7}>
+            <Text style={styles.restoreText}>Restore previous purchases</Text>
+          </TouchableOpacity>
+        )}
 
         <Text style={styles.footer}>
-          Secured by RevenueCat · Payments via Google Play{'\n'}
+          Secured by RevenueCat · Payments via {Platform.OS === 'web' ? 'Stripe' : 'Google Play'}{'\n'}
           Subscription renews automatically. Cancel anytime.
         </Text>
 

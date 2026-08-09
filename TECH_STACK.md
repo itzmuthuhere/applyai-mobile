@@ -1,5 +1,5 @@
 # ApplyAI Mobile — Tech Stack
-> Version: 1.2 | Last updated: Jun 8, 2026
+> Version: 1.3 | Last updated: Aug 9, 2026
 > Every package: actual installed version, status, purpose, why chosen.
 > Source of truth: package.json. This doc must always match.
 
@@ -115,9 +115,19 @@
 | Package | Status | Planned For | Reason on Hold |
 |---------|--------|-------------|---------------|
 | Lottie React Native | ⏸ Phase 2 | Interview character animation | Not needed for Phase 1 MVP |
-| RevenueCat | ⏸ Phase 1 launch | In-app subscriptions | Add before public Play Store launch |
 | Firebase SDK (notifications) | ⏸ Phase 2 | Push notifications | After core features done |
 | expo-camera | ⏸ Phase 3 | Video interview | Voice-only for Phase 1 |
+
+_RevenueCat moved out of this table Aug 9, 2026 — it's been ✅ Active since Jun 21, 2026 (native IAP), this table was stale. See PAYMENTS below._
+
+---
+
+## PAYMENTS
+
+| Package | Installed Version | Status | Day Added | Purpose |
+|---------|-----------------|--------|-----------|---------|
+| react-native-purchases | ^10.4.0 | ✅ Active | Jun 21, 2026 | Native (iOS/Android) RevenueCat SDK — App Store/Play Store IAP |
+| @revenuecat/purchases-js | ^1.9.0 | ✅ Active | Aug 9, 2026 | RevenueCat Web Billing SDK (Stripe-backed) — same RevenueCat project/entitlements/webhook as native, web-only via Metro's `.web.ts` resolution (`services/revenueCat.web.ts`) |
 
 ---
 
@@ -179,3 +189,4 @@ _This section must match package.json exactly. Update on every `npm install`._
 |---------|------|--------|--------|
 | 1.0 | Jun 6, 2026 | Initial tech stack defined | Project start |
 | 1.1 | Jun 6, 2026 | Fixed all package versions to match actual package.json; marked all Day 1–2 packages ✅ Active; added expo-updates, expo-dev-client, babel-preset-expo | Version audit |
+| 1.3 | Aug 9, 2026 | Added @revenuecat/purchases-js (Web Billing) ✅ Active; moved RevenueCat out of ON HOLD into new PAYMENTS section, corrected stale ⏸ status (has been ✅ Active since Jun 21) | Web MVP push — RevenueCat Web Billing integration. Note: the "package.json — ACTUAL INSTALLED DEPENDENCIES" block above this table is stale against the real package.json (missing several already-installed packages, e.g. react-native-purchases, expo-av, react-native-web, @react-native-firebase/*) — pre-existing drift, not fully reconciled this session, flagged here rather than silently left inconsistent. |

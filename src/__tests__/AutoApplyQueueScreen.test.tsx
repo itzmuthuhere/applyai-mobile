@@ -1,6 +1,6 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
+import { Alert, Linking } from 'react-native';
 
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
@@ -30,6 +30,7 @@ jest.mock('../constants', () => ({
     AUTO_APPLY_DELETE: (id: number) => `/api/auto-apply/${id}`,
     AUTO_APPLY_DELETE_BATCH: '/api/auto-apply/queue/batch',
   },
+  CHROME_EXTENSION_URL: 'https://chrome.google.com/webstore/detail/nigpinofkjobdkncjgojoloohkfdnjbm',
 }));
 
 import apiClient from '../api/apiClient';
@@ -300,5 +301,51 @@ describe('AutoApplyQueueScreen', () => {
     fireEvent.press(screen.getByTestId('queue-card-2'));
 
     expect(screen.getByText('0 selected')).toBeTruthy();
+  });
+
+  it('shows an Install button that opens the Chrome Web Store link', async () => {
+    mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM] });
+    const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true as any);
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('extension-install-btn'));
+    fireEvent.press(screen.getByTestId('extension-install-btn'));
+
+    expect(openURLSpy).toHaveBeenCalledWith(
+      'https://chrome.google.com/webstore/detail/nigpinofkjobdkncjgojoloohkfdnjbm'
+    );
+  });
+
+  it('polls the queue again while an item is still PENDING or APPLYING', async () => {
+    jest.useFakeTimers();
+    mockGet.mockResolvedValueOnce({ data: [PENDING_ITEM] });
+    renderScreen();
+
+    await waitFor(() => expect(screen.getAllByText('Senior Engineer').length).toBeGreaterThan(0));
+    expect(mockGet).toHaveBeenCalledTimes(1);
+
+    mockGet.mockResolvedValueOnce({ data: [{ ...PENDING_ITEM, status: 'APPLIED' }] });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(10000);
+    });
+
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
+
+  it('stops polling once every item has settled', async () => {
+    jest.useFakeTimers();
+    mockGet.mockResolvedValueOnce({ data: [APPLIED_ITEM] });
+    renderScreen();
+
+    await waitFor(() => expect(screen.getAllByText('Senior Engineer').length).toBeGreaterThan(0));
+    expect(mockGet).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(10000);
+    });
+
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 });

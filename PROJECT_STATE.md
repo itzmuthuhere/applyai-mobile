@@ -25,8 +25,23 @@
 ## CURRENT BUILD PHASE
 
 **Phase:** 1 — Core Screens (Days 1–12) + Theming + Web Parity (in progress)
-**Active Day:** Phase 1 complete — theming layer added Jun 24, 2026. Web app (feature/web-app branch) bootstrapped Jul 12, login verified end-to-end Jul 13, 2026.
-**Last Session:** Jul 13, 2026
+**Active Day:** Phase 1 complete — theming layer added Jun 24, 2026. Web app (feature/web-app branch) bootstrapped Jul 12, login verified end-to-end Jul 13, 2026. Web MVP push started Aug 9, 2026 on branch `feature/web-mvp` (off `feature/web-app`) — see below.
+**Last Session:** Aug 9, 2026
+
+**Overall Status (Aug 9, 2026):** Closed the gaps between `feature/web-app`'s existing screens and the "web-first MVP, ship this week" flow the user asked for (see `D:\backend` BUILD_LOG.md same date for the full cross-repo context — this was mostly a frontend session, zero new backend endpoints needed since the existing API is already client-agnostic). Five concrete gaps closed:
+1. **Extension install step** — `AutoApplyQueueScreen.tsx`'s old static hint banner replaced with a real `components/jobs/ExtensionInstallCard.tsx` (new file): Chrome Web Store link (`CHROME_EXTENSION_URL`, new constant) + an actual "Install" button. Still no live install-detection — deliberately deferred, extension repo untouched.
+2. **RevenueCat Web Billing** — the real risk item. `services/revenueCat.ts` split into a native-only file (Metro `.native`/default resolution) and a new `services/revenueCat.web.ts` (Metro `.web` resolution) using the new `@revenuecat/purchases-js` SDK, configured with the user's email as `appUserId` (must match the native `Purchases.logIn(userEmail)` convention exactly, since the backend webhook resolves purchases by email — see backend BUILD_LOG.md). `PaywallScreen.tsx`'s old "Coming Soon... Google Play" dead-end on web is gone; web purchases now go through a real checkout. Restore-purchases hidden on web (doesn't map to an account-based web purchase model). **Not yet functional against a real account** — needs RevenueCat dashboard Web Billing + Stripe connection (see actions checklist).
+3. **Live progress polling** — `AutoApplyQueueScreen.tsx` now re-polls `GET /api/auto-apply/queue` every 10s while any item is PENDING/APPLYING, stops once all settle. Was previously manual-refresh-only.
+4. **Tailored resume visible for interview prep** — `ApplicationDetailScreen.tsx` now shows `application.tailoredResumeText` (was on the type, never rendered). Also added the field to the `Application` TS type (`types/api.types.ts`) — it existed on the backend response (`ApplicationResponse.java`) but was missing from the frontend type entirely.
+5. **Top 20 cap** — `JobFeedScreen.tsx`'s default view (Best Match sort, All Jobs tab, no search/filter) no longer infinite-scrolls past the first 20 — that's the "top 20 matches" feed the auto-apply flow is built around. Any deliberate narrowing (search, filter, tab switch) re-enables normal pagination.
+
+All 532 mobile tests green (was 517 baseline + new coverage for all 5 changes, including the native/web `revenueCat` split). `tsc --noEmit` shows zero new errors from this session's files (one pre-existing unrelated error in `ApplicationDetailScreen.tsx` line 333, `application.resume` possibly null — confirmed pre-existing on `feature/web-app` before this session, not touched).
+
+**External setup still required (not code, tracked here since no `actions/ACTION_REQUIRED_0XX.md` was warranted for a multi-item checklist this small):**
+- RevenueCat dashboard: connect Stripe, create Web Billing products/entitlements matching the existing `hunter`/`pro` lowercase identifiers
+- Set the real `EXPO_PUBLIC_REVENUECAT_WEB_BILLING_KEY` once issued
+- Google Cloud Console: add the production Vercel domain to the OAuth client's Authorized JavaScript origins (per `actions/ACTION_REQUIRED_004.md`, only `localhost:8090` was ever confirmed added)
+- Verify Railway `CORS_ALLOWED_ORIGINS` still matches the production domain live (checked this session — it does, see backend BUILD_LOG.md)
 **Overall Status (Jul 13, 2026):** Web app login now works end-to-end against the live Railway backend (ACTION_REQUIRED_004 done — Google Cloud Console origin + Railway CORS_ALLOWED_ORIGINS both set). Live web testing (via Claude in Chrome, the user's real signed-in browser) found and fixed BUG-MOB-018 (Alert.alert was a total no-op on web, app-wide — 75 call sites, fixed via a react-native-web patch-package patch), BUG-MOB-019 (Paywall restore-purchases unguarded on web), BUG-MOB-020 (WebSidebar account footer wasn't clickable, ProfileScreen unreachable from it). 24 screens verified rendering correctly on web with zero console errors (Onboarding, GoogleSignIn, Home, Feed, Search, ChatList, Jobs list, JobDetail, CompanyIntel, Companies, SavedJobs, JobAlerts, AutoApplyQueue, Resumes list, ResumeUpload, ResumeDetail, Applications list, ApplicationDetail, Interview landing, Profile, ProfileSettings, Analytics, SalaryIntel, NegotiationCoach, CareerPath, Blacklist, Notifications, Paywall, HrPostJob — see BUILD_LOG.md for the full breakdown). Remaining screens were deliberately not live-tested this session because doing so would trigger real side effects (AI credit usage, actual job applications, voice recording) — same judgment call as the FEAT-024 session.
 
 **FEAT-026 (same day, follow-up):** User pushed back with screenshots — most screens were still stretching full-bleed on desktop web despite "rendering correctly." Root cause: FEAT-024/025's centering treatment (`WebPageContainer`) had only reached 7 of 44 screens. Applied it to all 36 remaining screens (2 intentionally skipped — see BUILD_LOG.md). 517 mobile tests passing.
@@ -172,6 +187,8 @@ _Update whenever a screen is added, removed, or renamed._
 |----------|---------|--------|
 | `EXPO_PUBLIC_API_URL` | Backend base URL | ⬜ Set in .env |
 | `EXPO_PUBLIC_ENV` | development / production | ⬜ Set in .env |
+| `EXPO_PUBLIC_REVENUECAT_KEY` | Native RevenueCat public SDK key (iOS/Android IAP) | ⬜ Not set in .env — configure via RevenueCat dashboard |
+| `EXPO_PUBLIC_REVENUECAT_WEB_BILLING_KEY` | RevenueCat Web Billing public key (Stripe-backed, web-only paywall) | ⬜ Placeholder added to .env — needs the real key from RevenueCat dashboard once Web Billing + Stripe are connected there (see actions checklist below) |
 
 ---
 

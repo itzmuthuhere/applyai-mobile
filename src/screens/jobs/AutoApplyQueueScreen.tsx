@@ -15,6 +15,7 @@ import apiClient from '../../api/apiClient';
 import { AutoApplyQueueItem } from '../../types/api.types';
 import WebPageContainer from '../../components/common/WebPageContainer';
 import { useExtensionInstalled } from '../../hooks/useExtensionInstalled';
+import ExtensionInstallCard from '../../components/jobs/ExtensionInstallCard';
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
   PENDING:  { color: '#92400E', bg: '#FEF3C7', icon: 'time-outline',           label: 'Queued' },
@@ -162,6 +163,13 @@ export default function AutoApplyQueueScreen() {
 
   useEffect(() => { load(); }, [load]);
 
+  const hasUnsettledItems = items.some(i => i.status === 'PENDING' || i.status === 'APPLYING');
+  useEffect(() => {
+    if (!hasUnsettledItems) return;
+    const interval = setInterval(() => load(true), 10000);
+    return () => clearInterval(interval);
+  }, [hasUnsettledItems, load]);
+
   const exitSelectMode = useCallback(() => {
     setSelectMode(false);
     setSelectedIds(new Set());
@@ -278,15 +286,10 @@ export default function AutoApplyQueueScreen() {
         </View>
       )}
 
-      {/* Extension hint banner */}
-      {!selectMode && !extensionInstalled && (
-        <View testID="extension-hint-banner" style={styles.hintBanner}>
-          <Ionicons name="extension-puzzle-outline" size={15} color={colors.primary} />
-          <Text style={styles.hintText}>
-            Install the ApplyAI Chrome extension — it picks up queued jobs and auto-fills applications on Naukri, LinkedIn & Indeed.
-          </Text>
-        </View>
-      )}
+      {/* Extension install prompt — only shown when useExtensionInstalled() (real
+          postMessage detection against the extension's webapp.ts content script)
+          hasn't confirmed the extension is already present. */}
+      {!selectMode && !extensionInstalled && <ExtensionInstallCard />}
 
       {isLoading ? (
         <View testID="queue-loading"><ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} /></View>
@@ -384,13 +387,6 @@ function makeStyles(colors: AppColors) {
   },
   summaryCount: { fontSize: 13, fontWeight: '700' },
   summaryLabel: { fontSize: 12, fontWeight: '500' },
-
-  hintBanner: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: colors.primaryLight,
-  },
-  hintText: { flex: 1, fontSize: 12, color: colors.primary, lineHeight: 17 },
 
   listContent: { padding: 12, gap: 10 },
 

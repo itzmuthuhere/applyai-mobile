@@ -1,5 +1,9 @@
 import '@testing-library/react-native/extend-expect';
 
+// RevenueCat Web Billing reads its public key from env at module-load time —
+// give tests a stub value so revenueCat.web.ts actually configures instead of no-oping.
+process.env.EXPO_PUBLIC_REVENUECAT_WEB_BILLING_KEY = 'test_web_billing_key';
+
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');
   const { Text } = require('react-native');

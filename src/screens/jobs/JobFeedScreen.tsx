@@ -322,9 +322,16 @@ export default function JobFeedScreen() {
     loadPage(0, false);
   }, [loadPage]);
 
+  // The default landing view (no search/filter, Best Match sort, All Jobs tab) is
+  // capped at the top 20 matches rather than infinite-scrolling — that's the "top
+  // 20" feed the auto-apply flow is built around. Any deliberate narrowing
+  // (search, filters, a non-default tab) re-enables normal pagination.
+  const isDefaultTopMatches =
+    activeTab === 'all' && sortBy === 'match' && !debouncedQuery.trim() && filterSalary === 0;
+
   const onRefresh = () => { setIsRefreshing(true); loadPage(0, false); };
   const loadMore = () => {
-    if (isLoadingMore || jobs.length >= total || activeTab === 'saved') return;
+    if (isLoadingMore || jobs.length >= total || activeTab === 'saved' || isDefaultTopMatches) return;
     setIsLoadingMore(true);
     loadPage(page + 1, true);
   };

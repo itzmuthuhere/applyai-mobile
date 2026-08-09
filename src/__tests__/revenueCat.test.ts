@@ -1,4 +1,3 @@
-import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import {
   initRevenueCat,
@@ -115,39 +114,6 @@ describe('revenueCat service', () => {
     it('propagates error from getCustomerInfo', async () => {
       mockPurchases.getCustomerInfo.mockRejectedValueOnce(new Error('Not configured'));
       await expect(getActiveEntitlements()).rejects.toThrow('Not configured');
-    });
-  });
-
-  describe('on web', () => {
-    const originalOS = Platform.OS;
-    afterEach(() => {
-      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
-    });
-
-    it('initRevenueCat no-ops instead of configuring Purchases (web billing goes through Stripe)', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
-      initRevenueCat('user@example.com');
-      expect(mockPurchases.configure).not.toHaveBeenCalled();
-    });
-
-    it('getOfferings returns null without calling Purchases', async () => {
-      Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
-      const result = await getOfferings();
-      expect(result).toBeNull();
-      expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
-    });
-
-    it('getActiveEntitlements returns an empty array without calling Purchases', async () => {
-      Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
-      const result = await getActiveEntitlements();
-      expect(result).toEqual([]);
-      expect(mockPurchases.getCustomerInfo).not.toHaveBeenCalled();
-    });
-
-    it('restorePurchases throws a web-specific message without calling Purchases', async () => {
-      Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
-      await expect(restorePurchases()).rejects.toThrow("Restoring purchases isn't available on web yet.");
-      expect(mockPurchases.restorePurchases).not.toHaveBeenCalled();
     });
   });
 });

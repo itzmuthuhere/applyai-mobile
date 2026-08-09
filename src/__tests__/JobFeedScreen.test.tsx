@@ -19,6 +19,9 @@ jest.mock('../constants', () => ({
   },
   API_ENDPOINTS: {
     JOBS: '/api/jobs',
+    JOB_FEED: '/api/jobs/feed',
+    SAVED_JOBS: '/api/jobs/saved',
+    SAVE_JOB: (id: number) => `/api/jobs/${id}/save`,
     RESUMES: '/api/resumes',
     AUTO_APPLY_QUEUE: '/api/auto-apply/queue',
     QUICK_APPLY: (id: number) => `/api/applications/quick-apply/${id}`,
@@ -325,7 +328,11 @@ describe('JobFeedScreen', () => {
   });
 
   it('deduplicates jobs by id when a paginated page overlaps the previous one', async () => {
+    // Dedup only matters once pagination is actually active — the default
+    // Best Match view is capped at the top 20 and never paginates (see below),
+    // so this exercises the "Most Recent" sort, which still infinite-scrolls.
     mockGet
+      .mockResolvedValueOnce({ data: { content: [JOB], totalElements: 2, number: 0, totalPages: 2 } })
       .mockResolvedValueOnce({ data: { content: [JOB], totalElements: 2, number: 0, totalPages: 2 } })
       // Page 2 re-returns JOB (id 10) alongside a genuinely new job — simulates an
       // unstable DB sort tiebreak shifting the same row across two OFFSET/LIMIT pages.
@@ -334,11 +341,48 @@ describe('JobFeedScreen', () => {
     renderScreen();
 
     await waitFor(() => screen.getByTestId('job-card-10'));
+    fireEvent.press(screen.getByTestId('sort-pill-btn'));
+    await waitFor(() => screen.getByTestId('sort-option-recent'));
+    fireEvent.press(screen.getByTestId('sort-option-recent'));
+
+    await waitFor(() => screen.getByTestId('job-card-10'));
     fireEvent(screen.getByTestId('jobs-list'), 'onEndReached');
 
     await waitFor(() => {
       expect(screen.getAllByTestId('job-card-10')).toHaveLength(1);
       expect(screen.getByTestId('job-card-11')).toBeTruthy();
+    });
+  });
+
+  it('does not paginate past the top 20 in the default Best Match view', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: { content: [JOB], totalElements: 40, number: 0, totalPages: 2 },
+    });
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('job-card-10'));
+    fireEvent(screen.getByTestId('jobs-list'), 'onEndReached');
+
+    // Give any (incorrect) second fetch a chance to fire before asserting it didn't.
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(mockGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('resumes normal pagination once a filter narrows the default view', async () => {
+    mockGet
+      .mockResolvedValueOnce({ data: { content: [JOB], totalElements: 40, number: 0, totalPages: 2 } })
+      .mockResolvedValueOnce({ data: { content: [JOB], totalElements: 5, number: 0, totalPages: 1 } });
+
+    renderScreen();
+
+    await waitFor(() => screen.getByTestId('job-card-10'));
+    fireEvent.press(screen.getByText('Remote'));
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledTimes(2);
+      expect(mockGet).toHaveBeenLastCalledWith('/api/jobs/feed', expect.objectContaining({
+        params: expect.objectContaining({ remote: true }),
+      }));
     });
   });
 

@@ -68,6 +68,9 @@ export const SECURE_STORE_KEYS = {
   JWT: 'jwt',
 } as const;
 
+export const CHROME_EXTENSION_ID = 'nigpinofkjobdkncjgojoloohkfdnjbm';
+export const CHROME_EXTENSION_URL = `https://chrome.google.com/webstore/detail/${CHROME_EXTENSION_ID}`;
+
 export const API_ENDPOINTS = {
   HEALTH: '/health',
   AUTH_GOOGLE: '/api/auth/google',

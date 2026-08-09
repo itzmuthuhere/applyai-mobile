@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "docs", "-p", "3000", "--no-clipboard"],
       "port": 3000
+    },
+    {
+      "name": "applyai-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "web"],
+      "port": 8081
     }
   ]
 }
