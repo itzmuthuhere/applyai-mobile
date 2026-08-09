@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 
 jest.mock('../api/apiClient', () => ({
@@ -52,10 +53,16 @@ function renderScreen() {
 }
 
 describe('ResumeUploadScreen', () => {
+  const originalOS = Platform.OS;
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockNavigate.mockReset();
     mockGoBack.mockReset();
+  });
+
+  afterEach(() => {
+    Platform.OS = originalOS;
   });
 
   it('renders file picker trigger', () => {
@@ -154,6 +161,64 @@ describe('ResumeUploadScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('Only PDF and DOCX files are allowed')).toBeTruthy();
     });
+  });
+
+  it('appends the real web File object (not a {uri,name,type} descriptor) when running on web', async () => {
+    // Regression test for BUG-074: on web, FormData is the browser's real
+    // FormData, so appending a {uri,name,type} plain object (the native
+    // pattern) silently stringifies into a text field instead of a file
+    // part, and the backend fails with "Required part 'file' is not
+    // present". Web must append the real File/Blob from asset.file instead.
+    Platform.OS = 'web';
+    const appendSpy = jest.spyOn(FormData.prototype, 'append');
+    const webFile = new File(['dummy content'], 'resume.pdf', { type: 'application/pdf' });
+
+    mockGetDocument.mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ uri: 'blob:http://localhost/abc', name: 'resume.pdf', size: 100 * 1024, mimeType: 'application/pdf', file: webFile }],
+    });
+    mockPost.mockResolvedValueOnce({
+      data: { resumeId: 99, versionName: 'resume.pdf', fileUrl: 'https://cdn.com/r.pdf', isParsed: false },
+    });
+
+    renderScreen();
+    fireEvent.press(screen.getByText('Tap to select a file'));
+
+    await waitFor(() => {
+      expect(screen.getByText('resume.pdf')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Upload & Analyse'));
+
+    await waitFor(() => {
+      expect(appendSpy).toHaveBeenCalledWith('file', webFile, 'resume.pdf');
+      expect(mockNavigate).toHaveBeenCalledWith('ResumeList');
+    });
+
+    appendSpy.mockRestore();
+  });
+
+  it('shows an error and does not call the upload API when the web File is missing', async () => {
+    Platform.OS = 'web';
+
+    mockGetDocument.mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ uri: 'blob:http://localhost/abc', name: 'resume.pdf', size: 100 * 1024, mimeType: 'application/pdf' }],
+    });
+
+    renderScreen();
+    fireEvent.press(screen.getByText('Tap to select a file'));
+
+    await waitFor(() => {
+      expect(screen.getByText('resume.pdf')).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText('Upload & Analyse'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Could not read the selected file/i)).toBeTruthy();
+    });
+    expect(mockPost).not.toHaveBeenCalled();
   });
 
   it('shows fallback error when upload fails with no message', async () => {

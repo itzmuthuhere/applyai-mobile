@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ActivityIndicator, ScrollView, SafeAreaView,
+  ActivityIndicator, ScrollView, SafeAreaView, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -68,11 +68,23 @@ export default function ResumeUploadScreen() {
     setIsUploading(true);
 
     const formData = new FormData();
-    formData.append('file', {
-      uri: selectedFile.uri,
-      name: selectedFile.name,
-      type: selectedFile.mimeType || 'application/pdf',
-    } as any);
+    if (Platform.OS === 'web') {
+      // On web, expo-document-picker gives a real File/Blob on `.file` —
+      // the browser's native FormData needs that (not a {uri,name,type}
+      // descriptor) to produce an actual multipart file part.
+      if (!selectedFile.file) {
+        setError('Could not read the selected file. Please try again.');
+        setIsUploading(false);
+        return;
+      }
+      formData.append('file', selectedFile.file, selectedFile.name);
+    } else {
+      formData.append('file', {
+        uri: selectedFile.uri,
+        name: selectedFile.name,
+        type: selectedFile.mimeType || 'application/pdf',
+      } as any);
+    }
 
     try {
       const res = await apiClient.post<ResumeUploadResponse>(

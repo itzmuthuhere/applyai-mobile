@@ -545,6 +545,26 @@ shows the section and its content when tailoredResumeText is set, and
 confirms it's absent when not. 530 mobile tests green (528 + 2 new).
 ```
 
+```
+[BUG-MOB-024] | Web (ResumeUploadScreen) | FIXED | Opened Aug 9, 2026 — Fixed Aug 9, 2026
+Symptom: Real production 500 on resume upload at applyai-mobile.vercel.app —
+"An internal error occurred", upload request returned HTTP 500. Railway logs
+showed MissingServletRequestPartException: Required part 'file' is not present.
+Screen/File: ResumeUploadScreen.tsx — upload()
+Reproduced: yes (user screenshot + live Railway logs)
+Fix applied: upload() always built the native RN multipart descriptor
+({uri, name, type}) regardless of platform. On native, RN's FormData
+polyfill turns that into a real file part; on web, FormData is the
+browser's real implementation, which just stringifies a plain object
+into a text field — never producing an actual multipart file part, so
+Spring's @RequestParam("file") MultipartFile never found one. Now
+branches on Platform.OS === 'web': appends the real File object
+expo-document-picker already exposes on web (asset.file) instead, with
+an explicit error shown if it's ever missing. New regression tests:
+web File appended correctly; missing-file error path. 564 mobile tests
+green (562 + 2 new).
+```
+
 Format when adding:
 ```
 [BUG-001] | Day X | OPEN | Jun 6, 2026
