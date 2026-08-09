@@ -13,10 +13,12 @@ import { getJwt, clearJwt } from '../utils/auth';
 import apiClient, { setUnauthorizedHandler } from '../api/apiClient';
 import { COLORS, API_ENDPOINTS } from '../constants';
 import { useFcmDeepLink } from '../hooks/useFcmDeepLink';
+import { useExtensionInstalled } from '../hooks/useExtensionInstalled';
 import { initRevenueCat } from '../services/revenueCat';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
+import ExtensionPromptScreen from '../screens/auth/ExtensionPromptScreen';
 import { linking } from './linking';
 
 const Root = createNativeStackNavigator<RootStackParamList>();
@@ -30,11 +32,24 @@ export function needsProfileSetup(user: { targetRole?: string | null; targetLoca
   return !user.targetRole || !user.targetLocation;
 }
 
+// Second onboarding gate, right after ProfileSetupScreen — the extension is
+// what actually submits applications, so a fresh account with nothing queued
+// yet should be pointed at it immediately rather than discovering the (easy
+// to miss) hint banner deep in Auto Apply Queue on their own.
+export function needsExtensionPrompt(extensionInstalled: boolean, dismissed: boolean): boolean {
+  return !extensionInstalled && !dismissed;
+}
+
 export default function AppNavigator() {
   const dispatch = useDispatch<AppDispatch>();
   const jwt = useSelector((state: RootState) => state.auth.jwt);
   const authUser = useSelector((state: RootState) => state.auth.user);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  // Session-only (not persisted) — re-prompts on every fresh load/sign-in while
+  // the extension genuinely isn't detected, but doesn't trap a user who already
+  // dismissed it once this session behind a second full-screen gate.
+  const [extensionPromptDismissed, setExtensionPromptDismissed] = useState(false);
+  const extensionInstalled = useExtensionInstalled();
   const navRef = useRef<NavigationContainerRef<any>>(null);
   const { onNavigationReady } = useFcmDeepLink(navRef, !!jwt);
 
@@ -99,6 +114,10 @@ export default function AppNavigator() {
       <Root.Navigator screenOptions={{ headerShown: false }}>
         {jwt && needsProfileSetup(authUser) ? (
           <Root.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+        ) : jwt && needsExtensionPrompt(extensionInstalled, extensionPromptDismissed) ? (
+          <Root.Screen name="ExtensionPrompt">
+            {() => <ExtensionPromptScreen onDone={() => setExtensionPromptDismissed(true)} />}
+          </Root.Screen>
         ) : jwt ? (
           <Root.Screen name="Main" component={MainNavigator} />
         ) : (

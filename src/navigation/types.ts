@@ -79,5 +79,6 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   ProfileSetup: undefined;
+  ExtensionPrompt: undefined;
   Main: NavigatorScreenParams<MainTabParamList>;
 };
