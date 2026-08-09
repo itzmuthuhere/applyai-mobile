@@ -10,8 +10,9 @@ import { setResumes } from '../store/slices/resumeSlice';
 import { setApplications } from '../store/slices/applicationSlice';
 import { setHistory } from '../store/slices/interviewSlice';
 import { getJwt, clearJwt } from '../utils/auth';
+import * as SecureStorage from '../utils/secureStorage';
 import apiClient, { setUnauthorizedHandler } from '../api/apiClient';
-import { COLORS, API_ENDPOINTS } from '../constants';
+import { COLORS, API_ENDPOINTS, SECURE_STORE_KEYS } from '../constants';
 import { useFcmDeepLink } from '../hooks/useFcmDeepLink';
 import { useExtensionInstalled } from '../hooks/useExtensionInstalled';
 import { initRevenueCat } from '../services/revenueCat';
@@ -45,16 +46,25 @@ export default function AppNavigator() {
   const jwt = useSelector((state: RootState) => state.auth.jwt);
   const authUser = useSelector((state: RootState) => state.auth.user);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
-  // Session-only (not persisted) — re-prompts on every fresh load/sign-in while
-  // the extension genuinely isn't detected, but doesn't trap a user who already
-  // dismissed it once this session behind a second full-screen gate.
+  // Persisted (SecureStore native / localStorage web) — a real dismissal must
+  // survive a page refresh, not just last for the current in-memory session.
+  // Still re-prompts on a fresh sign-in on a NEW device/browser, since this
+  // is local-only and never synced to the account.
   const [extensionPromptDismissed, setExtensionPromptDismissed] = useState(false);
   const extensionInstalled = useExtensionInstalled();
+
+  async function dismissExtensionPrompt() {
+    setExtensionPromptDismissed(true);
+    await SecureStorage.setItemAsync(SECURE_STORE_KEYS.EXTENSION_PROMPT_DISMISSED, 'true');
+  }
   const navRef = useRef<NavigationContainerRef<any>>(null);
   const { onNavigationReady } = useFcmDeepLink(navRef, !!jwt);
 
   useEffect(() => {
     (async () => {
+      const dismissed = await SecureStorage.getItemAsync(SECURE_STORE_KEYS.EXTENSION_PROMPT_DISMISSED);
+      if (dismissed === 'true') setExtensionPromptDismissed(true);
+
       const token = await getJwt();
       if (!token) {
         dispatch(clearAuth());
@@ -116,7 +126,7 @@ export default function AppNavigator() {
           <Root.Screen name="ProfileSetup" component={ProfileSetupScreen} />
         ) : jwt && needsExtensionPrompt(extensionInstalled, extensionPromptDismissed) ? (
           <Root.Screen name="ExtensionPrompt">
-            {() => <ExtensionPromptScreen onDone={() => setExtensionPromptDismissed(true)} />}
+            {() => <ExtensionPromptScreen onDone={dismissExtensionPrompt} />}
           </Root.Screen>
         ) : jwt ? (
           <Root.Screen name="Main" component={MainNavigator} />

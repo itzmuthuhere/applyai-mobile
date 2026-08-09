@@ -66,6 +66,7 @@ export const COLORS = {
 
 export const SECURE_STORE_KEYS = {
   JWT: 'jwt',
+  EXTENSION_PROMPT_DISMISSED: 'extension_prompt_dismissed',
 } as const;
 
 export const CHROME_EXTENSION_ID = 'nigpinofkjobdkncjgojoloohkfdnjbm';
