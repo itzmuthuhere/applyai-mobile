@@ -16,9 +16,19 @@ import { useFcmDeepLink } from '../hooks/useFcmDeepLink';
 import { initRevenueCat } from '../services/revenueCat';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
+import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
 import { linking } from './linking';
 
 const Root = createNativeStackNavigator<RootStackParamList>();
+
+// New/incomplete users are gated into ProfileSetupScreen right after sign-in —
+// job matching, top-20 feed, and auto-apply are all built around targetRole/
+// targetLocation being set, so collecting it immediately (rather than leaving
+// users to discover Profile Settings on their own) is core to the MVP flow.
+export function needsProfileSetup(user: { targetRole?: string | null; targetLocation?: string | null } | null): boolean {
+  if (!user) return false;
+  return !user.targetRole || !user.targetLocation;
+}
 
 export default function AppNavigator() {
   const dispatch = useDispatch<AppDispatch>();
@@ -87,7 +97,9 @@ export default function AppNavigator() {
   return (
     <NavigationContainer ref={navRef} onReady={onNavigationReady} linking={linking}>
       <Root.Navigator screenOptions={{ headerShown: false }}>
-        {jwt ? (
+        {jwt && needsProfileSetup(authUser) ? (
+          <Root.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+        ) : jwt ? (
           <Root.Screen name="Main" component={MainNavigator} />
         ) : (
           <Root.Screen name="Auth" component={AuthNavigator} />
